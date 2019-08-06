@@ -1,0 +1,99 @@
+[core]
+dags_folder = {{ AIRFLOW_HOME }}/dags
+base_log_folder = {{ AIRFLOW_HOME }}/logs
+logging_level = INFO
+fab_logging_level = WARN
+log_format = [%%(asctime)s] {%%(filename)s:%%(lineno)d} %%(levelname)s - %%(message)s
+simple_log_format = %%(asctime)s %%(levelname)s - %%(message)s
+dag_processor_manager_log_location = {{ AIRFLOW_HOME }}/logs/dag_processor_manager/dag_processor_manager.log
+hostname_callable = socket:getfqdn
+default_timezone = utc
+executor = SequentialExecutor
+sql_alchemy_conn = sqlite:///{{ AIRFLOW_HOME }}/airflow.db
+sql_engine_encoding = utf-8
+sql_alchemy_pool_enabled = True
+sql_alchemy_pool_size = 5
+sql_alchemy_pool_recycle = 1800
+sql_alchemy_reconnect_timeout = 300
+parallelism = 32
+dag_concurrency = 16
+dags_are_paused_at_creation = True
+non_pooled_task_slot_count = 128
+max_active_runs_per_dag = 16
+load_examples = False
+plugins_folder = {{ AIRFLOW_HOME }}/plugins
+fernet_key = 8bTGZ3JI7CDUldWGy4_QXX7IsgnQiK9vQJs42nxPJNc=
+donot_pickle = False
+dagbag_import_timeout = 30
+task_runner = StandardTaskRunner
+secure_mode = True
+unit_test_mode = False
+task_log_reader = task
+enable_xcom_pickling = True
+killed_task_cleanup_time = 60
+dag_run_conf_overrides_params = False
+worker_precheck = False
+dag_discovery_safe_mode = True
+
+[cli]
+api_client = airflow.api.client.local_client
+endpoint_url = http://localhost:8080
+
+[api]
+auth_backend = airflow.api.auth.backend.default
+
+[operators]
+default_owner = Airflow
+default_cpus = 1
+default_ram = 512
+default_disk = 512
+default_gpus = 0
+
+[webserver]
+base_url = http://localhost:8080
+web_server_host = 0.0.0.0
+web_server_port = 8080
+web_server_master_timeout = 120
+web_server_worker_timeout = 120
+worker_refresh_batch_size = 1
+worker_refresh_interval = 30
+secret_key = temporary_key
+workers = 4
+worker_class = sync
+access_logfile = -
+error_logfile = -
+expose_config = False
+filter_by_owner = False
+owner_mode = user
+dag_default_view = tree
+dag_orientation = LR
+demo_mode = False
+log_fetch_timeout_sec = 5
+hide_paused_dags_by_default = False
+page_size = 100
+default_dag_run_display_number = 25
+{{ WEBSERVER_AUTH }}
+
+[scheduler]
+job_heartbeat_sec = 5
+scheduler_heartbeat_sec = 5
+run_duration = -1
+min_file_process_interval = 0
+dag_dir_list_interval = 300
+print_stats_interval = 30
+scheduler_health_check_threshold = 30
+child_process_log_directory = {{ AIRFLOW_HOME }}/logs/scheduler
+scheduler_zombie_task_threshold = 300
+catchup_by_default = True
+max_tis_per_query = 512
+max_threads = 2
+authenticate = False
+use_job_schedule = True
+
+[admin]
+hide_sensitive_variable_fields = True
+
+[gitlab_plugin]
+repository_url = git@example.com:mike/diaspora.git
+token = 1234
+dag = git

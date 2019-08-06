@@ -1,0 +1,37 @@
+<h2>DAGs Code Editor</h2>
+
+<table id="dags" class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>DAG</th>
+            <th>Owner</th>
+            <th class="text-center" style="width: 100px">Links</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for dag in dags %}
+        <tr>
+            <td>
+                <a href="editor?dag_id={{ dag.dag_id }}">{{ dag.dag_id }}</a>
+            </td>
+            <td>
+                {{ dag.owners }}
+            </td>
+            <td class="text-center">
+            {% if dag %}
+            <!-- Logs -->
+            <a href="{{ url_for(log_list) }}?_flt_3_dag_id={{ dag.dag_id }}&_od_LogModelView=desc&_oc_LogModelView=dttm">
+                <span class="glyphicon glyphicon-align-justify" aria-hidden="true" data-original-title="Logs"></span>
+            </a>
+            {% endif %}
+
+            <!-- Refresh -->
+            <a href="{{ url_for(airflow_refresh, dag_id=dag.dag_id) }}" onclick="postAsForm(this.href); return false">
+              <span class="glyphicon glyphicon-refresh" aria-hidden="true" data-original-title="Refresh"></span>
+            </a>
+
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

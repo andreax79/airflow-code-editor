@@ -1,0 +1,16 @@
+{% extends "airflow/master.html" %}
+
+{% block head_css %}
+{{ super() }}
+{% include "editor_head.html" %}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+{% include "editor_body.html" %}
+{% endblock %}
+
+{% block tail %}
+{{ super() }}
+{% include "editor_tail.html" %}
+{% endblock %}

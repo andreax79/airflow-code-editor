@@ -102,3 +102,17 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+/test_virtualenv/bin
+/test_virtualenv/include
+/test_virtualenv/logs
+/test_virtualenv/share
+/test_virtualenv/airflow.cfg
+/test_virtualenv/airflow.db
+/test_virtualenv/webserver_config.py
+/test_virtualenv/unittests.cfg
+/test_virtualenv/plugins/
+/test_virtualenv/*.pid
+
+
+

@@ -15,10 +15,8 @@
 #   limitations under the Licens
 #
 __author__ = 'Andrea Bonomi <andrea.bonomi@gmail.com>'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
-import os
-import os.path
 import logging
 from flask import Blueprint, request, flash
 import flask_admin
@@ -36,10 +34,12 @@ try:
 except:
     has_access = lambda x: x
 
-CONFIG_SECTION = 'editor_plugin'
+PLUGIN_NAME = 'code_editor'
 MENU_CATEGORY = 'Admin'
 MENU_LABEL = 'DAGs Code Editor'
-ROUTE = '/code_editor'
+ROUTE = '/' + PLUGIN_NAME
+STATIC = '/static/' + PLUGIN_NAME
+CONFIG_SECTION = PLUGIN_NAME + '_plugin'
 
 __all__ = [
     'CodeEditorPlugin'
@@ -162,7 +162,6 @@ admin_view = AdminCodeEditorView(
 # AppBuilder (Airflow >= 1.10 and rbac = True)
 
 class AppBuilderCodeEditorView(flask_appbuilder.BaseView, AbstractCodeEditorView):
-    template_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
     route_base = ROUTE
     base_permissions = ['can_list']
 
@@ -201,7 +200,7 @@ code_editor_plugin_blueprint = Blueprint(
     __name__,
     template_folder='templates',
     static_folder='static',
-    static_url_path='/static/editor/'
+    static_url_path=STATIC
 )
 
 # Plugin

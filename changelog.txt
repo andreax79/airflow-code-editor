@@ -8,3 +8,10 @@
 
 - initial version
 
+## 1.0.1
+
+2019-08-07
+
+### Fix
+
+- change static folder

@@ -85,7 +85,7 @@ class AbstractCodeEditorView(object):
             with open_maybe_zipped(dag.fileloc, 'w') as f:
                 f.write(code)
                 flash('DAG [{dag.dag_id}] saved successfully'.format(dag=dag),
-                      'error')
+                      'success')
         except Exception as ex:
             logging.error(ex)
             flash('Error saving DAG [{dag.dag_id}]'.format(dag=dag),

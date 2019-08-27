@@ -15,3 +15,11 @@
 ### Fix
 
 - change static folder
+
+## 2.0.0
+
+2019-08-30
+
+### Added
+
+- git gui

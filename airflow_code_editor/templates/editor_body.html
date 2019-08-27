@@ -1,4 +1,4 @@
-<h4>DAGs Code Editor - {{ title }}</h4>
+<h4>DAGs Code Editor - {{ path }}</h4>
 
 <div class="panel panel-primary">
 	<div class="panel-heading">
@@ -26,7 +26,7 @@
 {% if code != None %}
             <button type="submit" class="btn btn-primary">Save <i class="fa fa-save"></i></button>
 {% endif %}
-            <a href="{{ back }}" class="btn btn-danger" role="button">Cancel</a>
+            <a href="/code_editor/editor/{{ path }}" class="btn btn-danger" role="button">Revert</a>
         </div>
     </form>
 </div>

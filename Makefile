@@ -1,6 +1,6 @@
 
 help:
-	@echo - make coverage
+	@echo - make release
 
 release:
 	python3 setup.py sdist bdist_wheel

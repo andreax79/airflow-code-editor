@@ -4,8 +4,7 @@ source ./mo.sh
 export AIRFLOW_HOME=${PWD}
 
 export ENABLE_AIRFLOW_AUTH=1
-#export AIRFLOW_VERSION=1.10.4rc5
-export AIRFLOW_VERSION=1.10.3
+export AIRFLOW_VERSION=1.10.4
 
 function WEBSERVER_AUTH() {
     if [[ $ENABLE_AIRFLOW_AUTH == 1 ]]; then

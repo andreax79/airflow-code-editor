@@ -15,13 +15,13 @@
 #   limitations under the Licens
 #
 __author__ = 'Andrea Bonomi <andrea.bonomi@gmail.com>'
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 
 from flask import Blueprint
 from airflow.plugins_manager import AirflowPlugin
 from airflow_code_editor.commons import STATIC
-from airflow_code_editor.flask_admin import admin_view
-from airflow_code_editor.app_builder import appbuilder_view
+from airflow_code_editor.flask_admin_view import admin_view
+from airflow_code_editor.app_builder_view import appbuilder_view
 
 __all__ = [
     'CodeEditorPlugin'

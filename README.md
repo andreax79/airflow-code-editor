@@ -6,6 +6,8 @@ The DAGs are stored in a Git repository. You may use it to view Git history, rev
 
 * Airflow Versions
     * 1.10.3 or newer
+* git Versions
+    * 2.0 or newer
 
 ### Screenshots
 
@@ -24,8 +26,28 @@ The DAGs are stored in a Git repository. You may use it to view Git history, rev
 
 3. Open Admin - DAGs Code Editor
 
+
+### Config Options
+
+You can edit your *airflow.cfg* adding any of the following settings in the \[code_editor\] section.
+
+* **git_cmd**  git command (optional path)
+* **git_default_args**  git arguments added to each call (default: -c color.ui=true)
+* **git_author_name** human-readable name in the author/committer (default logged user first and last names)
+* **git_author_email** email for the author/committer (default: logged user email)
+* **git_init_repo**  initialize a git repo in DAGs folder (default: True)
+
+Example:
+```
+   [code_editor]
+   git_cmd = /usr/bin/git
+   git_default_args = -c color.ui=true
+   git_init_repo = False
+```
+
 ### Links
 
 * Apache Airflow - https://github.com/apache/airflow
 * Codemirror, In-browser code editor - https://github.com/codemirror/codemirror
 * Git WebUI, A standalone local web based user interface for git repositories - https://github.com/alberthier/git-webui
+

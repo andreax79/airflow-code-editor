@@ -19,17 +19,22 @@ import os.path
 import logging
 import subprocess
 import threading
+import shlex
 from flask import make_response
 from flask_login import current_user
 from airflow import configuration
 from airflow_code_editor.commons import (
     HTTP_200_OK,
     HTTP_404_NOT_FOUND,
-    SUPPORTED_GIT_COMMANDS
+    SUPPORTED_GIT_COMMANDS,
+    PLUGIN_NAME,
+    PLUGIN_DEFAULT_CONFIG
 )
 
 __all__ = [
     'normalize_path',
+    'get_plugin_config',
+    'get_plugin_boolean_config',
     'execute_git_command'
 ]
 
@@ -44,6 +49,14 @@ def normalize_path(path):
         elif result:
             result.pop()
     return '/'.join(result)
+
+def get_plugin_config(key):
+    " Get a plugin configuration/default for a given key "
+    return configuration.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
+
+def get_plugin_boolean_config(key):
+    " Get a plugin boolean configuration/default for a given key "
+    return configuration.getboolean(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
 
 def prepare_response(git_cmd, result=None, stderr=None, returncode=0):
     if result is None:
@@ -62,15 +75,25 @@ def prepare_response(git_cmd, result=None, stderr=None, returncode=0):
 def prepare_git_env():
     " Prepare the environ for git "
     env = dict(os.environ)
-    try:
-        env['GIT_AUTHOR_NAME'] = '%s %s' % (current_user.first_name, current_user.last_name)
-        env['GIT_AUTHOR_EMAIL'] = current_user.email
-        env['GIT_COMMITTER_NAME'] = env['GIT_AUTHOR_NAME']
-        env['GIT_COMMITTER_EMAIL'] = env['GIT_AUTHOR_EMAIL']
-    except:
-        pass
-    finally:
-        return env
+    git_author_name = get_plugin_config('git_author_name')
+    if not git_author_name:
+        try:
+            git_author_name = '%s %s' % (current_user.first_name, current_user.last_name)
+        except:
+            pass
+    if git_author_name:
+        env['GIT_AUTHOR_NAME'] = git_author_name
+        env['GIT_COMMITTER_NAME'] = git_author_name
+    git_author_email = get_plugin_config('git_author_email')
+    if not git_author_email:
+        try:
+            git_author_email = current_user.email
+        except:
+            pass
+    if git_author_email:
+        env['GIT_AUTHOR_EMAIL'] = git_author_email
+        env['GIT_COMMITTER_EMAIL'] = git_author_email
+    return env
 
 _execute_git_command_lock = threading.Lock()
 
@@ -80,14 +103,15 @@ def execute_git_command(git_args):
         git_cmd = git_args[0] if git_args else None
         try:
             cwd = configuration.get('core', 'dags_folder')
-            if not os.path.exists(os.path.join(cwd, '.git')):
+            if not os.path.exists(os.path.join(cwd, '.git')) and get_plugin_boolean_config('git_init_repo'):
                 init_git_repo()
             if git_cmd == 'ls-local':
                 stdout = git_ls_local(git_args)
                 stderr = None
                 returncode = 0
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
-                cmd = [ "git", "-c", "color.ui=true" ] + git_args
+                git_default_args = shlex.split(get_plugin_config('git_default_args'))
+                cmd = [ get_plugin_config('git_cmd') ] + git_default_args + git_args
                 git = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env=prepare_git_env())
                 stdout, stderr = git.communicate()
                 returncode = git.returncode
@@ -109,9 +133,13 @@ def execute_git_command(git_args):
             return prepare_response(git_cmd, stdout, stderr, returncode)
 
 def git_ls_local(git_args):
-    " 'git ls-tree -l' like output for local folders "
+    " 'git ls-tree' like output for local folders "
     cwd = configuration.get('core', 'dags_folder')
-    path = git_args[2] if len(git_args) > 2 else ''
+    long_ = False
+    if '-l' in git_args or '--long' in git_args:
+        git_args = [arg for arg in git_args if arg not in ('-l', '--long')]
+        long_ = True
+    path = git_args[1] if len(git_args) > 1 else ''
     dirpath = os.path.join(cwd, normalize_path(path))
     result = []
     for name in sorted(os.listdir(dirpath)):
@@ -126,7 +154,10 @@ def git_ls_local(git_args):
             type_ = 'blob'
             size_ = s.st_size
         relname = fullname[len(cwd):]
-        result.append('%06o %s %s %8s\t%s' % (s.st_mode, type_, relname, size_, name))
+        if long_:
+            result.append('%06o %s %s %8s\t%s' % (s.st_mode, type_, relname, size_, name))
+        else:
+            result.append('%06o %s %s\t%s' % (s.st_mode, type_, relname, name))
     return '\n'.join(result)
 
 def init_git_repo():

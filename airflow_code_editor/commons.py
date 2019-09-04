@@ -24,7 +24,8 @@ __all__ = [
     'CONFIG_SECTION',
     'SUPPORTED_GIT_COMMANDS',
     'HTTP_200_OK',
-    'HTTP_404_NOT_FOUND'
+    'HTTP_404_NOT_FOUND',
+    'PLUGIN_DEFAULT_CONFIG'
 ]
 
 PLUGIN_NAME = 'code_editor'
@@ -51,3 +52,10 @@ SUPPORTED_GIT_COMMANDS = [
     'tag',
     'unstage'
 ]
+PLUGIN_DEFAULT_CONFIG = {
+    'git_cmd':              'git',
+    'git_default_args':     '-c color.ui=true',
+    'git_author_name':      None,
+    'git_author_email':     None,
+    'git_init_repo':        True
+}

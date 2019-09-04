@@ -113,6 +113,5 @@ venv.bak/
 /test_virtualenv/unittests.cfg
 /test_virtualenv/plugins/
 /test_virtualenv/*.pid
-
-
+/test_virtualenv/dags/.gitignore
 

@@ -1160,9 +1160,28 @@ webui.TreeView = function(commitView) {
                    '<iframe src="/code_editor/editor' + object + '"></iframe>' +
                    '</div>').appendTo(self.element);
         } else {
+            // jQuery('<div id="tree-view-blob-content">' +
+            //        '<iframe src="/code_editor/repo/' + object + '"></iframe>' +
+            //        '</div>').appendTo(self.element);
             jQuery('<div id="tree-view-blob-content">' +
-                   '<iframe src="/code_editor/repo/' + object + '"></iframe>' +
-                   '</div>').appendTo(self.element);
+                '<textarea></textarea>' +
+                '</div>').appendTo(self.element);
+
+            var textarea = jQuery('#tree-view-blob-content textarea')[0];
+            var editor = CodeMirror.fromTextArea(textarea, {
+                readOnly: true,
+                lineNumbers: true,
+                mode: 'python',
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+            });
+            var client = new XMLHttpRequest();
+            client.open('GET', '/code_editor/repo/' + object);
+            client.onreadystatechange = function() {
+                editor.setValue(client.responseText);
+                editor.refresh();
+            }
+            client.send();
         }
     }
 

@@ -31,3 +31,11 @@
 ### Added
 
 - configuration options
+
+## 2.0.2
+
+2019-09-05
+
+### Added
+
+- show tree files with CodeMirror

@@ -40,6 +40,7 @@ SUPPORTED_GIT_COMMANDS = [
     'add',
     'branch',
     'checkout',
+    'cat-file',
     'commit',
     'diff',
     'log',

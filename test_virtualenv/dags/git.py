@@ -23,4 +23,4 @@ checkout = BashOperator(
     dag=dag)
 
 if __name__ == "__main__":
-    dag.cli()                 
+    dag.cli()

@@ -43,7 +43,7 @@ class AbstractCodeEditorView(object):
             fullpath = os.path.join(cwd, path)
             # Read code
             with open(fullpath, 'r') as f:
-                code = f.read()
+                code = f.read().rstrip('\n')
         except Exception as ex:
             logging.error(ex)
             flash('Error loading file [{path}]'.format(path=path),
@@ -55,10 +55,13 @@ class AbstractCodeEditorView(object):
         try:
             code = None
             code = request.form['code']
+            # Newline fix (remove cr)
+            code = code.replace('\r', '').rstrip()
             cwd = configuration.get('core', 'dags_folder')
             fullpath = os.path.join(cwd, path)
             with open(fullpath, 'w') as f:
                 f.write(code)
+                f.write('\n')
             flash('File [{path}] saved successfully'.format(path=path),
               'success')
         except Exception as ex:

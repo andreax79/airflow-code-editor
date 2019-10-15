@@ -39,3 +39,11 @@
 ### Added
 
 - show tree files with CodeMirror
+
+## 2.1.0
+
+2019-10-15
+
+### Fix
+
+- fix newline (cr+lf vs lf)

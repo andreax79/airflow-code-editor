@@ -47,3 +47,11 @@
 ### Fix
 
 - fix newline (cr+lf vs lf)
+
+## 2.1.1
+
+2019-11-19
+
+### Fix
+
+- fix missing icons

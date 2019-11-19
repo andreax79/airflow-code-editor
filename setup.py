@@ -4,6 +4,7 @@ import os.path
 import re
 import glob
 from setuptools import (find_packages, setup)
+from itertools import chain
 
 VERSION_RE = re.compile('__version__\s*=\s*[\'"](.*)[\'"]')
 
@@ -18,9 +19,9 @@ def get_version():
     raise Exception
 
 def get_package_data():
-    return ([x.split('/', 1)[1] for x in glob.glob('airflow_code_editor/**/*.js', recursive=True)] +
-            [x.split('/', 1)[1] for x in glob.glob('airflow_code_editor/**/*.css', recursive=True)] +
-            [x.split('/', 1)[1] for x in glob.glob('airflow_code_editor/**/*.html', recursive=True)])
+    exts = ['js', 'css', 'html', 'svg', 'png', 'jpg', 'gif']
+    files = list(chain(*[glob.glob('airflow_code_editor/**/*.%s' % x, recursive=True) for x in exts]))
+    return [x.split('/', 1)[1] for x in files]
 
 with open('README.md', 'r') as f:
     long_description = f.read()

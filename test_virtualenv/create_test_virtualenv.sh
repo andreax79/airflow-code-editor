@@ -4,7 +4,7 @@ source ./mo.sh
 export AIRFLOW_HOME=${PWD}
 
 export ENABLE_AIRFLOW_AUTH=1
-export AIRFLOW_VERSION=1.10.6
+export AIRFLOW_VERSION=1.10.8
 
 function WEBSERVER_AUTH() {
     if [[ $ENABLE_AIRFLOW_AUTH == 1 ]]; then
@@ -21,7 +21,7 @@ virtualenv -p `which python3` .
 echo "export AIRFLOW_HOME=${AIRFLOW_HOME}" >> bin/activate
 source bin/activate
 pip install --upgrade pip
-pip install pendulum==1.4.4
+# pip install pendulum==1.4.4
 AIRFLOW_GPL_UNIDECODE=true pip install apache-airflow[crypto,password]==${AIRFLOW_VERSION}
 # AIRFLOW_GPL_UNIDECODE=true pip install apache-airflow==${AIRFLOW_VERSION}
 
@@ -30,6 +30,12 @@ if [[ $AIRFLOW_VERSION == "1.10.3" ]]; then # killme
     # https://stackoverflow.com/questions/56933523/apache-airflow-airflow-initdb-throws-modulenotfounderror-no-module-named-wer
     pip install -U Flask==1.0.4
     # pip install werkzeug==0.15.5
+fi
+
+if [[ $AIRFLOW_VERSION == "1.10.8" ]]; then # killme
+    # Apache Airflow : airflow initdb throws ImportError: cannot import name 'secure_filename' from 'werkzeug'
+    # https://stackoverflow.com/questions/60104484/cannot-run-apache-airflow-after-fresh-install-python-import-error
+    pip install werkzeug==0.16.0
 fi
 
 # pip install --no-deps airflow-code-editor

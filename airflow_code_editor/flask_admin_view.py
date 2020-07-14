@@ -19,6 +19,7 @@ from flask_admin import BaseView, expose
 import airflow
 from airflow.utils.db import provide_session
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
+from airflow_code_editor.auth import login_required
 from airflow_code_editor.commons import (
     ROUTE,
     MENU_CATEGORY,
@@ -32,11 +33,6 @@ __all__ = [
 
 # ############################################################################
 # Flask Admin
-
-if airflow.login is not None:
-    login_required = airflow.login.login_required
-else:
-    login_required = lambda x: x
 
 class AdminCodeEditorView(BaseView, AbstractCodeEditorView):
 

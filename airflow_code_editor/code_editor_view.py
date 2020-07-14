@@ -24,7 +24,8 @@ from airflow.models.errors import ImportError
 from airflow_code_editor.commons import ROUTE
 from airflow_code_editor.utils import (
     normalize_path,
-    execute_git_command
+    execute_git_command,
+    get_dag_dir
 )
 
 __all__ = [
@@ -39,7 +40,7 @@ class AbstractCodeEditorView(object):
     def _load(self, path):
         try:
             code = None
-            cwd = configuration.get('core', 'dags_folder')
+            cwd = get_dag_dir()
             fullpath = os.path.join(cwd, path)
             # Read code
             with open(fullpath, 'r') as f:
@@ -57,7 +58,7 @@ class AbstractCodeEditorView(object):
             code = request.form['code']
             # Newline fix (remove cr)
             code = code.replace('\r', '').rstrip()
-            cwd = configuration.get('core', 'dags_folder')
+            cwd = get_dag_dir()
             fullpath = os.path.join(cwd, path)
             with open(fullpath, 'w') as f:
                 f.write(code)

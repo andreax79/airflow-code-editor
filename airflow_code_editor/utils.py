@@ -38,6 +38,13 @@ __all__ = [
     'execute_git_command'
 ]
 
+def get_dag_dir():
+    cwd = configuration.get('core', 'dags_folder')
+    subdir = configuration.get('code_editor', 'dag_subdir')
+    if subdir is not None:
+        cwd = os.path.join(cwd, subdir)
+    return cwd
+
 def normalize_path(path):
     comps = (path or '/').split('/')
     result = []
@@ -102,7 +109,7 @@ def execute_git_command(git_args):
         logging.info(' '.join(git_args))
         git_cmd = git_args[0] if git_args else None
         try:
-            cwd = configuration.get('core', 'dags_folder')
+            cwd = get_dag_dir()
             if not os.path.exists(os.path.join(cwd, '.git')) and get_plugin_boolean_config('git_init_repo'):
                 init_git_repo()
             if git_cmd == 'ls-local':
@@ -134,7 +141,7 @@ def execute_git_command(git_args):
 
 def git_ls_local(git_args):
     " 'git ls-tree' like output for local folders "
-    cwd = configuration.get('core', 'dags_folder')
+    cwd = get_dag_dir()
     long_ = False
     if '-l' in git_args or '--long' in git_args:
         git_args = [arg for arg in git_args if arg not in ('-l', '--long')]
@@ -162,7 +169,7 @@ def git_ls_local(git_args):
 
 def init_git_repo():
     " Initialize the git repository in dag_folder "
-    cwd = configuration.get('core', 'dags_folder')
+    cwd = get_dag_dir()
     subprocess.call([ 'git', 'init', '.'], cwd=cwd)
     gitignore = os.path.join(cwd, '.gitignore')
     if not os.path.exists(gitignore):

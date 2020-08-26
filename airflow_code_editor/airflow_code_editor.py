@@ -27,6 +27,7 @@ __all__ = [
     'CodeEditorPlugin'
 ]
 
+
 code_editor_plugin_blueprint = Blueprint(
     'code_editor_plugin_blueprint',
     __name__,
@@ -34,6 +35,7 @@ code_editor_plugin_blueprint = Blueprint(
     static_folder='static',
     static_url_path=STATIC
 )
+
 
 # Plugin
 class CodeEditorPlugin(AirflowPlugin):
@@ -45,4 +47,3 @@ class CodeEditorPlugin(AirflowPlugin):
     admin_views = [admin_view]
     menu_links = []
     appbuilder_views = [appbuilder_view]
-

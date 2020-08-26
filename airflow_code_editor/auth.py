@@ -1,6 +1,7 @@
 import airflow
 from functools import wraps
 
+
 def login_required(func):
     # when airflow loads plugins, login is still None.
     @wraps(func)

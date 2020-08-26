@@ -38,6 +38,7 @@ __all__ = [
     'execute_git_command'
 ]
 
+
 def normalize_path(path):
     comps = (path or '/').split('/')
     result = []
@@ -50,13 +51,16 @@ def normalize_path(path):
             result.pop()
     return '/'.join(result)
 
+
 def get_plugin_config(key):
     " Get a plugin configuration/default for a given key "
     return configuration.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
 
+
 def get_plugin_boolean_config(key):
     " Get a plugin boolean configuration/default for a given key "
     return configuration.getboolean(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
+
 
 def prepare_response(git_cmd, result=None, stderr=None, returncode=0):
     if result is None:
@@ -72,6 +76,7 @@ def prepare_response(git_cmd, result=None, stderr=None, returncode=0):
         response.headers['X-Git-Stderr-Length'] = str(len(stderr or ''))
     return response
 
+
 def prepare_git_env():
     " Prepare the environ for git "
     env = dict(os.environ)
@@ -79,7 +84,7 @@ def prepare_git_env():
     if not git_author_name:
         try:
             git_author_name = '%s %s' % (current_user.first_name, current_user.last_name)
-        except:
+        except Exception:
             pass
     if git_author_name:
         env['GIT_AUTHOR_NAME'] = git_author_name
@@ -88,14 +93,16 @@ def prepare_git_env():
     if not git_author_email:
         try:
             git_author_email = current_user.email
-        except:
+        except Exception:
             pass
     if git_author_email:
         env['GIT_AUTHOR_EMAIL'] = git_author_email
         env['GIT_COMMITTER_EMAIL'] = git_author_email
     return env
 
+
 _execute_git_command_lock = threading.Lock()
+
 
 def execute_git_command(git_args):
     with _execute_git_command_lock:
@@ -111,8 +118,13 @@ def execute_git_command(git_args):
                 returncode = 0
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
                 git_default_args = shlex.split(get_plugin_config('git_default_args'))
-                cmd = [ get_plugin_config('git_cmd') ] + git_default_args + git_args
-                git = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env=prepare_git_env())
+                cmd = [get_plugin_config('git_cmd')] + git_default_args + git_args
+                git = subprocess.Popen(cmd,
+                                       stdin=subprocess.PIPE,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       cwd=cwd,
+                                       env=prepare_git_env())
                 stdout, stderr = git.communicate()
                 returncode = git.returncode
             else:
@@ -131,6 +143,7 @@ def execute_git_command(git_args):
             returncode = 1
         finally:
             return prepare_response(git_cmd, stdout, stderr, returncode)
+
 
 def git_ls_local(git_args):
     " 'git ls-tree' like output for local folders "
@@ -160,16 +173,18 @@ def git_ls_local(git_args):
             result.append('%06o %s %s\t%s' % (s.st_mode, type_, relname, name))
     return '\n'.join(result)
 
+
 def init_git_repo():
     " Initialize the git repository in dag_folder "
     cwd = configuration.get('core', 'dags_folder')
-    subprocess.call([ 'git', 'init', '.'], cwd=cwd)
+    subprocess.call(['git', 'init', '.'], cwd=cwd)
     gitignore = os.path.join(cwd, '.gitignore')
     if not os.path.exists(gitignore):
         with open(gitignore, 'w') as f:
             f.write('__pycache__\n')
-        subprocess.call([ 'git', 'add', '.gitignore' ], cwd=cwd)
-    subprocess.call([ 'git', 'commit', '-m', 'Initial commit' ], cwd=cwd, env=prepare_git_env())
+        subprocess.call(['git', 'add', '.gitignore'], cwd=cwd)
+    subprocess.call(['git', 'commit', '-m', 'Initial commit'], cwd=cwd, env=prepare_git_env())
+
 
 assert(normalize_path('/') == '')
 assert(normalize_path('/../') == '')
@@ -194,4 +209,3 @@ assert(normalize_path('/../aaa') == 'aaa')
 
 assert(normalize_path('/aaa') == 'aaa')
 assert(normalize_path('aaa') == 'aaa')
-

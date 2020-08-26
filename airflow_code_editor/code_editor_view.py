@@ -31,6 +31,7 @@ __all__ = [
     'AbstractCodeEditorView'
 ]
 
+
 class AbstractCodeEditorView(object):
 
     def _index(self, session=None):
@@ -63,7 +64,7 @@ class AbstractCodeEditorView(object):
                 f.write(code)
                 f.write('\n')
             flash('File [{path}] saved successfully'.format(path=path),
-              'success')
+                  'success')
         except Exception as ex:
             logging.error(ex)
             flash('Error saving file [{path}]'.format(path=path),
@@ -101,10 +102,9 @@ class AbstractCodeEditorView(object):
 
     def _git_repo_get(self, session, path):
         " Get a file from GIT (invoked by the HTTP GET method) "
-        return execute_git_command([ "cat-file", "-p", path ])
+        return execute_git_command(["cat-file", "-p", path])
 
     def _git_repo_post(self, session, path):
         " Execute a GIT command (invoked by the HTTP POST method) "
         git_args = request.form.getlist('args[]')
         return execute_git_command(git_args)
-

@@ -20,8 +20,9 @@ from airflow.utils.db import provide_session
 from airflow.www_rbac.decorators import has_dag_access
 try:
     from flask_appbuilder import has_access
-except:
-    has_access = lambda x: x
+except (ImportError, ModuleNotFoundError):
+    def has_access(x):
+        return x
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
 from airflow_code_editor.commons import (
     ROUTE,
@@ -33,6 +34,7 @@ __all__ = [
     'AppBuilderCodeEditorView',
     'appbuilder_view'
 ]
+
 
 # ############################################################################
 # AppBuilder (Airflow >= 1.10 and rbac = True)
@@ -74,9 +76,9 @@ class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
 
     def _render(self, template, *args, **kargs):
         return self.render_template(template + '_appbuilder.html',
-                airflow_refresh='Airflow.refresh',
-                log_list='LogModelView.list',
-                *args, **kargs)
+                                    airflow_refresh='Airflow.refresh',
+                                    log_list='LogModelView.list',
+                                    *args, **kargs)
 
 
 appbuilder_code_editor_view = AppBuilderCodeEditorView()
@@ -85,4 +87,3 @@ appbuilder_view = {
     'name': MENU_LABEL,
     'view': appbuilder_code_editor_view
 }
-

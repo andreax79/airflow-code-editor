@@ -25,11 +25,13 @@ from airflow_code_editor.commons import (
     MENU_CATEGORY,
     MENU_LABEL
 )
+assert(airflow)
 
 __all__ = [
     'AdminCodeEditorView',
     'admin_view'
 ]
+
 
 # ############################################################################
 # Flask Admin
@@ -68,9 +70,9 @@ class AdminCodeEditorView(BaseView, AbstractCodeEditorView):
 
     def _render(self, template, *args, **kargs):
         return self.render(template + '_admin.html',
-                airflow_refresh="airflow.refresh",
-                log_list='log.index_view',
-                *args, **kargs)
+                           airflow_refresh="airflow.refresh",
+                           log_list='log.index_view',
+                           *args, **kargs)
 
 
 admin_view = AdminCodeEditorView(

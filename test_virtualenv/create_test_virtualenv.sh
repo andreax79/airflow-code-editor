@@ -4,7 +4,7 @@ source ./mo.sh
 export AIRFLOW_HOME=${PWD}
 
 export ENABLE_AIRFLOW_AUTH=1
-export AIRFLOW_VERSION=1.10.8
+export AIRFLOW_VERSION=1.10.12
 
 function WEBSERVER_AUTH() {
     if [[ $ENABLE_AIRFLOW_AUTH == 1 ]]; then
@@ -22,8 +22,12 @@ echo "export AIRFLOW_HOME=${AIRFLOW_HOME}" >> bin/activate
 source bin/activate
 pip install --upgrade pip
 # pip install pendulum==1.4.4
-AIRFLOW_GPL_UNIDECODE=true pip install apache-airflow[crypto,password]==${AIRFLOW_VERSION}
-# AIRFLOW_GPL_UNIDECODE=true pip install apache-airflow==${AIRFLOW_VERSION}
+# AIRFLOW_GPL_UNIDECODE=true pip install apache-airflow[crypto,password]==${AIRFLOW_VERSION}
+
+export PYTHON_VERSION=$(python3 -c "import sys; print('%s.%s' % (sys.version_info.major, sys.version_info.minor))")
+pip install \
+     apache-airflow[crypto,password]==${AIRFLOW_VERSION} \
+      --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
 
 if [[ $AIRFLOW_VERSION == "1.10.3" ]]; then # killme
     # Apache Airflow : airflow initdb throws ModuleNotFoundError: No module named 'werkzeug.wrappers.json'; 'werkzeug.wrappers' is not a package error

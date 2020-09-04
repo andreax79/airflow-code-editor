@@ -68,6 +68,12 @@ class AdminCodeEditorView(BaseView, AbstractCodeEditorView):
     def repo(self, session=None, path=None):
         return self._git_repo(session, path)
 
+    @expose('/download/<path:path>', methods=['GET'])
+    @login_required
+    @provide_session
+    def download(self, session=None, path=None):
+        return self._download(session, path)
+
     def _render(self, template, *args, **kargs):
         return self.render(template + '_admin.html',
                            airflow_refresh="airflow.refresh",

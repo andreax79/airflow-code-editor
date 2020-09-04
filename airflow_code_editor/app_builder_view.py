@@ -74,6 +74,12 @@ class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
     def repo(self, session=None, path=None):
         return self._git_repo(session, path)
 
+    @expose('/download/<path:path>', methods=['GET'])
+    @has_dag_access(can_dag_edit=True)
+    @provide_session
+    def download(self, session=None, path=None):
+        return self._download(session, path)
+
     def _render(self, template, *args, **kargs):
         return self.render_template(template + '_appbuilder.html',
                                     airflow_refresh='Airflow.refresh',

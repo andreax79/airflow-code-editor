@@ -1,5 +1,11 @@
+#!/usr/bin/env python
+
 import airflow
 from functools import wraps
+
+__all__ = [
+    'login_required'
+]
 
 
 def login_required(func):

@@ -36,6 +36,7 @@ You can edit your *airflow.cfg* adding any of the following settings in the \[co
 * **git_author_name** human-readable name in the author/committer (default logged user first and last names)
 * **git_author_email** email for the author/committer (default: logged user email)
 * **git_init_repo**  initialize a git repo in DAGs folder (default: True)
+* **root_folder**  root folder (default: Airflow DAGs folder)
 
 Example:
 ```
@@ -43,6 +44,7 @@ Example:
    git_cmd = /usr/bin/git
    git_default_args = -c color.ui=true
    git_init_repo = False
+   root_folder = /home/airflow/dags
 ```
 
 ### Links

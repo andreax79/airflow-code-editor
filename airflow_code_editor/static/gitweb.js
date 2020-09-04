@@ -1110,12 +1110,13 @@ webui.TreeView = function(commitView) {
             }
             webui.splitLines(data).forEach(function(line) {
                 var entry = new Entry(line);
-                console.log(entry)
                 var size = entry.formatedSize()
+                var download = (entry.type == "tree") ? '' : ' <i class="fa fa-download" aria-hidden="true"></i>';
                 var elt =   jQuery('<a href="#" class="list-group-item">' +
                                 '<span>' + entry.name + '</span> ' +
                                 '<span>' + size[0] + '</span>&nbsp;' +
                                 '<span>' + size[1] + '</span>' +
+                                download +
                             '</a>')[0];
                 elt.model = entry;
                 var nameElt = jQuery("span", elt)[0];
@@ -1131,9 +1132,13 @@ webui.TreeView = function(commitView) {
                     });
                 } else {
                     blobs.push(elt);
-                    jQuery(elt).click(function() {
-                        self.stack.push({ name: elt.model.name, object: elt.model.object});
-                        self.showBlob();
+                    jQuery(elt).click(function(t) {
+                        if (t.target.className == 'fa fa-download') {
+                            window.location.href = '/code_editor/download' + elt.model.object;
+                        } else {
+                            self.stack.push({ name: elt.model.name, object: elt.model.object});
+                            self.showBlob();
+                        }
                     });
                 }
             });

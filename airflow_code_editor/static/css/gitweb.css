@@ -118,6 +118,10 @@ body {
 #sidebar .modal-dialog .list-group-item {
   border: 0;
 }
+.list-group-item .fa-download {
+  margin-left: 1em;
+  margin-top: 0.25em;
+}
 #main-view {
   display: flex;
   display: -webkit-flex;

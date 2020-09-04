@@ -35,6 +35,7 @@ __all__ = [
     'normalize_path',
     'get_plugin_config',
     'get_plugin_boolean_config',
+    'get_root_folder',
     'execute_git_command'
 ]
 
@@ -101,6 +102,11 @@ def prepare_git_env():
     return env
 
 
+def get_root_folder():
+    " Return the configured root folder or Airflow DAGs folder "
+    return os.path.abspath(get_plugin_config('root_directory') or configuration.get('core', 'dags_folder'))
+
+
 _execute_git_command_lock = threading.Lock()
 
 
@@ -109,7 +115,7 @@ def execute_git_command(git_args):
         logging.info(' '.join(git_args))
         git_cmd = git_args[0] if git_args else None
         try:
-            cwd = configuration.get('core', 'dags_folder')
+            cwd = get_root_folder()
             if not os.path.exists(os.path.join(cwd, '.git')) and get_plugin_boolean_config('git_init_repo'):
                 init_git_repo()
             if git_cmd == 'ls-local':
@@ -147,7 +153,7 @@ def execute_git_command(git_args):
 
 def git_ls_local(git_args):
     " 'git ls-tree' like output for local folders "
-    cwd = configuration.get('core', 'dags_folder')
+    cwd = get_root_folder()
     long_ = False
     if '-l' in git_args or '--long' in git_args:
         git_args = [arg for arg in git_args if arg not in ('-l', '--long')]
@@ -175,8 +181,8 @@ def git_ls_local(git_args):
 
 
 def init_git_repo():
-    " Initialize the git repository in dag_folder "
-    cwd = configuration.get('core', 'dags_folder')
+    " Initialize the git repository in root folder "
+    cwd = get_root_folder()
     subprocess.call(['git', 'init', '.'], cwd=cwd)
     gitignore = os.path.join(cwd, '.gitignore')
     if not os.path.exists(gitignore):

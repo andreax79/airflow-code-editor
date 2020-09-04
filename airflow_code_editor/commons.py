@@ -58,5 +58,6 @@ PLUGIN_DEFAULT_CONFIG = {
     'git_default_args': '-c color.ui=true',
     'git_author_name': None,
     'git_author_email': None,
-    'git_init_repo': True
+    'git_init_repo': True,
+    'root_directory': None
 }

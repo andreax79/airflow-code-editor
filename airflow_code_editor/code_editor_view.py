@@ -18,13 +18,19 @@
 import os
 import os.path
 import logging
-from flask import request, flash
-from airflow import configuration
+from flask import (
+    abort,
+    flash,
+    request,
+    send_file
+)
 from airflow.models.errors import ImportError
 from airflow_code_editor.commons import ROUTE
 from airflow_code_editor.utils import (
+    get_root_folder,
+    execute_git_command,
     normalize_path,
-    execute_git_command
+    HTTP_404_NOT_FOUND
 )
 
 __all__ = [
@@ -40,7 +46,7 @@ class AbstractCodeEditorView(object):
     def _load(self, path):
         try:
             code = None
-            cwd = configuration.get('core', 'dags_folder')
+            cwd = get_root_folder()
             fullpath = os.path.join(cwd, path)
             # Read code
             with open(fullpath, 'r') as f:
@@ -58,7 +64,7 @@ class AbstractCodeEditorView(object):
             code = request.form['code']
             # Newline fix (remove cr)
             code = code.replace('\r', '').rstrip()
-            cwd = configuration.get('core', 'dags_folder')
+            cwd = get_root_folder()
             fullpath = os.path.join(cwd, path)
             with open(fullpath, 'w') as f:
                 f.write(code)
@@ -108,3 +114,15 @@ class AbstractCodeEditorView(object):
         " Execute a GIT command (invoked by the HTTP POST method) "
         git_args = request.form.getlist('args[]')
         return execute_git_command(git_args)
+
+    def _download(self, session, path):
+        " Send the contents of a file to the client "
+        try:
+            cwd = get_root_folder()
+            fullpath = os.path.abspath(os.path.join(cwd, path))
+            if not fullpath.startswith(cwd):
+                raise Exception('Not in root path')
+            return send_file(fullpath, as_attachment=True)
+        except Exception as ex:
+            logging.error(ex)
+            abort(HTTP_404_NOT_FOUND)

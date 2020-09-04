@@ -1022,18 +1022,19 @@ webui.TreeView = function(commitView) {
 
         var self = this;
 
+        // https://en.wikipedia.org/wiki/Kilobyte
         self.formatedSize = function(size) {
             if (isNaN(self.size)) {
                 return ["", ""]
             }
-            if (self.size < 1024) {
-                return [self.size.toString(), ""];
-            } else if (self.size < 1024 * 1024) {
-                return [(self.size / 1024).toFixed(2), "K"];
-            } else if (self.size < 1024 * 1024 * 1024) {
-                return [(self.size / 1024 * 1024).toFixed(2), "M"];
+            if (self.size < 1000) {
+                return [self.size.toString(), "B"];
+            } else if (self.size < 1000000) {
+                return [(self.size / 1000).toFixed(2), "kB"];
+            } else if (self.size < 1000000000) {
+                return [(self.size / 1000000).toFixed(2), "MB"];
             } else {
-                return [(self.size / 1024 * 1024 * 1024).toFixed(2), "G"];
+                return [(self.size / 1000000000).toFixed(2), "GB"];
             }
         };
 

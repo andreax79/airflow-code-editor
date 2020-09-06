@@ -16,6 +16,7 @@
 #
 
 import logging
+import mimetypes
 from flask import (
     abort,
     flash,
@@ -116,8 +117,22 @@ class AbstractCodeEditorView(object):
     def _download(self, session, path):
         " Send the contents of a file to the client "
         try:
-            fullpath = git_absolute_path(path)
-            return send_file(fullpath, as_attachment=True)
+            if path.startswith('~git/'):
+                # Download git blob - path = '~git/<hash>/<name>'
+                _, path, filename = path.split('/', 3)
+                response = execute_git_command(["cat-file", "-p", path])
+                response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
+                try:
+                    content_type = mimetypes.guess_type(filename)[0]
+                    if content_type:
+                        response.headers['Content-Type'] = content_type
+                except Exception:
+                    pass
+                return response
+            else:
+                # Download file
+                fullpath = git_absolute_path(path)
+                return send_file(fullpath, as_attachment=True)
         except Exception as ex:
             logging.error(ex)
             abort(HTTP_404_NOT_FOUND)

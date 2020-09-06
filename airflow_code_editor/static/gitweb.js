@@ -1135,7 +1135,11 @@ webui.TreeView = function(commitView) {
                     blobs.push(elt);
                     jQuery(elt).click(function(t) {
                         if (t.target.className == 'fa fa-download') {
-                            window.location.href = '/code_editor/download' + elt.model.object;
+                            if (elt.model.object[0] == '/') { // file
+                                window.location.href = '/code_editor/download' + elt.model.object;
+                            } else { // blob
+                                window.location.href = '/code_editor/download/~git/' + elt.model.object + '/' + elt.model.name;
+                            }
                         } else {
                             self.stack.push({ name: elt.model.name, object: elt.model.object});
                             self.showBlob();

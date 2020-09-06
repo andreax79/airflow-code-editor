@@ -15,8 +15,6 @@
 #   limitations under the Licens
 #
 
-import os
-import os.path
 import logging
 from flask import (
     abort,
@@ -25,12 +23,14 @@ from flask import (
     send_file
 )
 from airflow.models.errors import ImportError
-from airflow_code_editor.commons import ROUTE
-from airflow_code_editor.utils import (
-    get_root_folder,
-    execute_git_command,
-    normalize_path,
+from airflow_code_editor.commons import (
+    ROUTE,
     HTTP_404_NOT_FOUND
+)
+from airflow_code_editor.utils import (
+    git_absolute_path,
+    execute_git_command,
+    normalize_path
 )
 
 __all__ = [
@@ -46,8 +46,7 @@ class AbstractCodeEditorView(object):
     def _load(self, path):
         try:
             code = None
-            cwd = get_root_folder()
-            fullpath = os.path.join(cwd, path)
+            fullpath = git_absolute_path(path)
             # Read code
             with open(fullpath, 'r') as f:
                 code = f.read().rstrip('\n')
@@ -64,8 +63,7 @@ class AbstractCodeEditorView(object):
             code = request.form['code']
             # Newline fix (remove cr)
             code = code.replace('\r', '').rstrip()
-            cwd = get_root_folder()
-            fullpath = os.path.join(cwd, path)
+            fullpath = git_absolute_path(path)
             with open(fullpath, 'w') as f:
                 f.write(code)
                 f.write('\n')
@@ -118,10 +116,7 @@ class AbstractCodeEditorView(object):
     def _download(self, session, path):
         " Send the contents of a file to the client "
         try:
-            cwd = get_root_folder()
-            fullpath = os.path.abspath(os.path.join(cwd, path))
-            if not fullpath.startswith(cwd):
-                raise Exception('Not in root path')
+            fullpath = git_absolute_path(path)
             return send_file(fullpath, as_attachment=True)
         except Exception as ex:
             logging.error(ex)

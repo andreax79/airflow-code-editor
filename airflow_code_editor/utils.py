@@ -36,6 +36,7 @@ __all__ = [
     'get_plugin_config',
     'get_plugin_boolean_config',
     'get_root_folder',
+    'git_absolute_path',
     'execute_git_command'
 ]
 
@@ -55,12 +56,12 @@ def normalize_path(path):
 
 def get_plugin_config(key):
     " Get a plugin configuration/default for a given key "
-    return configuration.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
+    return configuration.conf.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
 
 
 def get_plugin_boolean_config(key):
     " Get a plugin boolean configuration/default for a given key "
-    return configuration.getboolean(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
+    return configuration.conf.getboolean(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
 
 
 def prepare_response(git_cmd, result=None, stderr=None, returncode=0):
@@ -104,7 +105,12 @@ def prepare_git_env():
 
 def get_root_folder():
     " Return the configured root folder or Airflow DAGs folder "
-    return os.path.abspath(get_plugin_config('root_directory') or configuration.get('core', 'dags_folder'))
+    return os.path.abspath(get_plugin_config('root_directory') or configuration.conf.get('core', 'dags_folder'))
+
+
+def git_absolute_path(git_path):
+    " Git relative path to absolute path "
+    return os.path.join(get_root_folder(), normalize_path(git_path))
 
 
 _execute_git_command_lock = threading.Lock()
@@ -159,7 +165,7 @@ def git_ls_local(git_args):
         git_args = [arg for arg in git_args if arg not in ('-l', '--long')]
         long_ = True
     path = git_args[1] if len(git_args) > 1 else ''
-    dirpath = os.path.join(cwd, normalize_path(path))
+    dirpath = git_absolute_path(path)
     result = []
     for name in sorted(os.listdir(dirpath)):
         if name.startswith('.') or name == '__pycache__':
@@ -190,28 +196,3 @@ def init_git_repo():
             f.write('__pycache__\n')
         subprocess.call(['git', 'add', '.gitignore'], cwd=cwd)
     subprocess.call(['git', 'commit', '-m', 'Initial commit'], cwd=cwd, env=prepare_git_env())
-
-
-assert(normalize_path('/') == '')
-assert(normalize_path('/../') == '')
-assert(normalize_path('../') == '')
-assert(normalize_path('../../') == '')
-assert(normalize_path('../..') == '')
-assert(normalize_path('/..') == '')
-
-assert(normalize_path('//') == '')
-assert(normalize_path('////../') == '')
-assert(normalize_path('..///') == '')
-assert(normalize_path('..///../') == '')
-assert(normalize_path('..///..') == '')
-assert(normalize_path('//..') == '')
-
-assert(normalize_path('/aaa') == 'aaa')
-assert(normalize_path('/../aaa') == 'aaa')
-assert(normalize_path('../aaa') == 'aaa')
-assert(normalize_path('../../aaa') == 'aaa')
-assert(normalize_path('../../aaa') == 'aaa')
-assert(normalize_path('/../aaa') == 'aaa')
-
-assert(normalize_path('/aaa') == 'aaa')
-assert(normalize_path('aaa') == 'aaa')

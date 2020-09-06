@@ -18,11 +18,7 @@
 from flask_appbuilder import BaseView, expose
 from airflow.utils.db import provide_session
 from airflow.www_rbac.decorators import has_dag_access
-try:
-    from flask_appbuilder import has_access
-except (ImportError, ModuleNotFoundError):
-    def has_access(x):
-        return x
+from airflow_code_editor.auth import has_access
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
 from airflow_code_editor.commons import (
     ROUTE,

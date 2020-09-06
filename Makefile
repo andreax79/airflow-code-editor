@@ -4,6 +4,7 @@ help:
 	@echo - make release
 	@echo - make lint
 	@echo - make clean
+	@echo - make test
 
 lint:
 	python3 setup.py flake8
@@ -18,3 +19,5 @@ clean:
 	-rm -rf build dist
 	-rm -rf *.egg-info
 
+test:
+	@nosetests

@@ -2,9 +2,15 @@
 
 import airflow
 from functools import wraps
+try:
+    from flask_appbuilder import has_access
+except (ImportError, ModuleNotFoundError):
+    def has_access(x):
+        return x
 
 __all__ = [
-    'login_required'
+    'login_required',
+    'has_access'
 ]
 
 

@@ -20,6 +20,7 @@ import logging
 import subprocess
 import threading
 import shlex
+from datetime import datetime
 from flask import make_response
 from flask_login import current_user
 from airflow import configuration
@@ -165,6 +166,7 @@ def git_ls_local(git_args):
         git_args = [arg for arg in git_args if arg not in ('-l', '--long')]
         long_ = True
     path = git_args[1] if len(git_args) > 1 else ''
+    path = path.split('#', 1)[0]
     dirpath = git_absolute_path(path)
     result = []
     for name in sorted(os.listdir(dirpath)):
@@ -180,7 +182,8 @@ def git_ls_local(git_args):
             size_ = s.st_size
         relname = fullname[len(cwd):]
         if long_:
-            result.append('%06o %s %s %8s\t%s' % (s.st_mode, type_, relname, size_, name))
+            mtime = datetime.utcfromtimestamp(s.st_mtime).isoformat()[:16]
+            result.append('%06o %s %s#%s %8s\t%s' % (s.st_mode, type_, relname, mtime, size_, name))
         else:
             result.append('%06o %s %s\t%s' % (s.st_mode, type_, relname, name))
     return '\n'.join(result)

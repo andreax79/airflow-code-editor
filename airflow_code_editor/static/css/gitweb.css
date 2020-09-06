@@ -118,6 +118,17 @@ body {
 #sidebar .modal-dialog .list-group-item {
   border: 0;
 }
+.list-group-item .name {
+  color: #000000;
+}
+.list-group-item .size {
+  width: 100px;
+  text-align: right;
+}
+.list-group-item .download {
+  width: 30px;
+  color: #000000;
+}
 .list-group-item .fa-download {
   margin-left: 1em;
   margin-top: 0.25em;
@@ -430,7 +441,6 @@ body {
   display: -webkit-flex;
   min-height: 0;
   min-width: 0;
-  cursor: pointer;
   border: 0;
   padding: 5px 10px;
 }

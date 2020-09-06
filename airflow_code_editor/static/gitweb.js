@@ -1025,16 +1025,16 @@ webui.TreeView = function(commitView) {
         // https://en.wikipedia.org/wiki/Kilobyte
         self.formatedSize = function(size) {
             if (isNaN(self.size)) {
-                return ["", ""]
+                return "";
             }
             if (self.size < 1000) {
-                return [self.size.toString(), "B"];
+                return self.size.toString() + " B";
             } else if (self.size < 1000000) {
-                return [(self.size / 1000).toFixed(2), "kB"];
+                return (self.size / 1000).toFixed(2) + " kB";
             } else if (self.size < 1000000000) {
-                return [(self.size / 1000000).toFixed(2), "MB"];
+                return (self.size / 1000000).toFixed(2) + " MB";
             } else {
-                return [(self.size / 1000000000).toFixed(2), "GB"];
+                return (self.size / 1000000000).toFixed(2) + " GB";
             }
         };
 
@@ -1113,36 +1113,41 @@ webui.TreeView = function(commitView) {
                 var entry = new Entry(line);
                 var size = entry.formatedSize()
                 var download = (entry.type == "tree") ? '' : ' <i class="fa fa-download" aria-hidden="true"></i>';
-                var elt =   jQuery('<a href="#" class="list-group-item">' +
-                                '<span>' + entry.name + '</span> ' +
-                                '<span>' + size[0] + '</span>&nbsp;' +
-                                '<span>' + size[1] + '</span>' +
-                                download +
-                            '</a>')[0];
+                var mtime = entry.object.split('#')[1];
+                if (mtime === undefined) {
+                    mtime = '';
+                } else {
+                    mtime = mtime.replace('T', ' ');
+                }
+                var elt = jQuery('<span class="list-group-item">' +
+                                '<a class="name" href="#">' + entry.name + '</a> ' +
+                                '<span class="mtime">' + mtime + '</span>' +
+                                '<span class="size">' + size + '</span>&nbsp;' +
+                                '<a class="download" href="#">' + download + '</a>' +
+                            '</span>')[0];
                 elt.model = entry;
-                var nameElt = jQuery("span", elt)[0];
+                var nameElt = jQuery("a", elt)[0];
                 jQuery(nameElt).addClass("tree-item-" + entry.type);
                 if (entry.isSymbolicLink()) {
                     jQuery(nameElt).addClass("tree-item-symlink");
                 }
                 if (entry.type == "tree") {
                     trees.push(elt);
-                    jQuery(elt).click(function() {
+                    jQuery(elt).children('.name').click(function(t) {
                         self.stack.push({ name: elt.model.name, object: elt.model.object});
                         self.showTree();
                     });
                 } else {
                     blobs.push(elt);
-                    jQuery(elt).click(function(t) {
-                        if (t.target.className == 'fa fa-download') {
-                            if (elt.model.object[0] == '/') { // file
-                                window.location.href = '/code_editor/download' + elt.model.object;
-                            } else { // blob
-                                window.location.href = '/code_editor/download/~git/' + elt.model.object + '/' + elt.model.name;
-                            }
-                        } else {
-                            self.stack.push({ name: elt.model.name, object: elt.model.object});
-                            self.showBlob();
+                    jQuery(elt).children('.name').click(function(t) {
+                        self.stack.push({ name: elt.model.name, object: elt.model.object});
+                        self.showBlob();
+                    });
+                    jQuery(elt).children('.download').click(function(t) {
+                        if (elt.model.object[0] == '/') { // file
+                            window.location.href = '/code_editor/download' + elt.model.object;
+                        } else { // blob
+                            window.location.href = '/code_editor/download/~git/' + elt.model.object + '/' + elt.model.name;
                         }
                     });
                 }

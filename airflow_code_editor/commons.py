@@ -25,7 +25,8 @@ __all__ = [
     'SUPPORTED_GIT_COMMANDS',
     'HTTP_200_OK',
     'HTTP_404_NOT_FOUND',
-    'PLUGIN_DEFAULT_CONFIG'
+    'PLUGIN_DEFAULT_CONFIG',
+    'ROOT_MOUNTPOUNT'
 ]
 
 PLUGIN_NAME = 'code_editor'
@@ -61,3 +62,4 @@ PLUGIN_DEFAULT_CONFIG = {
     'git_init_repo': True,
     'root_directory': None
 }
+ROOT_MOUNTPOUNT = 'root'

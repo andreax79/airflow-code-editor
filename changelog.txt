@@ -55,3 +55,31 @@
 ### Fix
 
 - fix missing icons
+
+## 2.2.0
+
+2020-09-04
+
+### Added
+
+- configurable root folder and download link
+
+## 2.2.1
+
+2020-09-04
+
+### Fix
+
+- fixed format file size
+
+## 2.2.2
+
+2020-09-07
+
+### Added
+
+- configurable additional folders
+- show files modification date
+- add link for downloading from git
+- tests added
+

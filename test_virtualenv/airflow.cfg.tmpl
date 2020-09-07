@@ -97,3 +97,9 @@ hide_sensitive_variable_fields = True
 repository_url = git@example.com:mike/diaspora.git
 token = 1234
 dag = git
+
+[code_editor]
+mount_name = airflow_home
+mount_path = {{ AIRFLOW_HOME }}
+mount1_name = logs
+mount1_path = {{ AIRFLOW_HOME }}/logs

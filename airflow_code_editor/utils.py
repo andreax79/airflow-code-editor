@@ -21,6 +21,7 @@ import subprocess
 import threading
 import shlex
 from datetime import datetime
+from collections import namedtuple
 from flask import make_response
 from flask_login import current_user
 from airflow import configuration
@@ -29,7 +30,8 @@ from airflow_code_editor.commons import (
     HTTP_404_NOT_FOUND,
     SUPPORTED_GIT_COMMANDS,
     PLUGIN_NAME,
-    PLUGIN_DEFAULT_CONFIG
+    PLUGIN_DEFAULT_CONFIG,
+    ROOT_MOUNTPOUNT
 )
 
 __all__ = [
@@ -111,7 +113,15 @@ def get_root_folder():
 
 def git_absolute_path(git_path):
     " Git relative path to absolute path "
-    return os.path.join(get_root_folder(), normalize_path(git_path))
+    path = normalize_path(git_path)
+    if path.startswith('~'):
+        # Expand paths beginning with '~'
+        prefix, remain = path.split('/', 1) if '/' in path else (path, '')
+        try:
+            return os.path.join(mount_points[prefix[1:]].path, remain)
+        except KeyError:
+            pass
+    return os.path.join(get_root_folder(), path)
 
 
 _execute_git_command_lock = threading.Lock()
@@ -127,6 +137,10 @@ def execute_git_command(git_args):
                 init_git_repo()
             if git_cmd == 'ls-local':
                 stdout = git_ls_local(git_args)
+                stderr = None
+                returncode = 0
+            elif git_cmd == 'mounts':
+                stdout = git_mounts(git_args)
                 stderr = None
                 returncode = 0
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
@@ -160,13 +174,12 @@ def execute_git_command(git_args):
 
 def git_ls_local(git_args):
     " 'git ls-tree' like output for local folders "
-    cwd = get_root_folder()
     long_ = False
     if '-l' in git_args or '--long' in git_args:
         git_args = [arg for arg in git_args if arg not in ('-l', '--long')]
         long_ = True
     path = git_args[1] if len(git_args) > 1 else ''
-    path = path.split('#', 1)[0]
+    path = normalize_path(path.split('#', 1)[0])
     dirpath = git_absolute_path(path)
     result = []
     for name in sorted(os.listdir(dirpath)):
@@ -180,13 +193,18 @@ def git_ls_local(git_args):
         else:
             type_ = 'blob'
             size_ = s.st_size
-        relname = fullname[len(cwd):]
+        relname = os.path.join('/', path, name) #  fullname[len(cwd):]
         if long_:
             mtime = datetime.utcfromtimestamp(s.st_mtime).isoformat()[:16]
             result.append('%06o %s %s#%s %8s\t%s' % (s.st_mode, type_, relname, mtime, size_, name))
         else:
             result.append('%06o %s %s\t%s' % (s.st_mode, type_, relname, name))
     return '\n'.join(result)
+
+
+def git_mounts(git_args):
+    " List mountpoints "
+    return '\n'.join(sorted(k for k,v in mount_points.items() if not v.default))
 
 
 def init_git_repo():
@@ -199,3 +217,31 @@ def init_git_repo():
             f.write('__pycache__\n')
         subprocess.call(['git', 'add', '.gitignore'], cwd=cwd)
     subprocess.call(['git', 'commit', '-m', 'Initial commit'], cwd=cwd, env=prepare_git_env())
+
+
+MountPoint = namedtuple('MountPoint', 'path default')
+
+
+def read_mount_points_config():
+    " Return the plugin configuration "
+    global mount_points
+    config = {
+        ROOT_MOUNTPOUNT: MountPoint(path=get_root_folder(), default=True)
+    }
+    i = 0
+    # Iterate over the configurations
+    while True:
+        suffix = str(i) if i != 0 else '' # the first configuration doesn't have a suffix
+        try:
+            if not configuration.conf.has_option(PLUGIN_NAME, 'mount_name' + suffix):
+                break
+        except: # backports.configparser.NoSectionError and friends
+            break
+        name = configuration.conf.get(PLUGIN_NAME, 'mount_name' + suffix)
+        path = configuration.conf.get(PLUGIN_NAME, 'mount_path' + suffix)
+        config[name] = MountPoint(path=path, default=False)
+        i = i + 1
+    mount_points = config
+
+
+read_mount_points_config()

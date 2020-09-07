@@ -18,7 +18,7 @@
 
 var webui = webui || {};
 
-webui.repo = "dags";
+webui.repo = "root";
 
 webui.COLORS = ["#ffab1d", "#fd8c25", "#f36e4a", "#fc6148", "#d75ab6", "#b25ade", "#6575ff", "#7b77e9", "#4ea8ec", "#00d0f5", "#4eb94e", "#51af23", "#8b9f1c", "#d0b02f", "#d0853a", "#a4a4a4",
                 "#ffc51f", "#fe982c", "#fd7854", "#ff705f", "#e467c3", "#bd65e9", "#7183ff", "#8985f7", "#55b6ff", "#10dcff", "#51cd51", "#5cba2e", "#9eb22f", "#debe3d", "#e19344", "#b8b8b8",
@@ -224,6 +224,10 @@ webui.SideBarView = function(mainView) {
                 });
 
                 var maxRefsCount = 5;
+                if (id == "mounts") {
+                    maxRefsCount = refs.length;
+                    refs = refs.reverse();
+                }
                 for (var i = 0; i < refs.length && i < maxRefsCount; ++i) {
                     var ref = refs[i];
                     if (ref[2] == '(' && ref[ref.length - 1] == ')') {
@@ -247,7 +251,15 @@ webui.SideBarView = function(mainView) {
                     jQuery(li).attr("title", li.refName);
                     jQuery(li).text(li.refName);
                     jQuery(li).click(function (event) {
-                        self.selectRef(event.target.refName);
+                        if (id == "mounts") {
+                            jQuery("*", self.element).removeClass("active");
+                            filesElement.addClass("active");
+                            self.mainView.filesView.update();
+                            self.mainView.filesView.treeView.stack.push({ name: event.target.refName, object: '/~' + event.target.refName });
+                            self.mainView.filesView.treeView.showTree();
+                        } else {
+                            self.selectRef(event.target.refName);
+                        }
                     });
                 }
 
@@ -299,6 +311,7 @@ webui.SideBarView = function(mainView) {
         self.mainView.filesView.update();
     });
 
+    self.fetchSection(jQuery("#sidebar-files", self.element)[0], "Files", "mounts", [ "mounts" ]);
     self.fetchSection(jQuery("#sidebar-local-branches", self.element)[0], "Local Branches", "local-branches", [ "branch" ]);
     self.fetchSection(jQuery("#sidebar-remote-branches", self.element)[0], "Remote Branches", "remote-branches", [ "branch", "--remotes" ]);
     self.fetchSection(jQuery("#sidebar-tags", self.element)[0], "Tags", "tags", [ "tag" ]);
@@ -1120,11 +1133,11 @@ webui.TreeView = function(commitView) {
                     mtime = mtime.replace('T', ' ');
                 }
                 var elt = jQuery('<span class="list-group-item">' +
-                                '<a class="name" href="#">' + entry.name + '</a> ' +
-                                '<span class="mtime">' + mtime + '</span>' +
-                                '<span class="size">' + size + '</span>&nbsp;' +
-                                '<a class="download" href="#">' + download + '</a>' +
-                            '</span>')[0];
+                                 '<a class="name" href="#">' + entry.name + '</a> ' +
+                                 '<span class="mtime">' + mtime + '</span>' +
+                                 '<span class="size">' + size + '</span>&nbsp;' +
+                                 '<a class="download" href="#">' + download + '</a>' +
+                                 '</span>')[0];
                 elt.model = entry;
                 var nameElt = jQuery("a", elt)[0];
                 jQuery(nameElt).addClass("tree-item-" + entry.type);
@@ -1478,7 +1491,6 @@ webui.FilesView = function(mainView) {
     self.update = function() {
         self.show();
         self.treeView.update();
-        // self.commitMessageView.update();
     };
 
     self.element = jQuery('<div id="workspace-view">' +
@@ -1487,8 +1499,6 @@ webui.FilesView = function(mainView) {
     var workspaceEditor = jQuery("#workspace-editor", self.element)[0];
     self.treeView = new webui.TreeView(self);
     workspaceEditor.appendChild(self.treeView.element);
-    // self.commitMessageView = new webui.CommitMessageView(self);
-    // workspaceEditor.appendChild(self.commitMessageView.element);
 };
 
 /*

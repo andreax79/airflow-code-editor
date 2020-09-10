@@ -44,18 +44,6 @@ class AdminCodeEditorView(BaseView, AbstractCodeEditorView):
     def index(self, session=None):
         return self._index(session)
 
-    @expose('/editor', methods=['GET', 'POST'])
-    @login_required
-    @provide_session
-    def editor_base(self, session=None):
-        return self._editor(session)
-
-    @expose('/editor/<path:path>', methods=['GET', 'POST'])
-    @login_required
-    @provide_session
-    def editor(self, session=None, path=None):
-        return self._editor(session, path)
-
     @expose('/repo', methods=['POST'])
     @login_required
     @provide_session
@@ -68,11 +56,17 @@ class AdminCodeEditorView(BaseView, AbstractCodeEditorView):
     def repo(self, session=None, path=None):
         return self._git_repo(session, path)
 
-    @expose('/download/<path:path>', methods=['GET'])
+    @expose('/files/<path:path>', methods=['POST'])
     @login_required
     @provide_session
-    def download(self, session=None, path=None):
-        return self._download(session, path)
+    def save(self, session=None, path=None):
+        return self._save(session, path)
+
+    @expose('/files/<path:path>', methods=['GET'])
+    @login_required
+    @provide_session
+    def load(self, session=None, path=None):
+        return self._load(session, path)
 
     def _render(self, template, *args, **kargs):
         return self.render(template + '_admin.html',

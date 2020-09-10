@@ -15,17 +15,17 @@
 #   limitations under the Licens
 #
 
+import os
+import os.path
 import logging
 import mimetypes
 from flask import (
     abort,
-    flash,
+    jsonify,
     request,
     send_file
 )
-from airflow.models.errors import ImportError
 from airflow_code_editor.commons import (
-    ROUTE,
     HTTP_404_NOT_FOUND
 )
 from airflow_code_editor.utils import (
@@ -44,60 +44,33 @@ class AbstractCodeEditorView(object):
     def _index(self, session=None):
         return self._render('index')
 
-    def _load(self, path):
+    def _save(self, session=None, path=None):
         try:
-            code = None
-            fullpath = git_absolute_path(path)
-            # Read code
-            with open(fullpath, 'r') as f:
-                code = f.read().rstrip('\n')
-        except Exception as ex:
-            logging.error(ex)
-            flash('Error loading file [{path}]'.format(path=path),
-                  'error')
-        finally:
-            return code
-
-    def _save(self, path):
-        try:
-            code = None
-            code = request.form['code']
+            data = request.form['data']
             # Newline fix (remove cr)
-            code = code.replace('\r', '').rstrip()
+            data = data.replace('\r', '').rstrip()
             fullpath = git_absolute_path(path)
+            os.makedirs(os.path.dirname(fullpath), exist_ok=True)
             with open(fullpath, 'w') as f:
-                f.write(code)
+                f.write(data)
                 f.write('\n')
-            flash('File [{path}] saved successfully'.format(path=path),
-                  'success')
+            return jsonify({
+                'path': normalize_path(path)
+            })
         except Exception as ex:
             logging.error(ex)
-            flash('Error saving file [{path}]'.format(path=path),
-                  'error')
-        finally:
-            return code
-
-    def _editor(self, session=None, path=None):
-        path = normalize_path(path)
-        try:
-            code = None
-            # Display import error
-            for ie in session.query(ImportError).all():
-                if ie.filename == path:
-                    flash('Broken DAG: [{ie.filename}] {ie.stacktrace}'.format(ie=ie),
-                          'dag_import_error')
-            # Load or Save DAG
-            if 'code' in request.form:
-                code = self._save(path)
+            if hasattr(ex, 'strerror'):
+                message = ex.strerror
+            elif hasattr(ex, 'message'):
+                message = ex.message
             else:
-                code = self._load(path)
-        finally:
-            return self._render(
-                'editor',
-                code=code,
-                path=path,
-                back=ROUTE,
-                root=request.args.get('root'))
+                message = str(ex)
+            return jsonify({
+                'path': normalize_path(path),
+                'error': {
+                    'message': 'Error saving {path}: {message}'.format(path=path, message=message)
+                }
+            })
 
     def _git_repo(self, session, path):
         if request.method == 'POST':
@@ -114,9 +87,10 @@ class AbstractCodeEditorView(object):
         git_args = request.form.getlist('args[]')
         return execute_git_command(git_args)
 
-    def _download(self, session, path):
+    def _load(self, session, path):
         " Send the contents of a file to the client "
         try:
+            path = normalize_path(path)
             if path.startswith('~git/'):
                 # Download git blob - path = '~git/<hash>/<name>'
                 _, path, filename = path.split('/', 3)

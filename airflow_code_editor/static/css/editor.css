@@ -1,0 +1,22 @@
+.cm-flex-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
+  background-color: #eee;
+}
+.cm-flex-child-fixed {
+  flex: none;
+}
+.cm-flex-child-grow {
+  flex: auto;
+  overflow-y:hidden;
+}
+.cm-footer {
+  border-top: 1px solid #eee;
+  padding: 0.2em 1em;
+}
+.CodeMirror {
+  border: 1px solid #eee;
+  height: 100%;
+}

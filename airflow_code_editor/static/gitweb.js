@@ -1158,9 +1158,9 @@ webui.TreeView = function(commitView) {
                     });
                     jQuery(elt).children('.download').click(function(t) {
                         if (elt.model.object[0] == '/') { // file
-                            window.location.href = '/code_editor/download' + elt.model.object;
+                            window.location.href = '/code_editor/files' + elt.model.object;
                         } else { // blob
-                            window.location.href = '/code_editor/download/~git/' + elt.model.object + '/' + elt.model.name;
+                            window.location.href = '/code_editor/files/~git/' + elt.model.object + '/' + elt.model.name;
                         }
                     });
                 }
@@ -1179,30 +1179,141 @@ webui.TreeView = function(commitView) {
         });
     }
 
+    self.updateStack = function(path) {
+        self.stack = [];
+        var fullPath = null;
+        path.split('/').forEach(function(part, index) {
+            if (index === 0) {
+                self.stack.push({ name: webui.repo, object: undefined });
+                fullPath = '';
+            } else {
+                fullPath += '/' + part;
+                if (part[0] == '~') {
+                    part = part.substring(1);
+                }
+                self.stack.push({ name: part, object: fullPath });
+            }
+        });
+        self.createBreadcrumb();
+    }
+
+    self.normalize = function(path) {
+        if (path[0] != '/') {
+            path = '/' + path;
+        }
+        return path.split(/[/]+/).join('/');
+    }
+
+    self.editorLoad = function(path) {
+        jQuery.get("/code_editor/files" + path, function(res) {
+            self.editor.setValue(res)
+            self.editor.refresh();
+            self.editorPath = path;
+        }, 'text');
+    }
+
+    self.editorSave = function(path) {
+        var data = {
+            data: self.editor.getValue()
+        };
+
+        jQuery.post("/code_editor/files" + path, data, function(res) {
+            if (res.error) {
+                BootstrapDialog.alert({
+                    type: BootstrapDialog.TYPE_DANGER,
+                    title: 'Error saving file',
+                    message: res.error.message
+                });
+            } else {
+                // Update editor path and the breadcrumb
+                self.editorPath = path;
+                self.updateStack(path);
+            }
+        });
+    };
+
+    self.editorSaveAs = function(path) {
+        BootstrapDialog.show({
+            title: 'Save File',
+            message: 'File name <input type="text" class="form-control" value="' + path + '" />',
+            buttons: [{
+                label: 'Save',
+                action: function(dialogRef) {
+                    var newPath = self.normalize(dialogRef.getModalBody().find('input').val().trim());
+                    dialogRef.close();
+                    self.editorSave(newPath);
+                }
+            },{
+                label: 'Cancel',
+                action: function(dialogRef) {
+                    dialogRef.close();
+                }
+            }]
+        });
+    }
+
     self.showBlob = function(blobRef) {
         self.createBreadcrumb();
         jQuery(self.element.lastElementChild).remove();
         var object = self.stack[self.stack.length - 1].object;
         if (object[0] == '/') {
+            self.editorPath = object.split('#')[0];
+            var info = CodeMirror.findModeByFileName(self.editorPath);
             jQuery('<div id="tree-view-blob-content">' +
-                   '<iframe src="/code_editor/editor' + object + '"></iframe>' +
+                   '    <div class="cm-fullscreen-container cm-flex-container">' +
+                   '        <div class="cm-toolbar cm-flex-child-fixed">' +
+                   '        </div>' +
+                   '        <div class="cm-body cm-flex-child-grow">' +
+                   '            <textarea rows="30" cols="80" id="editor" name="editor" style="display: none"></textarea>' +
+                   '        </div>' +
+                   '        <div class="cm-footer cm-flex-child-fixed">' +
+                   '        <button id="save" type="button" class="btn btn-default btn-sm">Save <i class="fa fa-save" aria-hidden="true"></i></button>' +
+                   '        <button id="saveAs" type="button" class="btn btn-default btn-sm">Save as...</i></button>' +
+                   '        <button id="revert" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>' +
+                   '        </div>' +
+                   '    </div>' +
                    '</div>').appendTo(self.element);
-        } else {
-            // jQuery('<div id="tree-view-blob-content">' +
-            //        '<iframe src="/code_editor/repo/' + object + '"></iframe>' +
-            //        '</div>').appendTo(self.element);
-            jQuery('<div id="tree-view-blob-content">' +
-                '<textarea></textarea>' +
-                '</div>').appendTo(self.element);
+            var textarea = jQuery('#tree-view-blob-content textarea')[0];
+            self.editor = CodeMirror.fromTextArea(textarea, {
+                lineNumbers: true,
+                mode: info && info.mode,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                extraKeys: {"Alt-F": "findPersistent"}
+            });
+            if (info) {
+                CodeMirror.autoLoadMode(self.editor, info.mode);
+            }
 
+            self.editorLoad(self.editorPath);
+            jQuery('#save').click(function() {
+                self.editorSave(self.editorPath);
+            });
+            jQuery('#saveAs').click(function() {
+                self.editorSaveAs(self.editorPath);
+            });
+            jQuery('#revert').click(function() {
+                self.editorLoad(self.editorPath);
+            });
+
+        } else {
+            jQuery('<div id="tree-view-blob-content">' +
+                  '<textarea></textarea>' +
+                  '</div>').appendTo(self.element);
+
+            var info = CodeMirror.findModeByFileName(self.stack[self.stack.length - 1].name);
             var textarea = jQuery('#tree-view-blob-content textarea')[0];
             var editor = CodeMirror.fromTextArea(textarea, {
                 readOnly: true,
                 lineNumbers: true,
-                mode: 'python',
+                mode: info && info.mode,
                 foldGutter: true,
-                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                extraKeys: {"Alt-F": "findPersistent"}
             });
+            if (info) {
+                CodeMirror.autoLoadMode(self.editor, info.mode);
+            }
             var client = new XMLHttpRequest();
             client.open('GET', '/code_editor/repo/' + object);
             client.onreadystatechange = function() {

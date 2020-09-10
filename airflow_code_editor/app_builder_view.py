@@ -46,18 +46,6 @@ class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
     def list(self, session=None):
         return self._index(session)
 
-    @expose('/editor', methods=['GET', 'POST'])
-    @has_dag_access(can_dag_edit=True)
-    @provide_session
-    def editor_base(self, session=None):
-        return self._editor(session)
-
-    @expose('/editor/<path:path>', methods=['GET', 'POST'])
-    @has_dag_access(can_dag_edit=True)
-    @provide_session
-    def editor(self, session=None, path=None):
-        return self._editor(session, path)
-
     @expose('/repo', methods=['POST'])
     @has_dag_access(can_dag_edit=True)
     @provide_session
@@ -70,11 +58,17 @@ class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
     def repo(self, session=None, path=None):
         return self._git_repo(session, path)
 
-    @expose('/download/<path:path>', methods=['GET'])
+    @expose('/files/<path:path>', methods=['POST'])
     @has_dag_access(can_dag_edit=True)
     @provide_session
-    def download(self, session=None, path=None):
-        return self._download(session, path)
+    def save(self, session=None, path=None):
+        return self._save(session, path)
+
+    @expose('/files/<path:path>', methods=['GET'])
+    @has_dag_access(can_dag_edit=True)
+    @provide_session
+    def load(self, session=None, path=None):
+        return self._load(session, path)
 
     def _render(self, template, *args, **kargs):
         return self.render_template(template + '_appbuilder.html',

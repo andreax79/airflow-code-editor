@@ -413,6 +413,7 @@ body {
   padding: 10px 16px;
   margin-bottom: 0;
   border-bottom: 1px #dddddd solid;
+  border-radius: 0px;
 }
 #tree-view #tree-view-tree-content {
   overflow: auto;
@@ -644,4 +645,7 @@ body {
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
   overflow: auto;
+}
+footer {
+  display: none;
 }

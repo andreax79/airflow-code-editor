@@ -1,5 +1,6 @@
 # Airflow Code Editor Plugin
 A plugin for [Apache Airflow](https://github.com/apache/airflow) that allows you to edit DAGs in browser.
+It provides a file managing interface within specified directories and it can be used to edit and download your files.
 The DAGs are stored in a Git repository. You may use it to view Git history, review local changes and commit.
 
 ### System Requirements

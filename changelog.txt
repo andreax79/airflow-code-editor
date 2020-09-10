@@ -44,7 +44,7 @@
 
 2019-10-15
 
-### Fix
+### Fixed
 
 - fix newline (cr+lf vs lf)
 
@@ -52,7 +52,7 @@
 
 2019-11-19
 
-### Fix
+### Fixed
 
 - fix missing icons
 
@@ -68,7 +68,7 @@
 
 2020-09-04
 
-### Fix
+### Fixed
 
 - fixed format file size
 
@@ -82,4 +82,16 @@
 - show files modification date
 - add link for downloading from git
 - tests added
+
+## 2.2.3
+
+2020-09-11
+
+### Added
+- save as
+- auto detect file mode
+
+### Changed
+- CodeMirror upgrade
+- editor layout
 

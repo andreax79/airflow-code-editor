@@ -34,4 +34,5 @@ codemirror:
 	@cp -a codemirror_src/theme airflow_code_editor/static/css/
 	@cp -a codemirror_src/addon airflow_code_editor/static/
 	@cp -a codemirror_src/keymap/*.js airflow_code_editor/static/
+	@cp -a codemirror_src/mode airflow_code_editor/static/
 	@rm -rf codemirror_src

@@ -12,9 +12,13 @@ The DAGs are stored in a Git repository. You may use it to view Git history, rev
 
 ### Screenshots
 
+![File manager](https://andreax79.github.io/airflow-code-editor/screenshots/1.png)
+
 ![Code editor](https://andreax79.github.io/airflow-code-editor/screenshots/2.png)
 
-![Git diff](https://andreax79.github.io/airflow-code-editor/screenshots/1.png)
+![Git tags](https://andreax79.github.io/airflow-code-editor/screenshots/3.png)
+
+![Git workspace](https://andreax79.github.io/airflow-code-editor/screenshots/4.png)
 
 
 ### Deployment Instructions
@@ -37,7 +41,7 @@ You can edit your *airflow.cfg* adding any of the following settings in the \[co
 * **git_author_name** human-readable name in the author/committer (default logged user first and last names)
 * **git_author_email** email for the author/committer (default: logged user email)
 * **git_init_repo**  initialize a git repo in DAGs folder (default: True)
-* **root_folder**  root folder (default: Airflow DAGs folder)
+* **root_directory**  root folder (default: Airflow DAGs folder)
 * **mount_name**  configure additional file folder name (mount point)
 * **mount_path**  configure additional file path
 
@@ -47,7 +51,7 @@ Example:
    git_cmd = /usr/bin/git
    git_default_args = -c color.ui=true
    git_init_repo = False
-   root_folder = /home/airflow/dags
+   root_directory = /home/airflow/dags
    mount_name = data
    mount_path = /home/airflow/data
    mount1_name = logs

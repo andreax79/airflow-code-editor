@@ -193,7 +193,7 @@ def git_ls_local(git_args):
         else:
             type_ = 'blob'
             size_ = s.st_size
-        relname = os.path.join('/', path, name) #  fullname[len(cwd):]
+        relname = os.path.join('/', path, name)  # fullname[len(cwd):]
         if long_:
             mtime = datetime.utcfromtimestamp(s.st_mtime).isoformat()[:16]
             result.append('%06o %s %s#%s %8s\t%s' % (s.st_mode, type_, relname, mtime, size_, name))
@@ -204,7 +204,7 @@ def git_ls_local(git_args):
 
 def git_mounts(git_args):
     " List mountpoints "
-    return '\n'.join(sorted(k for k,v in mount_points.items() if not v.default))
+    return '\n'.join(sorted(k for k, v in mount_points.items() if not v.default))
 
 
 def init_git_repo():
@@ -231,11 +231,11 @@ def read_mount_points_config():
     i = 0
     # Iterate over the configurations
     while True:
-        suffix = str(i) if i != 0 else '' # the first configuration doesn't have a suffix
+        suffix = str(i) if i != 0 else ''  # the first configuration doesn't have a suffix
         try:
             if not configuration.conf.has_option(PLUGIN_NAME, 'mount_name' + suffix):
                 break
-        except: # backports.configparser.NoSectionError and friends
+        except Exception:  # backports.configparser.NoSectionError and friends
             break
         name = configuration.conf.get(PLUGIN_NAME, 'mount_name' + suffix)
         path = configuration.conf.get(PLUGIN_NAME, 'mount_path' + suffix)

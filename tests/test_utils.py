@@ -10,6 +10,7 @@ from unittest import TestCase, main
 from airflow_code_editor.commons import PLUGIN_NAME
 from airflow_code_editor.utils import (
     get_root_folder,
+    mount_points,
     normalize_path,
     execute_git_command
 )
@@ -20,6 +21,11 @@ class TestUtils(TestCase):
 
     def test_get_root_folder(self):
         self.assertIsNotNone(get_root_folder())
+
+    def test_mount_points_config(self):
+        self.assertTrue('root' in mount_points)
+        self.assertTrue('airflow_home' in mount_points)
+        self.assertTrue('logs' in mount_points)
 
     def test_normalize_path(self):
         self.assertEqual(normalize_path('/'), '')

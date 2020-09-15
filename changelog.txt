@@ -95,3 +95,10 @@
 - CodeMirror upgrade
 - editor layout
 
+## 2.2.4
+
+2020-09-15
+
+### Fixed
+
+- mount points config parsing

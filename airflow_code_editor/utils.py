@@ -233,12 +233,12 @@ def read_mount_points_config():
     while True:
         suffix = str(i) if i != 0 else ''  # the first configuration doesn't have a suffix
         try:
-            if not configuration.conf.has_option(PLUGIN_NAME, 'mount_name' + suffix):
+            if not configuration.conf.has_option(PLUGIN_NAME, 'mount{}_name'.format(suffix)):
                 break
         except Exception:  # backports.configparser.NoSectionError and friends
             break
-        name = configuration.conf.get(PLUGIN_NAME, 'mount_name' + suffix)
-        path = configuration.conf.get(PLUGIN_NAME, 'mount_path' + suffix)
+        name = configuration.conf.get(PLUGIN_NAME, 'mount{}_name'.format(suffix))
+        path = configuration.conf.get(PLUGIN_NAME, 'mount{}_path'.format(suffix))
         config[name] = MountPoint(path=path, default=False)
         i = i + 1
     mount_points = config

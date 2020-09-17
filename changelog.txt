@@ -97,8 +97,9 @@
 
 ## 2.2.4
 
-2020-09-15
+2020-09-17
 
 ### Fixed
 
 - mount points config parsing
+- always show Files section

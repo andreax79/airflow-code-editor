@@ -271,7 +271,9 @@ webui.SideBarView = function(mainView) {
                     });
                 }
             } else {
-                jQuery(section).remove();
+                if (id != "mounts") {
+                    jQuery(section).remove();
+                }
             }
         });
     };

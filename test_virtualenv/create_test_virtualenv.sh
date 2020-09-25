@@ -5,6 +5,7 @@ export AIRFLOW_HOME=${PWD}
 
 export ENABLE_AIRFLOW_AUTH=1
 export AIRFLOW_VERSION=1.10.12
+# export FORCE_PYTHON_VERSION=3.7
 
 function WEBSERVER_AUTH() {
     if [[ $ENABLE_AIRFLOW_AUTH == 1 ]]; then
@@ -17,12 +18,11 @@ function WEBSERVER_AUTH() {
     fi
 }
 
-virtualenv -p `which python3` .
+virtualenv -p "$(which python${FORCE_PYTHON_VERSION:-3})" .
 echo "export AIRFLOW_HOME=${AIRFLOW_HOME}" >> bin/activate
 source bin/activate
 pip install --upgrade pip
 
-#export PYTHON_VERSION='3.7'
 export PYTHON_VERSION=$(python3 -c "import sys; print('%s.%s' % (sys.version_info.major, sys.version_info.minor))")
 pip install \
      apache-airflow[crypto,password]==${AIRFLOW_VERSION} \

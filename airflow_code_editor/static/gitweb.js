@@ -100,7 +100,6 @@ webui.getNodeIndex = function(element) {
 }
 
 webui.TabBox = function(buttons) {
-
     var self = this;
 
     self.itemClicked = function(event) {
@@ -132,7 +131,6 @@ webui.TabBox = function(buttons) {
  * == SideBarView =============================================================
  */
 webui.SideBarView = function(mainView) {
-
     var self = this;
 
     self.selectRef = function(refName) {
@@ -323,7 +321,6 @@ webui.SideBarView = function(mainView) {
  * == LogView =================================================================
  */
 webui.LogView = function(historyView) {
-
     var self = this;
 
     self.update = function(ref) {
@@ -609,7 +606,6 @@ webui.LogView = function(historyView) {
  * == DiffView ================================================================
  */
 webui.DiffView = function(sideBySide, hunkSelectionAllowed, parent) {
-
     var self = this;
 
     self.update = function(cmd, diffOpts, file, mode) {
@@ -1030,11 +1026,9 @@ webui.DiffView = function(sideBySide, hunkSelectionAllowed, parent) {
  * == TreeView ================================================================
  */
 webui.TreeView = function(commitView) {
-
     var self = this;
 
     function Entry(line) {
-
         var self = this;
 
         // https://en.wikipedia.org/wiki/Kilobyte
@@ -1042,14 +1036,14 @@ webui.TreeView = function(commitView) {
             if (isNaN(self.size)) {
                 return "";
             }
-            if (self.size < 1000) {
+            if (self.size < 10**3) {
                 return self.size.toString() + " B";
-            } else if (self.size < 1000000) {
-                return (self.size / 1000).toFixed(2) + " kB";
-            } else if (self.size < 1000000000) {
-                return (self.size / 1000000).toFixed(2) + " MB";
+            } else if (self.size < 10**6) {
+                return (self.size / 10**3).toFixed(2) + " kB";
+            } else if (self.size < 10**9) {
+                return (self.size / 10**6).toFixed(2) + " MB";
             } else {
-                return (self.size / 1000000000).toFixed(2) + " GB";
+                return (self.size / 10**9).toFixed(2) + " GB";
             }
         };
 
@@ -1057,19 +1051,15 @@ webui.TreeView = function(commitView) {
             return (self.mode & 120000) == 120000; // S_IFLNK
         }
 
-        var end = line.indexOf(" ");
-        self.mode = parseInt(line.substr(0, end));
-        var start = end + 1;
-        var end = line.indexOf(" ", start);
-        self.type = line.substr(start, end - start);
-        start = end + 1;
-        var end = line.indexOf(" ", start);
-        self.object = line.substr(start, end - start);
-        start = end + 1;
-        var end = line.indexOf("\t", start);
-        self.size = parseInt(line.substr(start, end - start).trim());
-        start = end + 1;
-        self.name = line.substr(start);
+        var match = line.match(/^(\d+) (\w+) ([^ #]+)#?(\S+)?\s+(\S*)\t(\S+)/);
+        if (match !== undefined) {
+            self.mode = parseInt(match[1]);
+            self.type = match[2];
+            self.object = match[3];
+            self.mtime = match[4] ? match[4].replace('T', ' ') : '';
+            self.size = parseInt(match[5]);
+            self.name = match[6];
+        }
     }
 
     self.update = function(treeRef) {
@@ -1110,6 +1100,7 @@ webui.TreeView = function(commitView) {
         var parentTreeRef = self.stack.length > 1 ? self.stack[self.stack.length - 2].object : undefined;
         var cmd = (treeRef === undefined || treeRef.startsWith('/')) ? 'ls-local' : 'ls-tree';
         webui.git([ cmd, "-l", treeRef ], function(data) {
+
             var blobs = [];
             var trees = [];
             if (parentTreeRef || (treeRef !== undefined && treeRef.startsWith('/')) ) {
@@ -1128,12 +1119,7 @@ webui.TreeView = function(commitView) {
                 var entry = new Entry(line);
                 var size = entry.formatedSize()
                 var download = (entry.type == "tree") ? '' : ' <i class="fa fa-download" aria-hidden="true"></i>';
-                var mtime = entry.object.split('#')[1];
-                if (mtime === undefined) {
-                    mtime = '';
-                } else {
-                    mtime = mtime.replace('T', ' ');
-                }
+                var mtime = entry.mtime;
                 var elt = jQuery('<span class="list-group-item">' +
                                  '<a class="name" href="#">' + entry.name + '</a> ' +
                                  '<span class="mtime">' + mtime + '</span>' +
@@ -1151,6 +1137,7 @@ webui.TreeView = function(commitView) {
                     jQuery(elt).children('.name').click(function(t) {
                         self.stack.push({ name: elt.model.name, object: elt.model.object});
                         self.showTree();
+                        return false;
                     });
                 } else {
                     blobs.push(elt);
@@ -1337,7 +1324,6 @@ webui.TreeView = function(commitView) {
  * == CommitExplorerView =============================================================
  */
 webui.CommitExplorerView = function(mainView, diff) {
-
     var self = this;
     var diffLines = diff.split("\n");
     var diffHeaderLines = [];
@@ -1533,7 +1519,6 @@ webui.CommitView = function(historyView) {
  * == HistoryView =============================================================
  */
 webui.HistoryView = function(mainView) {
-
     var self = this;
 
     self.show = function() {
@@ -1557,7 +1542,6 @@ webui.HistoryView = function(mainView) {
  * == WorkspaceView ===========================================================
  */
 webui.WorkspaceView = function(mainView) {
-
     var self = this;
 
     self.show = function() {
@@ -1594,7 +1578,6 @@ webui.WorkspaceView = function(mainView) {
  * == FilesView ===========================================================
  */
 webui.FilesView = function(mainView) {
-
     var self = this;
 
     self.show = function() {
@@ -1618,7 +1601,6 @@ webui.FilesView = function(mainView) {
  * == ChangedFilesView ========================================================
  */
 webui.ChangedFilesView = function(workspaceView, type, label) {
-
     var self = this;
 
     self.update = function() {
@@ -1794,7 +1776,6 @@ webui.ChangedFilesView = function(workspaceView, type, label) {
  * == CommitMessageView =======================================================
  */
 webui.CommitMessageView = function(workspaceView) {
-
     var self = this;
 
     self.onAmend = function() {

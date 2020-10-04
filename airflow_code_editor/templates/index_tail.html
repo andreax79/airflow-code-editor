@@ -19,7 +19,7 @@ jQuery(document).ready(function() {
             }
         }
     });
-    new MainUi(csrfToken);
+    window.main = new MainUi(csrfToken);
     CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';
     // Disable animation
     BootstrapDialog.configDefaultOptions({ animate: false });

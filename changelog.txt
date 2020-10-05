@@ -111,3 +111,6 @@
 ### Changed
 
 - convert tabs to spaces (only for python files)
+
+### Added
+- search/replace

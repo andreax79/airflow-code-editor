@@ -111,6 +111,7 @@
 ### Changed
 
 - convert tabs to spaces (only for python files)
+- CodeMirror upgrade
 
 ### Added
 - search/replace

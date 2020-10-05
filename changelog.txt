@@ -103,3 +103,11 @@
 
 - mount points config parsing
 - always show Files section
+
+## 2.3.0
+
+2020-10-05
+
+### Changed
+
+- convert tabs to spaces (only for python files)

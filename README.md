@@ -3,6 +3,10 @@ A plugin for [Apache Airflow](https://github.com/apache/airflow) that allows you
 It provides a file managing interface within specified directories and it can be used to edit and download your files.
 The DAGs are stored in a Git repository. You may use it to view Git history, review local changes and commit.
 
+[![PyPI version](https://badge.fury.io/py/airflow-code-editor.svg)](https://badge.fury.io/py/airflow-code-editor)
+[![PyPI](https://img.shields.io/pypi/pyversions/airflow-code-editor.svg)](https://pypi.org/project/airflow-code-editor)
+[![Downloads](https://pepy.tech/badge/airflow-code-editor/month)](https://pepy.tech/project/airflow-code-editor/month)
+
 ### System Requirements
 
 * Airflow Versions

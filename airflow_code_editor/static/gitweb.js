@@ -115,6 +115,7 @@ webui.TabBox = function(buttons) {
 
     self.itemClicked = function(event) {
         self.updateSelection(event.target.parentElement);
+        return false;
     }
 
     self.select = function(index) {
@@ -141,7 +142,7 @@ webui.TabBox = function(buttons) {
 /*
  * == SideBarView =============================================================
  */
-webui.SideBarView = function(mainView) {
+webui.SideBarView = function(mainView, callback) {
     var self = this;
 
     self.selectRef = function(refName) {
@@ -205,7 +206,7 @@ webui.SideBarView = function(mainView) {
         return popup;
     };
 
-    self.fetchSection = function(section, title, id, gitCommand) {
+    self.fetchSection = function(section, title, id, gitCommand, callback) {
         webui.git(gitCommand, function(data) {
             var refs = webui.splitLines(data);
             if (id == "remote-branches") {
@@ -266,8 +267,18 @@ webui.SideBarView = function(mainView) {
                             self.mainView.filesView.update();
                             self.mainView.filesView.treeView.stack.push({ name: event.target.refName, object: '/~' + event.target.refName });
                             self.mainView.filesView.treeView.showTree();
+                        } else if (id == "remote-branches") {
+                            self.selectRef(event.target.refName);
+                            document.location.hash = 'remote-branches/' + event.target.refName;
+                        } else if (id == "local-branches") {
+                            self.selectRef(event.target.refName);
+                            document.location.hash = 'local-branches/' + event.target.refName;
+                        } else if (id == "tags") {
+                            self.selectRef(event.target.refName);
+                            document.location.hash = 'tags/' + event.target.refName;
                         } else {
                             self.selectRef(event.target.refName);
+                            document.location.hash = '';
                         }
                     });
                 }
@@ -284,6 +295,32 @@ webui.SideBarView = function(mainView) {
                     jQuery(section).remove();
                 }
             }
+
+            if (callback !== undefined) {
+                callback(id);
+            }
+
+        });
+    };
+
+    self.fetchSections = function(callback) {
+        var sections = [
+            ["#sidebar-files", "Files", "mounts", [ "mounts" ]],
+            ["#sidebar-local-branches", "Local Branches", "local-branches", [ "branch" ]],
+            ["#sidebar-remote-branches", "Remote Branches", "remote-branches", [ "branch", "--remotes" ]],
+            ["#sidebar-tags", "Tags", "tags", [ "tag" ]],
+        ];
+        var remainingSection = sections.length;
+
+        var fetchSectionCallback = function(id) {
+            remainingSection--;
+            if (remainingSection == 0 && callback !== undefined) {
+                callback();
+            }
+        }
+
+        sections.forEach(function (args) {
+            self.fetchSection(jQuery(args[0], self.element)[0], args[1], args[2], args[3], fetchSectionCallback);
         });
     };
 
@@ -313,6 +350,8 @@ webui.SideBarView = function(mainView) {
         jQuery("*", self.element).removeClass("active");
         workspaceElement.addClass("active");
         self.mainView.workspaceView.update([ "stage" ]);
+        // Update url hash
+        document.location.hash = 'workspace';
     });
 
     var filesElement = jQuery("#sidebar-files h4", self.element);
@@ -322,10 +361,7 @@ webui.SideBarView = function(mainView) {
         self.mainView.filesView.update();
     });
 
-    self.fetchSection(jQuery("#sidebar-files", self.element)[0], "Files", "mounts", [ "mounts" ]);
-    self.fetchSection(jQuery("#sidebar-local-branches", self.element)[0], "Local Branches", "local-branches", [ "branch" ]);
-    self.fetchSection(jQuery("#sidebar-remote-branches", self.element)[0], "Remote Branches", "remote-branches", [ "branch", "--remotes" ]);
-    self.fetchSection(jQuery("#sidebar-tags", self.element)[0], "Tags", "tags", [ "tag" ]);
+    self.fetchSections(callback);
 };
 
 /*
@@ -1058,6 +1094,28 @@ webui.TreeView = function(commitView) {
             }
         };
 
+        self.href = function() {
+            if (self.local) { // local file/dir
+                if (self.type == 'tree') {
+                    return '#files' + encodeURI(self.object);
+                } else {
+                    return '#edit' + encodeURI(self.object);
+                }
+            } else { // git blob
+                return '/code_editor/files/~git/' + self.object + '/' + self.name;
+            }
+        }
+
+        self.downloadHref = function() {
+            if (self.type == 'tree') { // tree
+                return '#';
+            } else if (self.local) {  // local file
+                return '/code_editor/files' + self.object;
+            } else { // git blob
+                return '/code_editor/files/~git/' + self.object + '/' + self.name;
+            }
+        }
+
         self.isSymbolicLink = function() {
             return (self.mode & 120000) == 120000; // S_IFLNK
         }
@@ -1070,6 +1128,7 @@ webui.TreeView = function(commitView) {
             self.mtime = match[4] ? match[4].replace('T', ' ') : '';
             self.size = parseInt(match[5]);
             self.name = match[6];
+            self.local = self.object[0] == '/';
         }
     }
 
@@ -1083,8 +1142,13 @@ webui.TreeView = function(commitView) {
         for (var i = 0; i < self.stack.length; ++i) {
             var last = i == self.stack.length - 1;
             var name = self.stack[i].name;
+            var object = self.stack[i].object;
+            var href = '#';
             if (!last) {
-                name = '<a href="#">' + name + '</a>';
+                if (object !== undefined && object.startsWith('/')) {
+                    href = '#files' + object;
+                }
+                name = '<a href="' + encodeURI(href) + '">' + name + '</a>';
             }
             var li = jQuery('<li>' + name + '</li>');
             li.appendTo(breadcrumb);
@@ -1100,6 +1164,7 @@ webui.TreeView = function(commitView) {
         var to = webui.getNodeIndex(event.target.parentElement);
         self.stack = self.stack.slice(0, to + 1);
         self.showTree();
+        return false;
     }
 
     self.showTree = function() {
@@ -1110,58 +1175,72 @@ webui.TreeView = function(commitView) {
         var treeRef = self.stack[self.stack.length - 1].object;
         var parentTreeRef = self.stack.length > 1 ? self.stack[self.stack.length - 2].object : undefined;
         var cmd = (treeRef === undefined || treeRef.startsWith('/')) ? 'ls-local' : 'ls-tree';
+        // Update url hash
+        if (cmd == 'ls-local') {
+            document.location.hash = 'files' + (treeRef || '/');
+        }
         webui.git([ cmd, "-l", treeRef ], function(data) {
-
             var blobs = [];
             var trees = [];
             if (parentTreeRef || (treeRef !== undefined && treeRef.startsWith('/')) ) {
-                var elt =   jQuery('<a href="#" class="list-group-item">' +
-                                '<span class="tree-item-tree">..</span> ' +
-                                '<span></span> ' +
-                                '<span></span> ' +
-                            '</a>');
-                elt.click(function() {
+                var href = (parentTreeRef !== undefined && parentTreeRef.startsWith('/')) ? ( '#files' + parentTreeRef ) : '#files/';
+                var node = jQuery('<a href="' + encodeURI(href) + '" class="list-group-item">' +
+                                    '<span class="tree-item-tree">..</span> ' +
+                                    '<span></span> ' +
+                                    '<span></span> ' +
+                                 '</a>');
+                node.click(function() {
                     self.stack.pop();
                     self.showTree();
+                    if (cmd == 'ls-local') {
+                        // Update url hash
+                        document.location.hash = 'files' + (self.stack[self.stack.length - 1].object || '/');
+                    }
+                    return false;
                 });
-                elt.appendTo(treeViewTreeContent);
+                node.appendTo(treeViewTreeContent);
             }
             webui.splitLines(data).forEach(function(line) {
                 var entry = new Entry(line);
-                var size = entry.formatedSize()
-                var download = (entry.type == "tree") ? '' : ' <i class="fa fa-download" aria-hidden="true"></i>';
-                var mtime = entry.mtime;
-                var elt = jQuery('<span class="list-group-item">' +
-                                 '<a class="name" href="#">' + entry.name + '</a> ' +
-                                 '<span class="mtime">' + mtime + '</span>' +
-                                 '<span class="size">' + size + '</span>&nbsp;' +
-                                 '<a class="download" href="#">' + download + '</a>' +
+                var external = '';
+                var download = '';
+                if (entry.type == 'blob') {
+                    download = '<a class="download" title="Download" href="' + entry.downloadHref() + '">' +
+                               '<i class="fa fa-download" aria-hidden="true"></i>' +
+                               '</a>';
+                }
+                if (entry.local) {
+                    external = '<a class="external-link" title="Open in a new window" target="_blank" href="' + entry.href() + '">' +
+                               '<i class="fa fa-external-link" aria-hidden="true"></i>' +
+                               '</a>';
+                }
+                var node = jQuery('<span class="list-group-item">' +
+                                 '<a class="name" href="' + entry.href() + '">' + entry.name + '</a> ' +
+                                 '<span class="mtime">' + entry.mtime + '</span>' +
+                                 '<span class="size">' + entry.formatedSize() + '</span>&nbsp;' +
+                                 '<span class="buttons">' + download + external + '</span>' +
                                  '</span>')[0];
-                elt.model = entry;
-                var nameElt = jQuery("a", elt)[0];
-                jQuery(nameElt).addClass("tree-item-" + entry.type);
+                node.model = entry;
+                var aNode = jQuery("a", node)[0];
+                jQuery(aNode).addClass("tree-item-" + entry.type);
                 if (entry.isSymbolicLink()) {
-                    jQuery(nameElt).addClass("tree-item-symlink");
+                    jQuery(aNode).addClass("tree-item-symlink");
                 }
                 if (entry.type == "tree") {
-                    trees.push(elt);
-                    jQuery(elt).children('.name').click(function(t) {
-                        self.stack.push({ name: elt.model.name, object: elt.model.object});
+                    trees.push(node);
+                    jQuery(node).children('.name').click(function(t) {
+                        self.stack.push({ name: entry.name, object: entry.object});
                         self.showTree();
                         return false;
                     });
                 } else {
-                    blobs.push(elt);
-                    jQuery(elt).children('.name').click(function(t) {
-                        self.stack.push({ name: elt.model.name, object: elt.model.object});
+                    blobs.push(node);
+                    jQuery(node).children('.name').click(function(t) {
+                        self.stack.push({ name: entry.name, object: entry.object});
                         self.showBlob();
                     });
-                    jQuery(elt).children('.download').click(function(t) {
-                        if (elt.model.object[0] == '/') { // file
-                            window.location.href = '/code_editor/files' + elt.model.object;
-                        } else { // blob
-                            window.location.href = '/code_editor/files/~git/' + elt.model.object + '/' + elt.model.name;
-                        }
+                    jQuery(node).children('.download').click(function(t) {
+                        window.location.href = entry.downloadHref();
                     });
                 }
             });
@@ -1170,11 +1249,11 @@ webui.TreeView = function(commitView) {
             }
             blobs.sort(compare);
             trees.sort(compare);
-            trees.forEach(function (elt) {
-                treeViewTreeContent.appendChild(elt);
+            trees.forEach(function (node) {
+                treeViewTreeContent.appendChild(node);
             });
-            blobs.forEach(function (elt) {
-                treeViewTreeContent.appendChild(elt);
+            blobs.forEach(function (node) {
+                treeViewTreeContent.appendChild(node);
             });
         });
     }
@@ -1214,6 +1293,10 @@ webui.TreeView = function(commitView) {
             self.editor.setValue(res)
             self.editor.refresh();
             self.editorPath = path;
+            // Update url hash
+            if (! path.startsWith('/~git/')) {
+                document.location.hash = 'edit' + path;
+            }
         }, 'text');
     }
 
@@ -1230,6 +1313,8 @@ webui.TreeView = function(commitView) {
                 // Update editor path and the breadcrumb
                 self.editorPath = path;
                 self.updateStack(path);
+                // Update url hash
+                document.location.hash = 'edit' + path;
             }
         });
     };
@@ -1255,18 +1340,20 @@ webui.TreeView = function(commitView) {
         });
     }
 
-    self.prepareEditor = function(editorPath) {
+    self.openEditor = function(editorPath, filename) {
         // Create CodeMirror instance and set the mode
-        var info = CodeMirror.findModeByFileName(editorPath);
+        var info = CodeMirror.findModeByFileName(filename);
         var textarea = jQuery('#tree-view-blob-content textarea')[0];
         var options = Object.assign({}, webui.codeMirrorOptions, { mode: info && info.mode });
         self.editor = CodeMirror.fromTextArea(textarea, options);
         if (info) {
             CodeMirror.autoLoadMode(self.editor, info.mode);
         }
+        // Load the file
+        self.editorLoad(editorPath);
     }
 
-    self.showBlob = function(blobRef) {
+    self.showBlob = function() {
         self.createBreadcrumb();
         jQuery(self.element.lastElementChild).remove();
         var object = self.stack[self.stack.length - 1].object;
@@ -1284,6 +1371,8 @@ webui.TreeView = function(commitView) {
                    '        <button id="save" type="button" class="btn btn-default btn-sm">Save <i class="fa fa-save" aria-hidden="true"></i></button>' +
                    '        <button id="saveAs" type="button" class="btn btn-default btn-sm">Save as...</i></button>' +
                    '        <button id="revert" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>' +
+                   '        <button id="find" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>' +
+                   '        <button id="replace" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>' +
                    '        </div>' +
                    '    </div>' +
                    '</div>').appendTo(self.element);
@@ -1293,8 +1382,7 @@ webui.TreeView = function(commitView) {
                   '<textarea></textarea>' +
                   '</div>').appendTo(self.element);
         }
-        self.prepareEditor(filename);
-        self.editorLoad(self.editorPath);
+        self.openEditor(self.editorPath, filename);
         if (object.startsWith('/')) { // File path
             jQuery('#save').click(function() {
                 self.editorSave(self.editorPath);
@@ -1304,6 +1392,12 @@ webui.TreeView = function(commitView) {
             });
             jQuery('#revert').click(function() {
                 self.editorLoad(self.editorPath);
+            });
+            jQuery('#find').click(function() {
+                self.editor.execCommand('find');
+            });
+            jQuery('#replace').click(function() {
+                self.editor.execCommand('replace');
             });
         }
     }
@@ -1831,20 +1925,64 @@ function MainUi() {
         self.mainView.appendChild(element);
     }
 
-    var body = jQuery("body")[0];
-    jQuery('<div id="message-box">').appendTo(body);
-    var globalContainer = jQuery('<div id="global-container">').appendTo(body)[0];
+    self.edit = function(target) {
+        jQuery("*", self.element).removeClass("active");
+        jQuery("#sidebar-files h4").addClass("active");
+        self.filesView.update();
+        if (target) {
+            self.filesView.treeView.updateStack('/' + target);
+            self.filesView.treeView.showBlob();
+        }
+    }
 
-    self.sideBarView = new webui.SideBarView(self);
-    globalContainer.appendChild(self.sideBarView.element);
+    self.files = function(target) {
+        jQuery("*", self.element).removeClass("active");
+        jQuery("#sidebar-files h4").addClass("active");
+        self.filesView.update();
+        if (target) {
+            self.filesView.treeView.updateStack('/' + target);
+            self.filesView.treeView.showTree();
+        }
+    }
 
+    self.changeSection = function(hash) {
+        var match = /#?([a-z-]+)(\/(.*))?/.exec(hash);
+        var section = match !== null ? match[1] : 'files';
+        var target = match !== null ? match[3] : null;
+        if (section == 'tags') { // e.g. "tags/v1.2.0"
+            jQuery('#sidebar-tags .sidebar-ref[title="' + target + '"]').click()
+
+        } else if (section == 'local-branches') {
+            jQuery('#sidebar-local-branches .sidebar-ref[title="' + target + '"]').click();
+
+        } else if (section == 'remote-branches') {
+            jQuery('#sidebar-remote-branches .sidebar-ref[title="' + target + '"]').click();
+
+        } else if (section == 'workspace') {
+            jQuery("#sidebar-workspace h4").click();
+
+        } else if (section == 'edit') { // e.g. "edit/a/b/c/dag.py"
+            self.edit(target);
+
+        } else {
+            self.files(target);
+        }
+    }
+
+    var sideBarViewCallback = function() {
+        setTimeout(function() {
+            self.changeSection(document.location.hash);
+        }, 500);
+    }
+
+    self.globalContainer = jQuery('<div id="global-container">').appendTo(jQuery("body"))[0];
+    self.sideBarView = new webui.SideBarView(self, sideBarViewCallback);
     self.mainView = jQuery('<div id="main-view">')[0];
-    globalContainer.appendChild(self.mainView);
-
+    self.globalContainer.appendChild(self.sideBarView.element);
+    self.globalContainer.appendChild(self.mainView);
     self.historyView = new webui.HistoryView(self);
     self.workspaceView = new webui.WorkspaceView(self);
     self.filesView = new webui.FilesView(self);
 
-    jQuery("#sidebar-files h4").click();
 }
 

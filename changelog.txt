@@ -115,3 +115,12 @@
 
 ### Added
 - search/replace
+
+## 2.4.0
+
+2020-10-22
+
+### Added
+- url hash navigation
+- open in a new window button
+- search and replace buttons

@@ -6,15 +6,20 @@ help:
 	@echo - make clean
 	@echo - make test
 	@echo - make codemirror
+	@echo - make webserver
 
 lint:
 	python3 setup.py flake8
 
-release:
-	rm -rf dist
-	python3 setup.py sdist bdist_wheel
-	python3 setup.py bdist_wheel
+release: build
 	twine upload -r pypi dist/*
+
+webserver: build
+	./test_virtualenv/airflow.sh webserver
+
+build: clean
+	python3 setup.py bdist_wheel
+	python3 setup.py sdist bdist_wheel
 
 clean:
 	-rm -rf build dist

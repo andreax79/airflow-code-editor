@@ -20,6 +20,7 @@ import os.path
 import logging
 import mimetypes
 from flask import abort, jsonify, request, send_file
+from airflow.version import version
 from airflow_code_editor.commons import HTTP_404_NOT_FOUND
 from airflow_code_editor.utils import (
     git_absolute_path,
@@ -29,8 +30,12 @@ from airflow_code_editor.utils import (
 
 __all__ = ['AbstractCodeEditorView']
 
+AIRFLOW_MAJOR_VERSION = int(version.split('.')[0])
+
 
 class AbstractCodeEditorView(object):
+    airflow_major_version = AIRFLOW_MAJOR_VERSION
+
     def _index(self):
         return self._render('index')
 

@@ -67,8 +67,7 @@ try:
         def _render(self, template, *args, **kargs):
             return self.render(
                 template + "_admin.html",
-                airflow_refresh="airflow.refresh",
-                log_list="log.index_view",
+                airflow_major_version=self.airflow_major_version,
                 *args,
                 **kargs
             )

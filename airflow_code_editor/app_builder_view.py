@@ -64,8 +64,7 @@ try:
         def _render(self, template, *args, **kargs):
             return self.render_template(
                 template + '_appbuilder.html',
-                airflow_refresh='Airflow.refresh',
-                log_list='LogModelView.list',
+                airflow_major_version=self.airflow_major_version,
                 *args,
                 **kargs
             )
@@ -111,8 +110,7 @@ except (ImportError, ModuleNotFoundError):
         def _render(self, template, *args, **kargs):
             return self.render_template(
                 template + '_appbuilder.html',
-                airflow_refresh='Airflow.refresh',
-                log_list='LogModelView.list',
+                airflow_major_version=self.airflow_major_version,
                 *args,
                 **kargs
             )

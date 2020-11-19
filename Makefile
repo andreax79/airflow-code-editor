@@ -6,6 +6,7 @@ help:
 	@echo - make clean
 	@echo - make test
 	@echo - make codemirror
+	@echo - make coverage
 	@echo - make webserver
 
 lint:
@@ -27,6 +28,9 @@ clean:
 
 test:
 	@nosetests
+
+coverage:
+	python3 -m coverage run --source=airflow_code_editor setup.py test && python3 -m coverage report -m
 
 codemirror:
 	@rm -rf codemirror_src codemirror.zip

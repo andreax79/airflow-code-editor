@@ -19,28 +19,18 @@ import os
 import os.path
 import logging
 import mimetypes
-from flask import (
-    abort,
-    jsonify,
-    request,
-    send_file
-)
-from airflow_code_editor.commons import (
-    HTTP_404_NOT_FOUND
-)
+from flask import abort, jsonify, request, send_file
+from airflow_code_editor.commons import HTTP_404_NOT_FOUND
 from airflow_code_editor.utils import (
     git_absolute_path,
     execute_git_command,
-    normalize_path
+    normalize_path,
 )
 
-__all__ = [
-    'AbstractCodeEditorView'
-]
+__all__ = ['AbstractCodeEditorView']
 
 
 class AbstractCodeEditorView(object):
-
     def _index(self, session=None):
         return self._render('index')
 
@@ -54,9 +44,7 @@ class AbstractCodeEditorView(object):
             with open(fullpath, 'w') as f:
                 f.write(data)
                 f.write('\n')
-            return jsonify({
-                'path': normalize_path(path)
-            })
+            return jsonify({'path': normalize_path(path)})
         except Exception as ex:
             logging.error(ex)
             if hasattr(ex, 'strerror'):
@@ -65,12 +53,16 @@ class AbstractCodeEditorView(object):
                 message = ex.message
             else:
                 message = str(ex)
-            return jsonify({
-                'path': normalize_path(path),
-                'error': {
-                    'message': 'Error saving {path}: {message}'.format(path=path, message=message)
+            return jsonify(
+                {
+                    'path': normalize_path(path),
+                    'error': {
+                        'message': 'Error saving {path}: {message}'.format(
+                            path=path, message=message
+                        )
+                    },
                 }
-            })
+            )
 
     def _git_repo(self, session, path):
         if request.method == 'POST':
@@ -95,7 +87,9 @@ class AbstractCodeEditorView(object):
                 # Download git blob - path = '~git/<hash>/<name>'
                 _, path, filename = path.split('/', 3)
                 response = execute_git_command(["cat-file", "-p", path])
-                response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
+                response.headers['Content-Disposition'] = (
+                    'attachment; filename="%s"' % filename
+                )
                 try:
                     content_type = mimetypes.guess_type(filename)[0]
                     if content_type:

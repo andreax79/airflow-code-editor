@@ -12,13 +12,14 @@ from airflow_code_editor.utils import (
     get_root_folder,
     mount_points,
     normalize_path,
-    execute_git_command
+    execute_git_command,
 )
-assert(airflow.plugins_manager)
+
+assert airflow.plugins_manager
 app = Flask(__name__)
 
-class TestUtils(TestCase):
 
+class TestUtils(TestCase):
     def test_get_root_folder(self):
         self.assertIsNotNone(get_root_folder())
 
@@ -112,6 +113,7 @@ class TestUtils(TestCase):
             self.assertTrue(i[2].startswith('/folder/'))
             self.assertEqual(i[3], '2')
             self.assertTrue(i[4] in ['1', '2', '3'])
+
 
 if __name__ == '__main__':
     main()

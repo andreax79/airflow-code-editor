@@ -31,7 +31,7 @@ from airflow_code_editor.commons import (
     SUPPORTED_GIT_COMMANDS,
     PLUGIN_NAME,
     PLUGIN_DEFAULT_CONFIG,
-    ROOT_MOUNTPOUNT
+    ROOT_MOUNTPOUNT,
 )
 
 __all__ = [
@@ -40,7 +40,7 @@ __all__ = [
     'get_plugin_boolean_config',
     'get_root_folder',
     'git_absolute_path',
-    'execute_git_command'
+    'execute_git_command',
 ]
 
 
@@ -50,7 +50,7 @@ def normalize_path(path):
     for comp in comps:
         if comp in ('', '.'):
             pass
-        elif (comp != '..' or (result and result[-1] == '..')):
+        elif comp != '..' or (result and result[-1] == '..'):
             result.append(comp)
         elif result:
             result.pop()
@@ -64,7 +64,9 @@ def get_plugin_config(key):
 
 def get_plugin_boolean_config(key):
     " Get a plugin boolean configuration/default for a given key "
-    return configuration.conf.getboolean(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
+    return configuration.conf.getboolean(
+        PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
+    )
 
 
 def prepare_response(git_cmd, result=None, stderr=None, returncode=0):
@@ -73,7 +75,9 @@ def prepare_response(git_cmd, result=None, stderr=None, returncode=0):
     elif stderr:
         result = result + stderr
     if git_cmd == 'cat-file':
-        response = make_response(result, HTTP_200_OK if returncode == 0 else HTTP_404_NOT_FOUND)
+        response = make_response(
+            result, HTTP_200_OK if returncode == 0 else HTTP_404_NOT_FOUND
+        )
         response.headers['Content-Type'] = 'text/plain'
     else:
         response = make_response(result)
@@ -88,7 +92,10 @@ def prepare_git_env():
     git_author_name = get_plugin_config('git_author_name')
     if not git_author_name:
         try:
-            git_author_name = '%s %s' % (current_user.first_name, current_user.last_name)
+            git_author_name = '%s %s' % (
+                current_user.first_name,
+                current_user.last_name,
+            )
         except Exception:
             pass
     if git_author_name:
@@ -108,7 +115,10 @@ def prepare_git_env():
 
 def get_root_folder():
     " Return the configured root folder or Airflow DAGs folder "
-    return os.path.abspath(get_plugin_config('root_directory') or configuration.conf.get('core', 'dags_folder'))
+    return os.path.abspath(
+        get_plugin_config('root_directory')
+        or configuration.conf.get('core', 'dags_folder')
+    )
 
 
 def git_absolute_path(git_path):
@@ -133,7 +143,9 @@ def execute_git_command(git_args):
         git_cmd = git_args[0] if git_args else None
         try:
             cwd = get_root_folder()
-            if not os.path.exists(os.path.join(cwd, '.git')) and get_plugin_boolean_config('git_init_repo'):
+            if not os.path.exists(
+                os.path.join(cwd, '.git')
+            ) and get_plugin_boolean_config('git_init_repo'):
                 init_git_repo()
             if git_cmd == 'ls-local':
                 stdout = git_ls_local(git_args)
@@ -146,12 +158,14 @@ def execute_git_command(git_args):
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
                 git_default_args = shlex.split(get_plugin_config('git_default_args'))
                 cmd = [get_plugin_config('git_cmd')] + git_default_args + git_args
-                git = subprocess.Popen(cmd,
-                                       stdin=subprocess.PIPE,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       cwd=cwd,
-                                       env=prepare_git_env())
+                git = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=cwd,
+                    env=prepare_git_env(),
+                )
                 stdout, stderr = git.communicate()
                 returncode = git.returncode
             else:
@@ -196,7 +210,10 @@ def git_ls_local(git_args):
         relname = os.path.join('/', path, name)  # fullname[len(cwd):]
         if long_:
             mtime = datetime.utcfromtimestamp(s.st_mtime).isoformat()[:16]
-            result.append('%06o %s %s#%s %8s\t%s' % (s.st_mode, type_, relname, mtime, size_, name))
+            result.append(
+                '%06o %s %s#%s %8s\t%s'
+                % (s.st_mode, type_, relname, mtime, size_, name)
+            )
         else:
             result.append('%06o %s %s\t%s' % (s.st_mode, type_, relname, name))
     return '\n'.join(result)
@@ -216,7 +233,9 @@ def init_git_repo():
         with open(gitignore, 'w') as f:
             f.write('__pycache__\n')
         subprocess.call(['git', 'add', '.gitignore'], cwd=cwd)
-    subprocess.call(['git', 'commit', '-m', 'Initial commit'], cwd=cwd, env=prepare_git_env())
+    subprocess.call(
+        ['git', 'commit', '-m', 'Initial commit'], cwd=cwd, env=prepare_git_env()
+    )
 
 
 MountPoint = namedtuple('MountPoint', 'path default')
@@ -225,15 +244,17 @@ MountPoint = namedtuple('MountPoint', 'path default')
 def read_mount_points_config():
     " Return the plugin configuration "
     global mount_points
-    config = {
-        ROOT_MOUNTPOUNT: MountPoint(path=get_root_folder(), default=True)
-    }
+    config = {ROOT_MOUNTPOUNT: MountPoint(path=get_root_folder(), default=True)}
     i = 0
     # Iterate over the configurations
     while True:
-        suffix = str(i) if i != 0 else ''  # the first configuration doesn't have a suffix
+        suffix = (
+            str(i) if i != 0 else ''
+        )  # the first configuration doesn't have a suffix
         try:
-            if not configuration.conf.has_option(PLUGIN_NAME, 'mount{}_name'.format(suffix)):
+            if not configuration.conf.has_option(
+                PLUGIN_NAME, 'mount{}_name'.format(suffix)
+            ):
                 break
         except Exception:  # backports.configparser.NoSectionError and friends
             break

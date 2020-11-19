@@ -124,3 +124,11 @@
 - url hash navigation
 - open in a new window button
 - search and replace buttons
+
+## 3.0.0
+
+2020-11-19
+
+### Added
+
+- Airflow 2.0 compatibility

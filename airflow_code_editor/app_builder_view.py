@@ -16,70 +16,111 @@
 #
 
 from flask_appbuilder import BaseView, expose
-from airflow.utils.db import provide_session
-from airflow.www_rbac.decorators import has_dag_access
-from airflow_code_editor.auth import has_access
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
-from airflow_code_editor.commons import (
-    ROUTE,
-    MENU_CATEGORY,
-    MENU_LABEL
-)
+from airflow_code_editor.commons import ROUTE, MENU_CATEGORY, MENU_LABEL
 
-__all__ = [
-    'AppBuilderCodeEditorView',
-    'appbuilder_view'
-]
+__all__ = ['appbuilder_view']
+
+try:
+    from airflow.www import auth
+    from airflow.security import permissions
+
+    PERMISSIONS = [
+        (permissions.ACTION_CAN_READ, permissions.RESOURCE_WEBSITE),
+    ]
+
+    # ############################################################################
+    # AppBuilder (Airflow >= 2.0)
+
+    class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
+        route_base = ROUTE
+        base_permissions = ['can_list', 'can_create', 'menu_acccess']
+
+        @expose('/')
+        @auth.has_access(PERMISSIONS)
+        def list(self):
+            return self._index()
+
+        @expose('/repo', methods=['POST'])
+        @auth.has_access(PERMISSIONS)
+        def repo_base(self, path=None):
+            return self._git_repo(path)
+
+        @expose('/repo/<path:path>', methods=['GET', 'HEAD', 'POST'])
+        @auth.has_access(PERMISSIONS)
+        def repo(self, path=None):
+            return self._git_repo(path)
+
+        @expose('/files/<path:path>', methods=['POST'])
+        @auth.has_access(PERMISSIONS)
+        def save(self, path=None):
+            return self._save(path)
+
+        @expose('/files/<path:path>', methods=['GET'])
+        @auth.has_access(PERMISSIONS)
+        def load(self, path=None):
+            return self._load(path)
+
+        def _render(self, template, *args, **kargs):
+            return self.render_template(
+                template + '_appbuilder.html',
+                airflow_refresh='Airflow.refresh',
+                log_list='LogModelView.list',
+                *args,
+                **kargs
+            )
 
 
-# ############################################################################
-# AppBuilder (Airflow >= 1.10 and rbac = True)
+except (ImportError, ModuleNotFoundError):
+    from airflow_code_editor.auth import has_access
+    from airflow.www_rbac.decorators import has_dag_access
 
-class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
-    route_base = ROUTE
-    base_permissions = ['can_list']
+    # ############################################################################
+    # AppBuilder (Airflow >= 1.10 < 2.0 and rbac = True)
 
-    @expose('/')
-    @has_dag_access(can_dag_edit=True)
-    @has_access
-    @provide_session
-    def list(self, session=None):
-        return self._index(session)
+    class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
+        route_base = ROUTE
+        base_permissions = ['can_list']
 
-    @expose('/repo', methods=['POST'])
-    @has_dag_access(can_dag_edit=True)
-    @provide_session
-    def repo_base(self, session=None, path=None):
-        return self._git_repo(session, path)
+        @expose('/')
+        @has_dag_access(can_dag_edit=True)
+        @has_access
+        def list(self):
+            return self._index()
 
-    @expose('/repo/<path:path>', methods=['GET', 'HEAD', 'POST'])
-    @has_dag_access(can_dag_edit=True)
-    @provide_session
-    def repo(self, session=None, path=None):
-        return self._git_repo(session, path)
+        @expose('/repo', methods=['POST'])
+        @has_dag_access(can_dag_edit=True)
+        def repo_base(self, path=None):
+            return self._git_repo(path)
 
-    @expose('/files/<path:path>', methods=['POST'])
-    @has_dag_access(can_dag_edit=True)
-    @provide_session
-    def save(self, session=None, path=None):
-        return self._save(session, path)
+        @expose('/repo/<path:path>', methods=['GET', 'HEAD', 'POST'])
+        @has_dag_access(can_dag_edit=True)
+        def repo(self, path=None):
+            return self._git_repo(path)
 
-    @expose('/files/<path:path>', methods=['GET'])
-    @has_dag_access(can_dag_edit=True)
-    @provide_session
-    def load(self, session=None, path=None):
-        return self._load(session, path)
+        @expose('/files/<path:path>', methods=['POST'])
+        @has_dag_access(can_dag_edit=True)
+        def save(self, path=None):
+            return self._save(path)
 
-    def _render(self, template, *args, **kargs):
-        return self.render_template(template + '_appbuilder.html',
-                                    airflow_refresh='Airflow.refresh',
-                                    log_list='LogModelView.list',
-                                    *args, **kargs)
+        @expose('/files/<path:path>', methods=['GET'])
+        @has_dag_access(can_dag_edit=True)
+        def load(self, path=None):
+            return self._load(path)
+
+        def _render(self, template, *args, **kargs):
+            return self.render_template(
+                template + '_appbuilder.html',
+                airflow_refresh='Airflow.refresh',
+                log_list='LogModelView.list',
+                *args,
+                **kargs
+            )
 
 
 appbuilder_code_editor_view = AppBuilderCodeEditorView()
 appbuilder_view = {
     'category': MENU_CATEGORY,
     'name': MENU_LABEL,
-    'view': appbuilder_code_editor_view
+    'view': appbuilder_code_editor_view,
 }

@@ -15,68 +15,65 @@
 #   limitations under the Licens
 #
 
-from flask_admin import BaseView, expose
 import airflow
-from airflow.utils.db import provide_session
+from functools import wraps
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
-from airflow_code_editor.auth import login_required
-from airflow_code_editor.commons import (
-    ROUTE,
-    MENU_CATEGORY,
-    MENU_LABEL
-)
-assert(airflow)
+from airflow_code_editor.commons import ROUTE, MENU_CATEGORY, MENU_LABEL
 
-__all__ = [
-    'AdminCodeEditorView',
-    'admin_view'
-]
-
+__all__ = ["admin_view"]
 
 # ############################################################################
-# Flask Admin
+# Flask Admin (Airflow < 2.0 and rbac = False)
 
-class AdminCodeEditorView(BaseView, AbstractCodeEditorView):
+try:
+    from flask_admin import BaseView, expose
 
-    @expose('/')
-    @login_required
-    @provide_session
-    def index(self, session=None):
-        return self._index(session)
+    def login_required(func):
+        # when airflow loads plugins, login is still None.
+        @wraps(func)
+        def func_wrapper(*args, **kwargs):
+            if airflow.login:
+                return airflow.login.login_required(func)(*args, **kwargs)
+            return func(*args, **kwargs)
 
-    @expose('/repo', methods=['POST'])
-    @login_required
-    @provide_session
-    def repo_base(self, session=None, path=None):
-        return self._git_repo(session, path)
+        return func_wrapper
 
-    @expose('/repo/<path:path>', methods=['GET', 'HEAD', 'POST'])
-    @login_required
-    @provide_session
-    def repo(self, session=None, path=None):
-        return self._git_repo(session, path)
+    class AdminCodeEditorView(BaseView, AbstractCodeEditorView):
+        @expose("/")
+        @login_required
+        def index(self):
+            return self._index()
 
-    @expose('/files/<path:path>', methods=['POST'])
-    @login_required
-    @provide_session
-    def save(self, session=None, path=None):
-        return self._save(session, path)
+        @expose("/repo", methods=["POST"])
+        @login_required
+        def repo_base(self, path=None):
+            return self._git_repo(path)
 
-    @expose('/files/<path:path>', methods=['GET'])
-    @login_required
-    @provide_session
-    def load(self, session=None, path=None):
-        return self._load(session, path)
+        @expose("/repo/<path:path>", methods=["GET", "HEAD", "POST"])
+        @login_required
+        def repo(self, path=None):
+            return self._git_repo(path)
 
-    def _render(self, template, *args, **kargs):
-        return self.render(template + '_admin.html',
-                           airflow_refresh="airflow.refresh",
-                           log_list='log.index_view',
-                           *args, **kargs)
+        @expose("/files/<path:path>", methods=["POST"])
+        @login_required
+        def save(self, path=None):
+            return self._save(path)
 
+        @expose("/files/<path:path>", methods=["GET"])
+        @login_required
+        def load(self, path=None):
+            return self._load(path)
 
-admin_view = AdminCodeEditorView(
-    url=ROUTE,
-    category=MENU_CATEGORY,
-    name=MENU_LABEL
-)
+        def _render(self, template, *args, **kargs):
+            return self.render(
+                template + "_admin.html",
+                airflow_refresh="airflow.refresh",
+                log_list="log.index_view",
+                *args,
+                **kargs
+            )
+
+    admin_view = AdminCodeEditorView(url=ROUTE, category=MENU_CATEGORY, name=MENU_LABEL)
+
+except (ImportError, ModuleNotFoundError):
+    admin_view = None

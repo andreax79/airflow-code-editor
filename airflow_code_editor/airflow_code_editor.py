@@ -15,7 +15,7 @@
 #   limitations under the Licens
 #
 __author__ = 'Andrea Bonomi <andrea.bonomi@gmail.com>'
-__version__ = '2.4.0'
+__version__ = '3.0.0'
 
 from flask import Blueprint
 from airflow.plugins_manager import AirflowPlugin
@@ -23,17 +23,16 @@ from airflow_code_editor.commons import STATIC
 from airflow_code_editor.flask_admin_view import admin_view
 from airflow_code_editor.app_builder_view import appbuilder_view
 
-__all__ = [
-    'CodeEditorPlugin'
-]
+__all__ = ['CodeEditorPlugin']
 
 
+# Blueprint
 code_editor_plugin_blueprint = Blueprint(
     'code_editor_plugin_blueprint',
     __name__,
     template_folder='templates',
     static_folder='static',
-    static_url_path=STATIC
+    static_url_path=STATIC,
 )
 
 
@@ -44,6 +43,6 @@ class CodeEditorPlugin(AirflowPlugin):
     flask_blueprints = [code_editor_plugin_blueprint]
     hooks = []
     executors = []
-    admin_views = [admin_view]
+    admin_views = [admin_view] if admin_view is not None else []
     menu_links = []
     appbuilder_views = [appbuilder_view]

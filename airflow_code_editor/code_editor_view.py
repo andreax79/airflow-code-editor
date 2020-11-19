@@ -31,10 +31,10 @@ __all__ = ['AbstractCodeEditorView']
 
 
 class AbstractCodeEditorView(object):
-    def _index(self, session=None):
+    def _index(self):
         return self._render('index')
 
-    def _save(self, session=None, path=None):
+    def _save(self, path=None):
         try:
             data = request.form['data']
             # Newline fix (remove cr)
@@ -64,22 +64,22 @@ class AbstractCodeEditorView(object):
                 }
             )
 
-    def _git_repo(self, session, path):
+    def _git_repo(self, path):
         if request.method == 'POST':
-            return self._git_repo_post(session, path)
+            return self._git_repo_post(path)
         else:
-            return self._git_repo_get(session, path)
+            return self._git_repo_get(path)
 
-    def _git_repo_get(self, session, path):
+    def _git_repo_get(self, path):
         " Get a file from GIT (invoked by the HTTP GET method) "
         return execute_git_command(["cat-file", "-p", path])
 
-    def _git_repo_post(self, session, path):
+    def _git_repo_post(self, path):
         " Execute a GIT command (invoked by the HTTP POST method) "
         git_args = request.form.getlist('args[]')
         return execute_git_command(git_args)
 
-    def _load(self, session, path):
+    def _load(self, path):
         " Send the contents of a file to the client "
         try:
             path = normalize_path(path)

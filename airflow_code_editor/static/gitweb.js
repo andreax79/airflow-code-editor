@@ -1308,7 +1308,7 @@ webui.TreeView = function(commitView) {
 
         jQuery.post("/code_editor/files" + path, data, function(res) {
             if (res.error) {
-                webui.showError('Error saving file');
+                webui.showError(res.error.message || 'Error saving file');
             } else {
                 // Update editor path and the breadcrumb
                 self.editorPath = path;

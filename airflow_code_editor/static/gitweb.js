@@ -1842,11 +1842,11 @@ webui.ChangedFilesView = function(workspaceView, type, label) {
         }
     };
 
-    self.cancel = function() {
+    self.checkout = function() {
         prevScrollTop = fileListContainer.scrollTop;
         var files = self.getFileList();
         if (files.length != 0) {
-            var cmd = 'checkout'
+            var cmd = [ 'checkout' ];
             webui.git(cmd.concat(files), function(data) {
                 workspaceView.update(["stage"]);
             });
@@ -1866,11 +1866,9 @@ webui.ChangedFilesView = function(workspaceView, type, label) {
                                 '<div class="list-group"></div>' +
                             '</div>' +
                         '</div>')[0];
-    if (type == "working-copy") {
-        var buttons = [{ name: "Stage", callback: self.process }, { name: "Cancel", callback: self.cancel }];
-    } else {
-        var buttons = [{ name: "Unstage", callback: self.process }];
-    }
+    var buttons = (type == "working-copy") ?
+        [{ name: "Stage", callback: self.process }, { name: "Revert", callback: self.checkout }] :
+        [{ name: "Unstage", callback: self.process }];
     var btnGroup = jQuery(".btn-group", self.element);
     buttons.forEach(function (btnData) {
         var btn = jQuery('<button type="button" class="btn btn-default">' + btnData.name + '</button>')

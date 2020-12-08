@@ -140,3 +140,8 @@
 ### Added
 
 - Format code
+
+### Fix
+
+- fix git revert (checkout)
+

@@ -132,3 +132,11 @@
 ### Added
 
 - Airflow 2.0 compatibility
+
+## 3.1.0
+
+2020-12-08
+
+### Added
+
+- Format code

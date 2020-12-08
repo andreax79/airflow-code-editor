@@ -61,6 +61,11 @@ try:
         def load(self, path=None):
             return self._load(path)
 
+        @expose('/format', methods=['POST'])
+        @auth.has_access(PERMISSIONS)
+        def format(self):
+            return self._format()
+
         def _render(self, template, *args, **kargs):
             return self.render_template(
                 template + '_appbuilder.html',
@@ -106,6 +111,11 @@ except (ImportError, ModuleNotFoundError):
         @has_dag_access(can_dag_edit=True)
         def load(self, path=None):
             return self._load(path)
+
+        @expose('/format', methods=['POST'])
+        @has_dag_access(can_dag_edit=True)
+        def format(self):
+            return self._format()
 
         def _render(self, template, *args, **kargs):
             return self.render_template(

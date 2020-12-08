@@ -19,14 +19,25 @@ import os
 import os.path
 import logging
 import mimetypes
-from flask import abort, jsonify, request, send_file
+from flask import abort, request, send_file
 from airflow.version import version
 from airflow_code_editor.commons import HTTP_404_NOT_FOUND
 from airflow_code_editor.utils import (
+    get_plugin_boolean_config,
+    get_plugin_int_config,
     git_absolute_path,
     execute_git_command,
+    error_message,
     normalize_path,
+    prepare_api_response,
 )
+
+# Optional Code Formatter
+try:
+    import black
+except ImportError:
+    black = None
+
 
 __all__ = ['AbstractCodeEditorView']
 
@@ -49,24 +60,14 @@ class AbstractCodeEditorView(object):
             with open(fullpath, 'w') as f:
                 f.write(data)
                 f.write('\n')
-            return jsonify({'path': normalize_path(path)})
+            return prepare_api_response(path=normalize_path(path))
         except Exception as ex:
             logging.error(ex)
-            if hasattr(ex, 'strerror'):
-                message = ex.strerror
-            elif hasattr(ex, 'message'):
-                message = ex.message
-            else:
-                message = str(ex)
-            return jsonify(
-                {
-                    'path': normalize_path(path),
-                    'error': {
-                        'message': 'Error saving {path}: {message}'.format(
-                            path=path, message=message
-                        )
-                    },
-                }
+            return prepare_api_response(
+                path=normalize_path(path),
+                error_message='Error saving {path}: {message}'.format(
+                    path=path, message=error_message(ex)
+                ),
             )
 
     def _git_repo(self, path):
@@ -109,3 +110,27 @@ class AbstractCodeEditorView(object):
         except Exception as ex:
             logging.error(ex)
             abort(HTTP_404_NOT_FOUND)
+
+    def _format(self):
+        " Format code "
+        if black is None:
+            return prepare_api_response(
+                error_message='black dependency is not installed: to install black `pip install black`'
+            )
+        try:
+            data = request.form['data']
+            # Newline fix (remove cr)
+            data = data.replace('\r', '').rstrip()
+            mode = black.Mode(
+                string_normalization=get_plugin_boolean_config('string_normalization'),
+                line_length=get_plugin_int_config('line_length'),
+            )
+            data = black.format_str(src_contents=data, mode=mode)
+            return prepare_api_response(data=data)
+        except Exception as ex:
+            logging.error(ex)
+            return prepare_api_response(
+                error_message='Error formatting: {message}'.format(
+                    message=error_message(ex)
+                )
+            )

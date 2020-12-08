@@ -32,9 +32,13 @@ The DAGs are stored in a Git repository. You may use it to view Git history, rev
 
     pip install airflow-code-editor
 
-2. Restart the Airflow Web Server
+2. (Optional) Install Black Python code formatter.
 
-3. Open Admin - DAGs Code Editor
+    pip install black
+
+3. Restart the Airflow Web Server
+
+4. Open Admin - DAGs Code Editor
 
 
 ### Config Options
@@ -49,6 +53,8 @@ You can edit your *airflow.cfg* adding any of the following settings in the \[co
 * **root_directory**  root folder (default: Airflow DAGs folder)
 * **mount_name**  configure additional file folder name (mount point)
 * **mount_path**  configure additional file path
+* **line_length**  Python code formatter - max line length (default: 88)
+* **string_normalization**  Python code formatter - if true normalize string quotes and prefixes (default: False)
 
 Example:
 ```
@@ -57,6 +63,8 @@ Example:
    git_default_args = -c color.ui=true
    git_init_repo = False
    root_directory = /home/airflow/dags
+   line_length = 88
+   string_normalization = False
    mount_name = data
    mount_path = /home/airflow/data
    mount1_name = logs
@@ -68,4 +76,5 @@ Example:
 * Apache Airflow - https://github.com/apache/airflow
 * Codemirror, In-browser code editor - https://github.com/codemirror/codemirror
 * Git WebUI, A standalone local web based user interface for git repositories - https://github.com/alberthier/git-webui
+* Black, The Uncompromising Code Formatter - https://github.com/psf/black
 

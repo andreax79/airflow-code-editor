@@ -1290,7 +1290,7 @@ webui.TreeView = function(commitView) {
             if (self.editor.getMode().name == 'python') {
                 res = res.replace(/\t/g, '    ');
             }
-            self.editor.setValue(res)
+            self.editor.setValue(res);
             self.editor.refresh();
             self.editorPath = path;
             // Update url hash
@@ -1340,6 +1340,21 @@ webui.TreeView = function(commitView) {
         });
     }
 
+    self.editorFormat = function() {
+        // Format code
+        var data = {
+            data: self.editor.getValue()
+        };
+        jQuery.post("/code_editor/format", data, function(res) {
+            if (res.error) {
+                webui.showError(res.error.message);
+            } else {
+                self.editor.setValue(res.data);
+                self.editor.refresh();
+            }
+        });
+    }
+
     self.openEditor = function(editorPath, filename) {
         // Create CodeMirror instance and set the mode
         var info = CodeMirror.findModeByFileName(filename);
@@ -1373,6 +1388,7 @@ webui.TreeView = function(commitView) {
                    '        <button id="revert" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>' +
                    '        <button id="find" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>' +
                    '        <button id="replace" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>' +
+                   '        <button id="format" type="button" class="btn btn-default btn-sm">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>' +
                    '        </div>' +
                    '    </div>' +
                    '</div>').appendTo(self.element);
@@ -1383,6 +1399,11 @@ webui.TreeView = function(commitView) {
                   '</div>').appendTo(self.element);
         }
         self.openEditor(self.editorPath, filename);
+        if (self.editor.getMode().name == 'python') {
+            jQuery('#format').show();
+        } else {
+            jQuery('#format').hide();
+        }
         if (object.startsWith('/')) { // File path
             jQuery('#save').click(function() {
                 self.editorSave(self.editorPath);
@@ -1398,6 +1419,9 @@ webui.TreeView = function(commitView) {
             });
             jQuery('#replace').click(function() {
                 self.editor.execCommand('replace');
+            });
+            jQuery('#format').click(function() {
+                self.editorFormat();
             });
         }
     }

@@ -61,5 +61,7 @@ PLUGIN_DEFAULT_CONFIG = {
     'git_author_email': None,
     'git_init_repo': True,
     'root_directory': None,
+    'line_length': 88,
+    'string_normalization': False,
 }
 ROOT_MOUNTPOUNT = 'root'

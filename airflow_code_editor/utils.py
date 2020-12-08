@@ -22,7 +22,7 @@ import threading
 import shlex
 from datetime import datetime
 from collections import namedtuple
-from flask import make_response
+from flask import jsonify, make_response
 from flask_login import current_user
 from airflow import configuration
 from airflow_code_editor.commons import (
@@ -38,9 +38,12 @@ __all__ = [
     'normalize_path',
     'get_plugin_config',
     'get_plugin_boolean_config',
+    'get_plugin_int_config',
     'get_root_folder',
     'git_absolute_path',
     'execute_git_command',
+    'error_message',
+    'prepare_api_response',
 ]
 
 
@@ -69,7 +72,14 @@ def get_plugin_boolean_config(key):
     )
 
 
-def prepare_response(git_cmd, result=None, stderr=None, returncode=0):
+def get_plugin_int_config(key):
+    " Get a plugin int configuration/default for a given key "
+    return configuration.conf.getint(
+        PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
+    )
+
+
+def prepare_git_response(git_cmd, result=None, stderr=None, returncode=0):
     if result is None:
         result = stderr
     elif stderr:
@@ -183,7 +193,7 @@ def execute_git_command(git_args):
             stderr = ex.message
             returncode = 1
         finally:
-            return prepare_response(git_cmd, stdout, stderr, returncode)
+            return prepare_git_response(git_cmd, stdout, stderr, returncode)
 
 
 def git_ls_local(git_args):
@@ -266,3 +276,23 @@ def read_mount_points_config():
 
 
 read_mount_points_config()
+
+
+def error_message(ex: Exception):
+    " Get exception error message "
+    if ex is None:
+        return ''
+    elif hasattr(ex, 'strerror'):
+        return ex.strerror
+    elif hasattr(ex, 'message'):
+        return ex.message
+    else:
+        return str(ex)
+
+
+def prepare_api_response(error_message=None, **kargs):
+    " Prepare API response (JSON) "
+    result = dict(kargs)
+    if error_message is not None:
+        result['error'] = {'message': error_message}
+    return jsonify(result)

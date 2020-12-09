@@ -1,17 +1,27 @@
-<script src="{{ url_for('static', filename='code_editor/codemirror.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/mode/python/python.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/fold/foldcode.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/fold/foldgutter.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/fold/indent-fold.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/fold/comment-fold.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/mode/loadmode.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/dialog/dialog.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/search/searchcursor.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/search/search.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/addon/search/jump-to-line.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/mode/meta.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/gitweb.js') }}"></script>
-<script src="{{ url_for('static', filename='code_editor/bootstrap-dialog.js') }}"></script>
+{% for filename in [
+    'codemirror.js',
+    'mode/python/python.js',
+    'addon/fold/foldcode.js',
+    'addon/fold/foldgutter.js',
+    'addon/fold/indent-fold.js',
+    'addon/fold/comment-fold.js',
+    'addon/mode/loadmode.js',
+    'addon/dialog/dialog.js',
+    'addon/search/searchcursor.js',
+    'addon/search/search.js',
+    'addon/search/jump-to-line.js',
+    'mode/meta.js',
+    'bootstrap-dialog.js',
+    'vim.js',
+    'emacs.js',
+    'sublime.js',
+    'vue.js',
+    'themes.js',
+    'gitweb.js'
+] -%}
+<script src="{{ url_for('static', filename='code_editor/' + filename) }}"></script>
+{% endfor %}
+
 <script type="text/javascript">
 
 jQuery(document).ready(function() {
@@ -27,6 +37,11 @@ jQuery(document).ready(function() {
     CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';
     // Disable animation
     BootstrapDialog.configDefaultOptions({ animate: false });
+    // Shortcuts
+    window.getEditor = function() {
+        return window.main.filesView.treeView.editor;
+    };
+
 });
 
 </script>

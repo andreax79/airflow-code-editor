@@ -140,6 +140,7 @@
 ### Added
 
 - Format code
+- Editor settings (theme, mode)
 
 ### Fix
 

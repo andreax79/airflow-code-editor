@@ -80,7 +80,6 @@ webui.git = function(args, callback) {
                 if (message.length > 0) {
                     webui.showWarning(message);
                 }
-                jQuery("#error-modal .alert").text("");
             } else {
                 webui.showError(message);
             }
@@ -1072,7 +1071,7 @@ webui.DiffView = function(sideBySide, hunkSelectionAllowed, parent) {
 /*
  * == TreeView ================================================================
  */
-webui.TreeView = function(commitView) {
+webui.TreeView = function(commitView, settings) {
     var self = this;
 
     function Entry(line) {
@@ -1355,12 +1354,41 @@ webui.TreeView = function(commitView) {
         });
     }
 
+    self.setOption = function(option, value) {
+        // Set editor option
+        if (self.editor) {
+            self.editor.setOption(option, value);
+        }
+        // Store settings in localStorage
+        if (option == 'keyMap') {
+            option = 'mode';
+        }
+        localStorage.setItem('airflow_code_editor_' + option, value);
+    };
+
+    self.setTheme = function(theme) {
+        // Set editor theme
+        if (theme == 'default') {
+            self.setOption('theme', theme);
+        } else {
+            var link = document.createElement('link');
+            link.onload = function() { self.setOption('theme', theme); };
+            var baseUrl = jQuery('link[rel=stylesheet]').filter(function(i, e) { return e.href.match(/gitweb.css/) !== null; })[0].href.split('/gitweb.css')[0];
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = baseUrl + '/theme/' + theme + '.css';
+            document.getElementsByTagName('head')[0].appendChild(link);
+        }
+    };
+
     self.openEditor = function(editorPath, filename) {
         // Create CodeMirror instance and set the mode
         var info = CodeMirror.findModeByFileName(filename);
         var textarea = jQuery('#tree-view-blob-content textarea')[0];
         var options = Object.assign({}, webui.codeMirrorOptions, { mode: info && info.mode });
         self.editor = CodeMirror.fromTextArea(textarea, options);
+        self.setTheme(settings.theme);
+        self.setOption('keyMap', settings.mode);
         if (info) {
             CodeMirror.autoLoadMode(self.editor, info.mode);
         }
@@ -1389,6 +1417,7 @@ webui.TreeView = function(commitView) {
                    '        <button id="find" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>' +
                    '        <button id="replace" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>' +
                    '        <button id="format" type="button" class="btn btn-default btn-sm">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>' +
+                   '        <button id="settings" type="button" class="btn btn-default btn-sm" style="float: right">Settings <i class="fa fa-cog" aria-hidden="true"></i></button>' +
                    '        </div>' +
                    '    </div>' +
                    '</div>').appendTo(self.element);
@@ -1422,6 +1451,9 @@ webui.TreeView = function(commitView) {
             });
             jQuery('#format').click(function() {
                 self.editorFormat();
+            });
+            jQuery('#settings').click(function() {
+                jQuery('#session-modal').modal({ backdrop: false, show: true });
             });
         }
     }
@@ -1588,7 +1620,7 @@ webui.CommitHeaderView = function(commitExplorerView, header) {
 /*
  * == CommitView ==============================================================
  */
-webui.CommitView = function(historyView) {
+webui.CommitView = function(historyView, settings) {
 
     var self = this;
 
@@ -1625,13 +1657,13 @@ webui.CommitView = function(historyView) {
     var commitViewContent = jQuery('<div id="commit-view-content">')[0];
     self.element.appendChild(commitViewContent);
     var diffView = new webui.DiffView(false, false, self);
-    var treeView = new webui.TreeView(self);
+    var treeView = new webui.TreeView(self, settings);
 };
 
 /*
  * == HistoryView =============================================================
  */
-webui.HistoryView = function(mainView) {
+webui.HistoryView = function(mainView, settings) {
     var self = this;
 
     self.show = function() {
@@ -1646,7 +1678,7 @@ webui.HistoryView = function(mainView) {
     self.element = jQuery('<div id="history-view">')[0];
     self.logView = new webui.LogView(self);
     self.element.appendChild(self.logView.element);
-    self.commitView = new webui.CommitView(self);
+    self.commitView = new webui.CommitView(self, settings);
     self.element.appendChild(self.commitView.element);
     self.mainView = mainView;
 };
@@ -1690,7 +1722,7 @@ webui.WorkspaceView = function(mainView) {
 /*
  * == FilesView ===========================================================
  */
-webui.FilesView = function(mainView) {
+webui.FilesView = function(mainView, settings) {
     var self = this;
 
     self.show = function() {
@@ -1706,7 +1738,7 @@ webui.FilesView = function(mainView) {
                           '<div id="workspace-editor"></div>' +
                           '</div>')[0];
     var workspaceEditor = jQuery("#workspace-editor", self.element)[0];
-    self.treeView = new webui.TreeView(self);
+    self.treeView = new webui.TreeView(self, settings);
     workspaceEditor.appendChild(self.treeView.element);
 };
 
@@ -1991,20 +2023,42 @@ function MainUi() {
         }
     }
 
+    self.getEditor = function() {
+        // Get editor instance
+        return window.main.filesView.treeView.editor;
+    };
+
     var sideBarViewCallback = function() {
         setTimeout(function() {
             self.changeSection(document.location.hash);
         }, 500);
     }
 
+    self.settings = new Vue({
+        el: '#settings-app',
+        data: {
+            theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
+            mode: localStorage.getItem('airflow_code_editor_mode') || 'default',  // edit mode (default, vim, etc...)
+            themes: themes  // themes list from "themes.js"
+        },
+        watch: {
+            'theme': function(val, preVal) {
+                self.filesView.treeView.setTheme(val);
+            },
+            'mode': function(val, preVal) {
+                self.filesView.treeView.setOption('keyMap', val);
+            }
+        }
+    });
+
     self.globalContainer = jQuery('<div id="global-container">').appendTo(jQuery("body"))[0];
     self.sideBarView = new webui.SideBarView(self, sideBarViewCallback);
     self.mainView = jQuery('<div id="main-view">')[0];
     self.globalContainer.appendChild(self.sideBarView.element);
     self.globalContainer.appendChild(self.mainView);
-    self.historyView = new webui.HistoryView(self);
+    self.historyView = new webui.HistoryView(self, self.settings);
     self.workspaceView = new webui.WorkspaceView(self);
-    self.filesView = new webui.FilesView(self);
+    self.filesView = new webui.FilesView(self, self.settings);
 
 }
 

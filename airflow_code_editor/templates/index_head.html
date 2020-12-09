@@ -1,6 +1,9 @@
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='code_editor/css/gitweb.css') }}" />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='code_editor/css/codemirror.css') }}" />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='code_editor/addon/fold/foldgutter.css') }}" />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='code_editor/addon/dialog/dialog.css') }}" />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='code_editor/css/bootstrap-dialog.css') }}" />
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='code_editor/css/editor_v' ~ airflow_major_version ~ '.css') }}" />
+{% for filename in [
+    'css/gitweb.css',
+    'css/codemirror.css',
+    'addon/fold/foldgutter.css',
+    'addon/dialog/dialog.css',
+    'css/bootstrap-dialog.css',
+    'css/editor_v' ~ airflow_major_version ~ '.css' ] -%}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='code_editor/' + filename) }}" />
+{% endfor %}

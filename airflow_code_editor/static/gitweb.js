@@ -324,7 +324,7 @@ webui.SideBarView = function(mainView, callback) {
     };
 
     self.mainView = mainView;
-    self.element = jQuery('#sidebar>');
+    self.element = jQuery('#sidebar')[0];
 
     var workspaceElement = jQuery("#sidebar-workspace h4", self.element);
     workspaceElement.click(function (event) {
@@ -1469,19 +1469,19 @@ webui.CommitView = function(id, historyView, settings) {
     };
 
     self.showDiff = function() {
-        jQuery(id + ' .tree-view').hide();
-        jQuery(id + ' .diff-view-container').show();
+        jQuery(id).find('.tree-view').hide();
+        jQuery(id).find('.diff-view-container').show();
     };
 
     self.showTree = function() {
-        jQuery(id + ' .diff-view-container').hide();
-        jQuery(id + ' .tree-view').show();
+        jQuery(id).find('.diff-view-container').hide();
+        jQuery(id).find('.tree-view').show();
     };
 
     self.historyView = historyView;
     var currentCommit = null;
     self.element = jQuery(id)[0];
-    var commitViewHeader = jQuery(id + ' .commit-view-header')[0];
+    var commitViewHeader = jQuery(id).find('.commit-view-header')[0];
     var buttonBox = new webui.TabBox([["Commit", self.showDiff], ["Tree", self.showTree]]);
     commitViewHeader.appendChild(buttonBox.element);
     var diffView = new webui.DiffView(id + ' .diff-view-container', false, false, self);

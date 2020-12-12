@@ -348,7 +348,7 @@ webui.SideBarView = function(mainView, callback) {
 /*
  * == LogView =================================================================
  */
-webui.LogView = function(historyView) {
+webui.LogView = function(id, historyView) {
     var self = this;
 
     self.update = function(ref) {
@@ -621,7 +621,7 @@ webui.LogView = function(historyView) {
     };
 
     self.historyView = historyView;
-    self.element = jQuery('#log-view')[0];
+    self.element = jQuery(id)[0];
     var svg = self.element.children[0];
     var content = self.element.children[1];
     var currentSelection = null;
@@ -979,24 +979,7 @@ webui.DiffView = function(id, sideBySide, hunkSelectionAllowed, parent) {
         });
     }
 
-    var html = '<div class="diff-view-container panel panel-default">';
-        html +=
-            '<div class="panel-heading btn-toolbar" role="toolbar">' +
-                '<button type="button" class="btn btn-sm btn-default diff-ignore-whitespace" data-toggle="button">Ignore Whitespace</button>' +
-                '<button type="button" class="btn btn-sm btn-default diff-context-all" data-toggle="button">Complete file</button>' +
-                '<div class="btn-group btn-group-sm">' +
-                    '<span></span>&nbsp;' +
-                    '<button type="button" class="btn btn-default diff-context-remove">-</button>' +
-                    '<button type="button" class="btn btn-default diff-context-add">+</button>' +
-                '</div>' +
-                '<div class="btn-group btn-group-sm diff-selection-buttons">' +
-                    '<button type="button" class="btn btn-default diff-stage" style="display:none">Stage</button>' +
-                    '<button type="button" class="btn btn-default diff-cancel" style="display:none">Cancel</button>' +
-                    '<button type="button" class="btn btn-default diff-unstage" style="display:none">Unstage</button>' +
-                '</div>' +
-            '</div>';
-    html += '<div class="panel-body"></div></div>'
-    self.element = jQuery(html)[0];
+    self.element = jQuery(id)[0];
     var panelBody = jQuery(".panel-body", self.element)[0];
     if (sideBySide) {
         var left = jQuery('<div class="diff-view"><div class="diff-view-lines"></div></div>')[0];
@@ -1469,7 +1452,7 @@ webui.TreeView = function(id, settings) {
 /*
  * == CommitView ==============================================================
  */
-webui.CommitView = function(historyView, settings) {
+webui.CommitView = function(id, historyView, settings) {
     var self = this;
 
     self.update = function(entry) {
@@ -1486,24 +1469,23 @@ webui.CommitView = function(historyView, settings) {
     };
 
     self.showDiff = function() {
-        webui.detachChildren(commitViewContent);
-        commitViewContent.appendChild(diffView.element);
+        jQuery(id + ' .tree-view').hide();
+        jQuery(id + ' .diff-view-container').show();
     };
 
     self.showTree = function() {
-        webui.detachChildren(commitViewContent);
-        commitViewContent.appendChild(treeView.element);
+        jQuery(id + ' .diff-view-container').hide();
+        jQuery(id + ' .tree-view').show();
     };
 
     self.historyView = historyView;
     var currentCommit = null;
-    self.element = jQuery('#commit-view')[0];
-    var commitViewHeader = jQuery('#commit-view-header')[0];
+    self.element = jQuery(id)[0];
+    var commitViewHeader = jQuery(id + ' .commit-view-header')[0];
     var buttonBox = new webui.TabBox([["Commit", self.showDiff], ["Tree", self.showTree]]);
     commitViewHeader.appendChild(buttonBox.element);
-    var commitViewContent = jQuery('#commit-view-content')[0];
-    var diffView = new webui.DiffView(null, false, false, self);
-    var treeView = new webui.TreeView('#workspace-tree', settings);
+    var diffView = new webui.DiffView(id + ' .diff-view-container', false, false, self);
+    var treeView = new webui.TreeView(id + ' .tree-view', settings);
 };
 
 /*
@@ -1522,8 +1504,8 @@ webui.HistoryView = function(mainView, settings) {
     };
 
     self.element = jQuery('#history-view')[0];
-    self.logView = new webui.LogView(self);
-    self.commitView = new webui.CommitView(self, settings);
+    self.logView = new webui.LogView('#log-view', self);
+    self.commitView = new webui.CommitView('#commit-view', self, settings);
     self.mainView = mainView;
 };
 
@@ -1549,8 +1531,7 @@ webui.WorkspaceView = function(mainView) {
 
     self.element = jQuery('#workspace-view')[0];
     var workspaceDiffView = jQuery("#workspace-diff-view", self.element)[0];
-    self.diffView = new webui.DiffView(null, true, true, self);
-    workspaceDiffView.appendChild(self.diffView.element);
+    self.diffView = new webui.DiffView('#workspace-diff-view .diff-view-container', true, true, self);
     var workspaceEditor = jQuery("#workspace-editor", self.element)[0];
     self.workingCopyView = new webui.ChangedFilesView(self, "working-copy", "Working Copy");
     workspaceEditor.appendChild(self.workingCopyView.element);

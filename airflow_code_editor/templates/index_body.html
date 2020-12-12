@@ -59,14 +59,48 @@
         <div id="history-view">
             <div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>
             <div id="commit-view">
-                <div id="commit-view-header"></div>
-                <div id="commit-view-content"></div>
+                <div class="commit-view-header"></div>
+                <div class="diff-view-container panel panel-default">
+                    <div class="panel-heading btn-toolbar" role="toolbar">
+                        <button type="button" class="btn btn-sm btn-default diff-ignore-whitespace" data-toggle="button">Ignore Whitespace</button>
+                        <button type="button" class="btn btn-sm btn-default diff-context-all" data-toggle="button">Complete file</button>
+                        <div class="btn-group btn-group-sm">
+                            <span></span>&nbsp;
+                            <button type="button" class="btn btn-default diff-context-remove">-</button>
+                            <button type="button" class="btn btn-default diff-context-add">+</button>
+                        </div>
+                        <div class="btn-group btn-group-sm diff-selection-buttons">
+                            <button type="button" class="btn btn-default diff-stage" style="display:none">Stage</button>
+                            <button type="button" class="btn btn-default diff-cancel" style="display:none">Cancel</button>
+                            <button type="button" class="btn btn-default diff-unstage" style="display:none">Unstage</button>
+                        </div>
+                    </div>
+                    <div class="panel-body"></div>
+                </div>
+                <div class="tree-view" class="display: none"></div>
             </div>
         </div>
         <div id="workspace-view">
-            <div id="workspace-diff-view"></div>
+            <div id="workspace-diff-view">
+                <div class="diff-view-container panel panel-default">
+                    <div class="panel-heading btn-toolbar" role="toolbar">
+                        <button type="button" class="btn btn-sm btn-default diff-ignore-whitespace" data-toggle="button">Ignore Whitespace</button>
+                        <button type="button" class="btn btn-sm btn-default diff-context-all" data-toggle="button">Complete file</button>
+                        <div class="btn-group btn-group-sm">
+                            <span></span>&nbsp;
+                            <button type="button" class="btn btn-default diff-context-remove">-</button>
+                            <button type="button" class="btn btn-default diff-context-add">+</button>
+                        </div>
+                        <div class="btn-group btn-group-sm diff-selection-buttons">
+                            <button type="button" class="btn btn-default diff-stage" style="display:none">Stage</button>
+                            <button type="button" class="btn btn-default diff-cancel" style="display:none">Cancel</button>
+                            <button type="button" class="btn btn-default diff-unstage" style="display:none">Unstage</button>
+                        </div>
+                    </div>
+                    <div class="panel-body"></div>
+                </div>
+            </div>
             <div id="workspace-editor"></div>
-            <div id="workspace-tree" class="tree-view"></div>
         </div>
         <div id="files-view">
             <div id="files-editor">

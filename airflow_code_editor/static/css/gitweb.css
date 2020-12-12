@@ -250,11 +250,11 @@ body {
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
 }
-#commit-view #commit-view-header {
+#commit-view .commit-view-header {
   border: solid #dddddd;
   border-width: 0 0 1px 0;
 }
-#commit-view #commit-view-content {
+#commit-view .commit-view-content {
   display: flex;
   display: -webkit-flex;
   min-height: 0;

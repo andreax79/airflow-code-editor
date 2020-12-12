@@ -324,25 +324,7 @@ webui.SideBarView = function(mainView, callback) {
     };
 
     self.mainView = mainView;
-    self.element = jQuery('<div id="sidebar">' +
-                            '<div id="sidebar-content">' +
-                                '<section id="sidebar-files">' +
-                                '<h4><i class="fa fa-home"></i> Files</h4>' +
-                                '</section>' +
-                                '<section id="sidebar-workspace">' +
-                                '<h4><i class="fa fa-briefcase"></i>Git Workspace</h4>' +
-                                '</section>' +
-                                '<section id="sidebar-local-branches">' +
-                                '<h4><i class="fa fa-code-fork"></i> Local Branches</h4>' +
-                                '</section>' +
-                                '<section id="sidebar-remote-branches">' +
-                                '<h4><i class="fa fa-globe"></i>Remote Branches</h4>' +
-                                '</section>' +
-                                '<section id="sidebar-tags">' +
-                                '<h4><i class="fa fa-tags"></i>Tags</h4>' +
-                                '</section>' +
-                            '</div>' +
-                        '</div>')[0];
+    self.element = jQuery('#sidebar>');
 
     var workspaceElement = jQuery("#sidebar-workspace h4", self.element);
     workspaceElement.click(function (event) {
@@ -639,7 +621,7 @@ webui.LogView = function(historyView) {
     };
 
     self.historyView = historyView;
-    self.element = jQuery('<div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>')[0];
+    self.element = jQuery('#log-view')[0];
     var svg = self.element.children[0];
     var content = self.element.children[1];
     var currentSelection = null;
@@ -651,7 +633,7 @@ webui.LogView = function(historyView) {
 /*
  * == DiffView ================================================================
  */
-webui.DiffView = function(sideBySide, hunkSelectionAllowed, parent) {
+webui.DiffView = function(id, sideBySide, hunkSelectionAllowed, parent) {
     var self = this;
 
     self.update = function(cmd, diffOpts, file, mode) {
@@ -997,18 +979,7 @@ webui.DiffView = function(sideBySide, hunkSelectionAllowed, parent) {
         });
     }
 
-    self.switchToExploreView = function() {
-        if (! self.currentDiff) {
-            return;
-        }
-        var mainView = parent.historyView.mainView;
-        var commitExplorerView = new webui.CommitExplorerView(mainView, self.currentDiff);
-        commitExplorerView.show();
-    };
-
-    var html = '<div class="diff-view-container panel panel-default">';
-    if (! (parent instanceof webui.CommitExplorerView)) {
-        html +=
+    var html = '<div class="diff-view-container panel panel-default">' +
             '<div class="panel-heading btn-toolbar" role="toolbar">' +
                 '<button type="button" class="btn btn-sm btn-default diff-ignore-whitespace" data-toggle="button">Ignore Whitespace</button>' +
                 '<button type="button" class="btn btn-sm btn-default diff-context-all" data-toggle="button">Complete file</button>' +
@@ -1022,10 +993,8 @@ webui.DiffView = function(sideBySide, hunkSelectionAllowed, parent) {
                     '<button type="button" class="btn btn-default diff-cancel" style="display:none">Cancel</button>' +
                     '<button type="button" class="btn btn-default diff-unstage" style="display:none">Unstage</button>' +
                 '</div>' +
-                (sideBySide ? '' : '<button type="button"  class="btn btn-sm btn-default diff-explore">Explore</button>') +
-            '</div>';
-    }
-    html += '<div class="panel-body"></div></div>'
+            '</div>' +
+            '<div class="panel-body"></div></div>'
     self.element = jQuery(html)[0];
     var panelBody = jQuery(".panel-body", self.element)[0];
     if (sideBySide) {
@@ -1060,8 +1029,6 @@ webui.DiffView = function(sideBySide, hunkSelectionAllowed, parent) {
     jQuery(".diff-cancel", self.element).click(function() { self.applySelection(true, false); });
     jQuery(".diff-unstage", self.element).click(function() { self.applySelection(true, true); });
 
-    jQuery(".diff-explore", self.element).click(function() { self.switchToExploreView(); });
-
     self.context = 3;
     self.complete = false;
     self.ignoreWhitespace = false;
@@ -1071,7 +1038,7 @@ webui.DiffView = function(sideBySide, hunkSelectionAllowed, parent) {
 /*
  * == TreeView ================================================================
  */
-webui.TreeView = function(commitView, settings) {
+webui.TreeView = function(id, settings) {
     var self = this;
 
     function Entry(line) {
@@ -1157,6 +1124,14 @@ webui.TreeView = function(commitView, settings) {
                 li.addClass("active");
             }
         }
+        var newButton = jQuery('<button id="new" type="button" class="btn btn-default btn-sm" style="float: right">New <i class="fa fa-plus" aria-hidden="true"></i></button>');
+        newButton.click(function(t) {
+            var treeRef = self.stack[self.stack.length - 1].object;
+            self.updateStack(treeRef + '/✧');
+            self.showBlob();
+            return false;
+        });
+        newButton.appendTo(breadcrumb);
     }
 
     self.breadcrumbClicked = function(event) {
@@ -1320,6 +1295,9 @@ webui.TreeView = function(commitView, settings) {
 
     self.editorSaveAs = function(path) {
         // Show 'Save as...' dialog
+        if (self.isNew(path)) {
+            path = path.replace('✧', '');
+        }
         BootstrapDialog.show({
             title: 'Save File',
             message: 'File name <input type="text" class="form-control" value="' + path + '" />',
@@ -1381,9 +1359,18 @@ webui.TreeView = function(commitView, settings) {
         }
     };
 
+    self.isNew = function(filename) {
+        return /✧$/.test(filename);
+    }
+
     self.openEditor = function(editorPath, filename) {
         // Create CodeMirror instance and set the mode
-        var info = CodeMirror.findModeByFileName(filename);
+        var info;
+        if (self.isNew(filename)) {
+            info = { 'mode': 'python' };
+        } else {
+            info = CodeMirror.findModeByFileName(filename);
+        }
         var textarea = jQuery('#tree-view-blob-content textarea')[0];
         var options = Object.assign({}, webui.codeMirrorOptions, { mode: info && info.mode });
         self.editor = CodeMirror.fromTextArea(textarea, options);
@@ -1392,8 +1379,15 @@ webui.TreeView = function(commitView, settings) {
         if (info) {
             CodeMirror.autoLoadMode(self.editor, info.mode);
         }
-        // Load the file
-        self.editorLoad(editorPath);
+        if (self.isNew(filename)) {
+            // New file
+            self.editor.setValue('');
+            self.editor.refresh();
+            self.editorPath = editorPath;
+        } else {
+            // Load the file
+            self.editorLoad(editorPath);
+        }
     }
 
     self.showBlob = function() {
@@ -1435,13 +1429,19 @@ webui.TreeView = function(commitView, settings) {
         }
         if (object.startsWith('/')) { // File path
             jQuery('#save').click(function() {
-                self.editorSave(self.editorPath);
+                if (self.isNew(self.editorPath)) {
+                    self.editorSaveAs(self.editorPath);
+                } else {
+                    self.editorSave(self.editorPath);
+                }
             });
             jQuery('#saveAs').click(function() {
                 self.editorSaveAs(self.editorPath);
             });
             jQuery('#revert').click(function() {
-                self.editorLoad(self.editorPath);
+                if (! self.isNew(self.editorPath)) {
+                    self.editorLoad(self.editorPath);
+                }
             });
             jQuery('#find').click(function() {
                 self.editor.execCommand('find');
@@ -1458,7 +1458,7 @@ webui.TreeView = function(commitView, settings) {
         }
     }
 
-    self.element = jQuery('<div id="tree-view">')[0];
+    self.element = jQuery(id)[0];
     var breadcrumb = jQuery('<ol class="breadcrumb">')[0];
     self.element.appendChild(breadcrumb);
     self.element.appendChild(jQuery('<div id="tree-view-tree-content">')[0]);
@@ -1466,162 +1466,9 @@ webui.TreeView = function(commitView, settings) {
 }
 
 /*
- * == CommitExplorerView =============================================================
- */
-webui.CommitExplorerView = function(mainView, diff) {
-    var self = this;
-    var diffLines = diff.split("\n");
-    var diffHeaderLines = [];
-    var diffSections = [];
-    var currentSection, line, c, lineMatch;
-
-    self.buildDiffSections = function(diff) {
-        var visitorState = 'header';
-
-        for (var i = 0; i < diffLines.length; i++) {
-            line = diffLines[i];
-            c = line[0];
-
-            switch(visitorState) {
-            case 'header':
-                if (c == 'd') {
-                    visitorState = 'sectionHeader';
-                    i -= 1;
-                } else {
-                    diffHeaderLines.push(line)
-                }
-                break;
-            case 'sectionHeader':
-                lineMatch = line.match(/^diff --git a\/(.*) b\/(.*)jQuery/)
-                currentSection = {
-                    leftName: lineMatch[1],
-                    rightName: lineMatch[2],
-                    lines: []
-                };
-                diffSections.push(currentSection);
-                visitorState = 'sectionContent';
-                break;
-            case 'sectionContent':
-                if (c == 'd') {
-                    visitorState = 'sectionHeader';
-                    i -= 1;
-                } else {
-                    currentSection.lines.push(line);
-                }
-            }
-        }
-    }
-
-    self.show = function() {
-        mainView.switchTo(self.element);
-    };
-
-    self.displayDiffForSection = function(idx) {
-        self.diffView.refresh(diffSections[idx].lines.join("\n"));
-    };
-
-    self.element = jQuery(    '<div id="commit-explorer-view">'+
-                             '<div id="commit-explorer-diff-view"></div>'+
-                             '<div id="commit-explorer-navigator-view"></div>'+
-                         '</div>')[0];
-
-    var commitExplorerDiffView = jQuery('#commit-explorer-diff-view', self.element)[0];
-    var commitExplorerNavigatorView = jQuery('#commit-explorer-navigator-view', self.element)[0];
-
-    self.buildDiffSections(diff);
-
-    self.diffView = new webui.DiffView(true, false, self);
-    self.fileListView = new webui.FileListView(self, diffSections);
-    self.commitHeaderView = new webui.CommitHeaderView(self, diffHeaderLines.join("\n"));
-
-    self.displayDiffForSection(0);
-
-    commitExplorerDiffView.appendChild(self.diffView.element);
-    commitExplorerNavigatorView.appendChild(self.fileListView.element);
-    commitExplorerNavigatorView.appendChild(self.commitHeaderView.element);
-
-}
-
-webui.FileListView = function(commitExplorerView, files){
-    var self = this;
-
-    self.fileSelected = function(event) {
-        var index = 0;
-        var sibling = event.target.previousElementSibling;
-        while (sibling) {
-            sibling = sibling.previousElementSibling;
-            ++index;
-        }
-        jQuery(".active", rightContainer).removeClass("active");
-        jQuery(".active", leftContainer).removeClass("active");
-        jQuery(rightContainer.children[index]).toggleClass("active");
-        jQuery(leftContainer.children[index]).toggleClass("active");
-        commitExplorerView.displayDiffForSection(index);
-    };
-
-    self.buildLine = function(label, parent) {
-        var element = jQuery('<a class="list-group-item">' + label + '</a>')[0];
-        jQuery(element).click(self.fileSelected)
-        parent.appendChild(element);
-    }
-
-    self.viewScrolled = function(event) {
-        if (event.target == rightScrollView) {
-            var current = rightScrollView;
-            var other = leftScrollView;
-        } else {
-            var current = leftScrollView;
-            var other = rightScrollView;
-        }
-        other.scrollTop = current.scrollTop;
-    }
-
-    self.element = jQuery(   '<div class="file-list-view panel panel-default">' +
-                            '<div class="panel-heading">' +
-                                '<h5> Files </h5>' +
-                            '</div>' +
-                            '<div class="file-list-container">' +
-                                '<div class="file-list-left-container">' +
-                                    '<div class="list-group"></div>' +
-                                '</div>' +
-                                '<div class="file-list-right-container">' +
-                                    '<div class="list-group"></div>' +
-                                '</div>' +
-                            '</div>' +
-                         '</div>')[0];
-
-    var rightScrollView = jQuery(".file-list-right-container", self.element)[0];
-    var rightContainer =  jQuery(".list-group", rightScrollView)[0];
-    var leftScrollView = jQuery(".file-list-left-container", self.element)[0];
-    var leftContainer =  jQuery(".list-group", leftScrollView)[0];
-
-    for (var i = 0; i < files.length; ++i) {
-        var lineData = files[i];
-        self.buildLine(lineData.rightName, rightContainer);
-        self.buildLine(lineData.leftName, leftContainer);
-    }
-    jQuery(rightScrollView).scroll(self.viewScrolled);
-    jQuery(leftScrollView).scroll(self.viewScrolled);
-}
-
-/*
- * == CommitHeaderView ==============================================================
- */
-webui.CommitHeaderView = function(commitExplorerView, header) {
-    var self = this;
-    self.element = jQuery('<div class="panel panel-default">' +
-                         '<div class="panel-heading">' +
-                             '<h5> Commit Details </h5>' +
-                         '</div>' +
-                         '<div class="panel-body">' + header.split("\n").join("<br>") + '</div>' +
-                     '</div>')[0];
-}
-
-/*
  * == CommitView ==============================================================
  */
 webui.CommitView = function(historyView, settings) {
-
     var self = this;
 
     self.update = function(entry) {
@@ -1649,15 +1496,13 @@ webui.CommitView = function(historyView, settings) {
 
     self.historyView = historyView;
     var currentCommit = null;
-    self.element = jQuery('<div id="commit-view">')[0];
-    var commitViewHeader = jQuery('<div id="commit-view-header">')[0];
-    self.element.appendChild(commitViewHeader);
+    self.element = jQuery('#commit-view')[0];
+    var commitViewHeader = jQuery('#commit-view-header')[0];
     var buttonBox = new webui.TabBox([["Commit", self.showDiff], ["Tree", self.showTree]]);
     commitViewHeader.appendChild(buttonBox.element);
-    var commitViewContent = jQuery('<div id="commit-view-content">')[0];
-    self.element.appendChild(commitViewContent);
-    var diffView = new webui.DiffView(false, false, self);
-    var treeView = new webui.TreeView(self, settings);
+    var commitViewContent = jQuery('#commit-view-content')[0];
+    var diffView = new webui.DiffView(null, false, false, self);
+    var treeView = new webui.TreeView('#workspace-tree', settings);
 };
 
 /*
@@ -1675,11 +1520,9 @@ webui.HistoryView = function(mainView, settings) {
         self.logView.update(ref);
     };
 
-    self.element = jQuery('<div id="history-view">')[0];
+    self.element = jQuery('#history-view')[0];
     self.logView = new webui.LogView(self);
-    self.element.appendChild(self.logView.element);
     self.commitView = new webui.CommitView(self, settings);
-    self.element.appendChild(self.commitView.element);
     self.mainView = mainView;
 };
 
@@ -1703,12 +1546,9 @@ webui.WorkspaceView = function(mainView) {
         }
     };
 
-    self.element = jQuery('<div id="workspace-view">' +
-                          '<div id="workspace-diff-view"></div>' +
-                          '<div id="workspace-editor"></div>' +
-                          '</div>')[0];
+    self.element = jQuery('#workspace-view')[0];
     var workspaceDiffView = jQuery("#workspace-diff-view", self.element)[0];
-    self.diffView = new webui.DiffView(true, true, self);
+    self.diffView = new webui.DiffView(null, true, true, self);
     workspaceDiffView.appendChild(self.diffView.element);
     var workspaceEditor = jQuery("#workspace-editor", self.element)[0];
     self.workingCopyView = new webui.ChangedFilesView(self, "working-copy", "Working Copy");
@@ -1734,12 +1574,8 @@ webui.FilesView = function(mainView, settings) {
         self.treeView.update();
     };
 
-    self.element = jQuery('<div id="workspace-view">' +
-                          '<div id="workspace-editor"></div>' +
-                          '</div>')[0];
-    var workspaceEditor = jQuery("#workspace-editor", self.element)[0];
-    self.treeView = new webui.TreeView(self, settings);
-    workspaceEditor.appendChild(self.treeView.element);
+    self.element = jQuery('#files-view')[0];
+    self.treeView = new webui.TreeView('#files-tree', settings);
 };
 
 /*
@@ -2031,6 +1867,7 @@ function MainUi() {
     var sideBarViewCallback = function() {
         setTimeout(function() {
             self.changeSection(document.location.hash);
+            jQuery('#global-container').show();
         }, 500);
     }
 
@@ -2051,11 +1888,9 @@ function MainUi() {
         }
     });
 
-    self.globalContainer = jQuery('<div id="global-container">').appendTo(jQuery("body"))[0];
+    self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
     self.sideBarView = new webui.SideBarView(self, sideBarViewCallback);
-    self.mainView = jQuery('<div id="main-view">')[0];
-    self.globalContainer.appendChild(self.sideBarView.element);
-    self.globalContainer.appendChild(self.mainView);
+    self.mainView = jQuery('#main-view')[0];
     self.historyView = new webui.HistoryView(self, self.settings);
     self.workspaceView = new webui.WorkspaceView(self);
     self.filesView = new webui.FilesView(self, self.settings);

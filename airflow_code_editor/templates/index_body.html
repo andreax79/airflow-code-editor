@@ -34,3 +34,47 @@
     </div>
 </div>
 
+{% raw %}
+<div id="global-container" style="display: none">
+    <div id="sidebar">
+        <div id="sidebar-content">
+            <section id="sidebar-files">
+            <h4><i class="fa fa-home"></i> Files</h4>
+            </section>
+            <section id="sidebar-workspace">
+            <h4><i class="fa fa-briefcase"></i>Git Workspace</h4>
+            </section>
+            <section id="sidebar-local-branches">
+            <h4><i class="fa fa-code-fork"></i> Local Branches</h4>
+            </section>
+            <section id="sidebar-remote-branches">
+            <h4><i class="fa fa-globe"></i>Remote Branches</h4>
+            </section>
+            <section id="sidebar-tags">
+            <h4><i class="fa fa-tags"></i>Tags</h4>
+            </section>
+        </div>
+    </div>
+    <div id="main-view">
+        <div id="history-view">
+            <div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>
+            <div id="commit-view">
+                <div id="commit-view-header"></div>
+                <div id="commit-view-content">
+                    <div id="workspace-tree" class="tree-view"></div>
+                </div>
+            </div>
+        </div>
+        <div id="workspace-view">
+            <div id="workspace-diff-view"></div>
+            <div id="workspace-editor"></div>
+        </div>
+        <div id="files-view">
+            <div id="files-editor">
+                <div id="files-diff" class=""></div>
+                <div id="files-tree" class="tree-view"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endraw %}

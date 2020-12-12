@@ -979,7 +979,8 @@ webui.DiffView = function(id, sideBySide, hunkSelectionAllowed, parent) {
         });
     }
 
-    var html = '<div class="diff-view-container panel panel-default">' +
+    var html = '<div class="diff-view-container panel panel-default">';
+        html +=
             '<div class="panel-heading btn-toolbar" role="toolbar">' +
                 '<button type="button" class="btn btn-sm btn-default diff-ignore-whitespace" data-toggle="button">Ignore Whitespace</button>' +
                 '<button type="button" class="btn btn-sm btn-default diff-context-all" data-toggle="button">Complete file</button>' +
@@ -993,8 +994,8 @@ webui.DiffView = function(id, sideBySide, hunkSelectionAllowed, parent) {
                     '<button type="button" class="btn btn-default diff-cancel" style="display:none">Cancel</button>' +
                     '<button type="button" class="btn btn-default diff-unstage" style="display:none">Unstage</button>' +
                 '</div>' +
-            '</div>' +
-            '<div class="panel-body"></div></div>'
+            '</div>';
+    html += '<div class="panel-body"></div></div>'
     self.element = jQuery(html)[0];
     var panelBody = jQuery(".panel-body", self.element)[0];
     if (sideBySide) {

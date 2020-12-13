@@ -90,12 +90,6 @@ webui.git = function(args, callback) {
     });
 };
 
-webui.detachChildren = function(element) {
-    while (element.firstChild) {
-        element.removeChild(element.firstChild);
-    }
-}
-
 webui.splitLines = function(data) {
     return data.split("\n").filter(function(s) { return s.length > 0; });
 };
@@ -1793,8 +1787,8 @@ function MainUi() {
     var self = this;
 
     self.switchTo = function(element) {
-        webui.detachChildren(self.mainView);
-        self.mainView.appendChild(element);
+        jQuery('#main-view').children().hide()
+        jQuery(element).show();
     }
 
     self.edit = function(target) {
@@ -1877,5 +1871,10 @@ function MainUi() {
     self.workspaceView = new webui.WorkspaceView(self);
     self.filesView = new webui.FilesView(self, self.settings);
 
+    // self.app = new Vue({
+    //     el: '#global-container',
+    //     data: {
+    //     },
+    // });
 }
 

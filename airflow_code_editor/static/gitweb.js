@@ -135,7 +135,7 @@ webui.TabBox = function(buttons) {
 /*
  * == SideBarView =============================================================
  */
-webui.SideBarView = function(mainView, callback) {
+webui.SideBarView = function(mainView, callback, refsPopup) {
     var self = this;
 
     self.selectRef = function(refName) {
@@ -161,42 +161,8 @@ webui.SideBarView = function(mainView, callback) {
         if (moreTag && moreTag.length) {
             moreTag.toggleClass("active");
         }
+        self.refName = refName;
         self.mainView.historyView.update(refName);
-    };
-
-    self.addPopup = function(section, title, id, refs) {
-        var popup = jQuery(  '<div class="modal fade" id="' + id + '" role="dialog">' +
-                            '<div class="modal-dialog modal-sm">' +
-                                '<div class="modal-content">' +
-                                    '<div class="modal-header">' +
-                                        '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>' +
-                                        '<h4 class="modal-title">' + title + '</h4>' +
-                                    '</div>' +
-                                    '<div class="modal-body"><div class="list-group"></div></div>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>')[0];
-        self.element.appendChild(popup);
-        var popupContent = jQuery(".list-group", popup)[0];
-        refs.forEach(function(ref) {
-            var link = jQuery('<a class="list-group-item sidebar-ref">')[0];
-            link.section = section;
-            if (id == "local-branches-popup") {
-                link.refName = ref.substr(2);
-                if (ref[0] == "*") {
-                    jQuery(link).addClass("branch-current");
-                }
-            } else {
-                link.refName = ref;
-            }
-            jQuery(link).text(link.refName);
-            popupContent.appendChild(link);
-            jQuery(link).click(function (event) {
-                jQuery(popup).modal('hide');
-                self.selectRef(event.target.refName);
-            });
-        });
-        return popup;
     };
 
     self.fetchSection = function(section, title, id, gitCommand, callback) {
@@ -277,11 +243,14 @@ webui.SideBarView = function(mainView, callback) {
                 }
 
                 if (refs.length > maxRefsCount) {
-                    var li = jQuery('<li class="sidebar-more">More ...</li>').appendTo(ul);
-                    var popup = self.addPopup(section, title, id + "-popup", refs);
-                    li.click(function() {
-                        jQuery(popup).modal();
-                    });
+                    jQuery('<li class="sidebar-more">More ...</li>')
+                        .appendTo(ul)
+                        .click(function() {
+                            refsPopup.title = title;
+                            refsPopup.refs = refs;
+                            refsPopup.ref = self.refName;
+                            jQuery('#refs-modal').modal({ backdrop: false, show: true });
+                        });
                 }
             } else {
                 if (id != "mounts") {
@@ -1431,7 +1400,7 @@ webui.TreeView = function(id, settings) {
                 self.editorFormat();
             });
             jQuery('#settings').click(function() {
-                jQuery('#session-modal').modal({ backdrop: false, show: true });
+                jQuery('#settings-modal').modal({ backdrop: false, show: true });
             });
         }
     }
@@ -1847,6 +1816,7 @@ function MainUi() {
         }, 500);
     }
 
+    // Show Settings popup
     self.settings = new Vue({
         el: '#settings-app',
         data: {
@@ -1864,8 +1834,26 @@ function MainUi() {
         }
     });
 
+    // Select Branch/Tag popup
+    self.refsPopup = new Vue({
+        el: '#refs-modal',
+        data: {
+            title: null,
+            ref: null,
+            refs: []
+        },
+        watch: {
+            'ref': function(val, preVal) {
+                if (self.sideBarView.refName != val && val !== undefined) {
+                    self.sideBarView.selectRef(val);
+                    jQuery('#refs-modal').modal('hide');
+                }
+            },
+        }
+    });
+
     self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
-    self.sideBarView = new webui.SideBarView(self, sideBarViewCallback);
+    self.sideBarView = new webui.SideBarView(self, sideBarViewCallback, self.refsPopup);
     self.mainView = jQuery('#main-view')[0];
     self.historyView = new webui.HistoryView(self, self.settings);
     self.workspaceView = new webui.WorkspaceView(self);
@@ -1877,4 +1865,3 @@ function MainUi() {
     //     },
     // });
 }
-

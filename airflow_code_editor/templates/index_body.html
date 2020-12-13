@@ -1,5 +1,6 @@
-<!-- Error modal dialog -->
-<div class="modal fade" id="session-modal" tabindex="-1" role="dialog">
+<!-- Settings modal dialog -->
+{% raw %}
+<div class="modal fade" id="settings-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -7,7 +8,6 @@
                 <h4 class="modal-title">Settings</h4>
             </div>
             <div class="modal-body">
-{% raw %}
 <div id="settings-app" class="container">
 
 <span style="min-width: 8em; display: inline-block">Theme:</span>
@@ -28,11 +28,37 @@
 
 </div>
 <hr/>
-{% endraw %}
             </div>
         </div>
     </div>
 </div>
+{% endraw %}
+
+<!-- Refs dialog -->
+{% raw %}
+<div class="modal fade" id="refs-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title">{{ title }}</h4>
+            </div>
+            <div class="modal-body">
+<div class="container">
+<select v-model="ref">
+    <option v-for="ref in refs">
+        {{ ref }}
+    </option>
+</select>
+<br/>
+
+</div>
+<hr/>
+            </div>
+        </div>
+    </div>
+</div>
+{% endraw %}
 
 {% raw %}
 <div id="global-container" style="display: none">

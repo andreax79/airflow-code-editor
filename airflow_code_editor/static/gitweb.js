@@ -1852,16 +1852,293 @@ function MainUi() {
         }
     });
 
-    self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
-    self.sideBarView = new webui.SideBarView(self, sideBarViewCallback, self.refsPopup);
-    self.mainView = jQuery('#main-view')[0];
-    self.historyView = new webui.HistoryView(self, self.settings);
-    self.workspaceView = new webui.WorkspaceView(self);
-    self.filesView = new webui.FilesView(self, self.settings);
+    // self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
+    // self.sideBarView = new webui.SideBarView(self, sideBarViewCallback, self.refsPopup);
+    // self.mainView = jQuery('#main-view')[0];
+    // self.historyView = new webui.HistoryView(self, self.settings);
+    // self.workspaceView = new webui.WorkspaceView(self);
+    // self.filesView = new webui.FilesView(self, self.settings);
 
     // self.app = new Vue({
     //     el: '#global-container',
     //     data: {
     //     },
     // });
+
+
+    function Entry(line) {
+        var self = this;
+
+        // https://en.wikipedia.org/wiki/Kilobyte
+        self.formatedSize = function(size) {
+            if (isNaN(self.size)) {
+                return "";
+            }
+            if (self.size < 10**3) {
+                return self.size.toString() + " B";
+            } else if (self.size < 10**6) {
+                return (self.size / 10**3).toFixed(2) + " kB";
+            } else if (self.size < 10**9) {
+                return (self.size / 10**6).toFixed(2) + " MB";
+            } else {
+                return (self.size / 10**9).toFixed(2) + " GB";
+            }
+        };
+
+        self.href = function() {
+            if (self.local) { // local file/dir
+                if (self.type == 'tree') {
+                    return '#files' + encodeURI(self.object);
+                } else {
+                    return '#edit' + encodeURI(self.object);
+                }
+            } else { // git blob
+                return '/code_editor/files/~git/' + self.object + '/' + self.name;
+            }
+        }
+
+        self.downloadHref = function() {
+            if (self.type == 'tree') { // tree
+                return '#';
+            } else if (self.local) {  // local file
+                return '/code_editor/files' + self.object;
+            } else { // git blob
+                return '/code_editor/files/~git/' + self.object + '/' + self.name;
+            }
+        }
+
+        self.isSymbolicLink = function() {
+            return (self.mode & 120000) == 120000; // S_IFLNK
+        }
+
+        var match = line.match(/^(\d+) (\w+) ([^ #]+)#?(\S+)?\s+(\S*)\t(\S+)/);
+        if (match !== undefined) {
+            self.mode = parseInt(match[1]);
+            self.type = match[2];
+            self.object = match[3];
+            self.mtime = match[4] ? match[4].replace('T', ' ') : '';
+            self.size = parseInt(match[5]);
+            self.name = match[6];
+            self.local = self.object[0] == '/';
+        }
+    }
+
+    Vue.component('button-counter', {
+        data: function () {
+            return {
+                editorPath: 0,
+                items: [],
+                stack: [ { name: webui.repo, object: null, uri: null } ]
+            }
+        },
+        methods: {
+            updateStack: function(path) {
+                var stack = [];
+                var fullPath = null;
+                path.split('/').forEach(function(part, index) {
+                    console.log(part);
+                    if (index === 0) {
+                        stack.push({ name: webui.repo, object: undefined, uri: undefined });
+                        fullPath = '';
+                    } else {
+                        fullPath += '/' + part;
+                        if (part[0] == '~') {
+                            part = part.substring(1);
+                        }
+                        stack.push({
+                            name: part,
+                            object: fullPath,
+                            uri: encodeURI((fullPath !== undefined && fullPath.startsWith('/')) ? ('#files' + fullPath) : fullPath)
+                        });
+                    }
+                });
+                console.log(stack);
+                this.stack = stack;
+            },
+            normalize: function(path) {
+                if (path[0] != '/') {
+                    path = '/' + path;
+                }
+                return path.split(/[/]+/).join('/');
+            },
+            editorLoad: function(path) {
+                // Load a file into the editor
+                jQuery.get('/code_editor/files' + path, function(res) {
+                    // Replace tabs with spaces
+                    if (this.editor.getMode().name == 'python') {
+                        res = res.replace(/\t/g, '    ');
+                    }
+                    this.editor.setValue(res);
+                    this.editor.refresh();
+                    this.editorPath = path;
+                    // Update url hash
+                    if (! path.startsWith('/~git/')) {
+                        document.location.hash = 'edit' + path;
+                    }
+                }, 'text');
+            },
+            editorSave: function(path) {
+                // Save editor content
+                var data = {
+                    data: this.editor.getValue()
+                };
+
+                jQuery.post("/code_editor/files" + path, data, function(res) {
+                    if (res.error) {
+                        webui.showError(res.error.message || 'Error saving file');
+                    } else {
+                        // Update editor path and the breadcrumb
+                        this.editorPath = path;
+                        this.updateStack(path);
+                        // Update url hash
+                        document.location.hash = 'edit' + path;
+                    }
+                });
+            },
+            editorSaveAs: function(path) {
+                // Show 'Save as...' dialog
+                if (this.isNew(path)) {
+                    path = path.replace('✧', '');
+                }
+                BootstrapDialog.show({
+                    title: 'Save File',
+                    message: 'File name <input type="text" class="form-control" value="' + path + '" />',
+                    buttons: [{
+                        label: 'Save',
+                        action: function(dialogRef) {
+                            var newPath = this.normalize(dialogRef.getModalBody().find('input').val().trim());
+                            dialogRef.close();
+                            this.editorSave(newPath);
+                        }
+                    },{
+                        label: 'Cancel',
+                        action: function(dialogRef) {
+                            dialogRef.close();
+                        }
+                    }]
+                });
+            },
+            editorFormat: function() {
+                // Format code
+                var data = {
+                    data: this.editor.getValue()
+                };
+                jQuery.post("/code_editor/format", data, function(res) {
+                    if (res.error) {
+                        webui.showError(res.error.message);
+                    } else {
+                        this.editor.setValue(res.data);
+                        this.editor.refresh();
+                    }
+                });
+            },
+            click: function(item) {
+                console.log(item);
+                this.stack.push(item);
+                this.showTree();
+                return false;
+            },
+            breadcrumbClicked: function(index, item) {
+                console.log(index);
+                return false;
+            },
+            showTree: function() {
+                var self = this;
+                // jQuery(self.element.lastElementChild).remove();
+                // var treeViewTreeContent = jQuery('<div id="tree-view-tree-content" class="list-group">')[0];
+                // self.element.appendChild(treeViewTreeContent);
+                // self.createBreadcrumb();
+                var treeRef = this.stack[this.stack.length - 1].object;
+                var parentTreeRef = this.stack.length > 1 ? this.stack[this.stack.length - 2].object : undefined;
+                var cmd = (treeRef === undefined || treeRef.startsWith('/')) ? 'ls-local' : 'ls-tree';
+                // Update url hash
+                if (cmd == 'ls-local') {
+                    document.location.hash = 'files' + (treeRef || '/');
+                }
+                webui.git([ cmd, "-l", treeRef ], function(data) {
+                    var blobs = [];
+                    var trees = [];
+                    if (parentTreeRef || (treeRef !== undefined && treeRef.startsWith('/')) ) {
+                    //     var href = (parentTreeRef !== undefined && parentTreeRef.startsWith('/')) ? ( '#files' + parentTreeRef ) : '#files/';
+                    //     var node = jQuery('<a href="' + encodeURI(href) + '" class="list-group-item">' +
+                    //                         '<span class="tree-item-tree">..</span> ' +
+                    //                         '<span></span> ' +
+                    //                         '<span></span> ' +
+                    //                      '</a>');
+                    //     node.click(function() {
+                    //         self.stack.pop();
+                    //         self.showTree();
+                    //         if (cmd == 'ls-local') {
+                    //             // Update url hash
+                    //             document.location.hash = 'files' + (self.stack[self.stack.length - 1].object || '/');
+                    //         }
+                    //         return false;
+                    //     });
+                    //     node.appendTo(treeViewTreeContent);
+                    }
+                    webui.splitLines(data).forEach(function(line) {
+                        var item = new Entry(line);
+                        var external = '';
+                        var download = '';
+                        // if (entry.type == 'blob') {
+                        //     // download = '<a class="download" title="Download" href="' + entry.downloadHref() + '">' +
+                        //     //            '<i class="fa fa-download" aria-hidden="true"></i>' +
+                        //     //            '</a>';
+                        // }
+                        // if (entry.local) {
+                        //     // external = '<a class="external-link" title="Open in a new window" target="_blank" href="' + entry.href() + '">' +
+                        //     //            '<i class="fa fa-external-link" aria-hidden="true"></i>' +
+                        //     //            '</a>';
+                        // }
+                        // // var node = jQuery('<span class="list-group-item">' +
+                        // //                  '<a class="name" href="' + entry.href() + '">' + entry.name + '</a> ' +
+                        // //                  '<span class="mtime">' + entry.mtime + '</span>' +
+                        // //                  '<span class="size">' + entry.formatedSize() + '</span>&nbsp;' +
+                        // //                  '<span class="buttons">' + download + external + '</span>' +
+                        // //                  '</span>')[0];
+                        // node.model = entry;
+                        // var aNode = jQuery("a", node)[0];
+                        // jQuery(aNode).addClass("tree-item-" + entry.type);
+                        // if (entry.isSymbolicLink()) {
+                        //     jQuery(aNode).addClass("tree-item-symlink");
+                        // }
+                        if (item.type == "tree") {
+                            trees.push(item);
+                        } else {
+                            blobs.push(item);
+                        }
+                        //     jQuery(node).children('.name').click(function(t) {
+                        //         self.stack.push({ name: entry.name, object: entry.object});
+                        //         self.showTree();
+                        //         return false;
+                        //     });
+                        // } else {
+                        //     blobs.push(node);
+                        //     jQuery(node).children('.name').click(function(t) {
+                        //         self.stack.push({ name: entry.name, object: entry.object});
+                        //         self.showBlob();
+                        //     });
+                        //     jQuery(node).children('.download').click(function(t) {
+                        //         window.location.href = entry.downloadHref();
+                        //     });
+                        // }
+                    });
+                    var compare = function(a, b) {
+                        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                    }
+                    blobs.sort(compare);
+                    trees.sort(compare);
+                    self.items = trees.concat(blobs);
+                });
+            }
+        },
+        created: function() {
+            this.updateStack('/');
+            this.showTree();
+        },
+        template: jQuery('#button-counter').html()
+    });
+
+    new Vue({ el: '#components-demo' });
+
 }

@@ -44,15 +44,12 @@
                 <h4 class="modal-title">{{ title }}</h4>
             </div>
             <div class="modal-body">
-<div class="container">
 <select v-model="ref">
     <option v-for="ref in refs">
         {{ ref }}
     </option>
 </select>
 <br/>
-
-</div>
 <hr/>
             </div>
         </div>
@@ -126,7 +123,18 @@
                     <div class="panel-body"></div>
                 </div>
             </div>
-            <div id="workspace-editor"></div>
+            <div id="workspace-editor">
+                <!-- <div id="commit&#45;message&#45;view" class="panel panel&#45;default"> -->
+                <!--     <div class="panel&#45;heading"> -->
+                <!--         <h5>Message</h5> -->
+                <!--         <div class="btn&#45;group btn&#45;group&#45;sm"> -->
+                <!--             <button type="button" class="btn btn&#45;default commit&#45;message&#45;amend" data&#45;toggle="button">Amend</button> -->
+                <!--             <button type="button" class="btn btn&#45;default commit&#45;message&#45;commit">Commit</button> -->
+                <!--         </div> -->
+                <!--     </div> -->
+                <!--     <textarea></textarea> -->
+                <!-- </div> -->
+            </div>
         </div>
         <div id="files-view">
             <div id="files-editor">
@@ -135,4 +143,51 @@
         </div>
     </div>
 </div>
+
+<div style='display: none'>
+    <div id='button-counter'>
+        <div class='tree-view'>
+            <ol class="breadcrumb">
+              <li v-for="(item, index) in stack" v-bind:key="item" v-bind:index="index">
+                  <a v-bind:href="item.uri" v-on:click="breadcrumbClicked(index, item)">{{ item.name }}</a>
+              </li>
+            </ol>
+            <div id="tree-view-tree-content" class="_list-group">
+                    <span v-for="item in items" :key="item" class="list-group-item">
+                        <a class="name" v-on:click="click(item)" v-bind:href="item.href()" v-bind:class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink() ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
+                        <span class="mtime">{{ item.mtime }}</span>
+                        <span class="size">{{ item.formatedSize() }}</span>&nbsp;
+                        <span class="buttons">
+                            <a v-if="item.type == 'blob'" class="download" title="Download" v-bind:href="item.downloadHref()"><i class="fa fa-download" aria-hidden="true"></i></a>
+                            <a v-if="item.local" class="external-link" title="Open in a new window" target="_blank" v-bind:href="item.href()"><i class="fa fa-external-link" aria-hidden="true"></i></a>
+                        </span>
+                    </span>
+                </div>
+            </div>
+            <div id="tree-view-blob-content">
+                <div class="cm-fullscreen-container cm-flex-container">
+                    <div class="cm-toolbar cm-flex-child-fixed">
+                    </div>
+                    <div class="cm-body cm-flex-child-grow">
+                        <textarea rows="30" cols="80" id="editor" name="editor" style="display: none"></textarea>
+                    </div>
+                    <div class="cm-footer cm-flex-child-fixed">
+                    <button id="save" type="button" class="btn btn-default btn-sm">Save <i class="fa fa-save" aria-hidden="true"></i></button>
+                    <button id="saveAs" type="button" class="btn btn-default btn-sm">Save as...</i></button>
+                    <button id="revert" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>
+                    <button id="find" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>
+                    <button id="replace" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>
+                    <button id="format" type="button" class="btn btn-default btn-sm">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>
+                    <button id="settings" type="button" class="btn btn-default btn-sm" style="float: right">Settings <i class="fa fa-cog" aria-hidden="true"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="components-demo">
+  <button-counter></button-counter>
+</div>
+
 {% endraw %}

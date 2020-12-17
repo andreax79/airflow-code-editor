@@ -1310,32 +1310,32 @@ webui.TreeView = function(id, settings) {
         return /✧$/.test(filename);
     }
 
-    self.openEditor = function(editorPath, filename) {
-        // Create CodeMirror instance and set the mode
-        var info;
-        if (self.isNew(filename)) {
-            info = { 'mode': 'python' };
-        } else {
-            info = CodeMirror.findModeByFileName(filename);
-        }
-        var textarea = jQuery('#tree-view-blob-content textarea')[0];
-        var options = Object.assign({}, webui.codeMirrorOptions, { mode: info && info.mode });
-        self.editor = CodeMirror.fromTextArea(textarea, options);
-        self.setTheme(settings.theme);
-        self.setOption('keyMap', settings.mode);
-        if (info) {
-            CodeMirror.autoLoadMode(self.editor, info.mode);
-        }
-        if (self.isNew(filename)) {
-            // New file
-            self.editor.setValue('');
-            self.editor.refresh();
-            self.editorPath = editorPath;
-        } else {
-            // Load the file
-            self.editorLoad(editorPath);
-        }
-    }
+    // self.openEditor = function(editorPath, filename) {
+    //     // Create CodeMirror instance and set the mode
+    //     var info;
+    //     if (self.isNew(filename)) {
+    //         info = { 'mode': 'python' };
+    //     } else {
+    //         info = CodeMirror.findModeByFileName(filename);
+    //     }
+    //     var textarea = jQuery('#tree-view-blob-content textarea')[0];
+    //     var options = Object.assign({}, webui.codeMirrorOptions, { mode: info && info.mode });
+    //     self.editor = CodeMirror.fromTextArea(textarea, options);
+    //     self.setTheme(settings.theme);
+    //     self.setOption('keyMap', settings.mode);
+    //     if (info) {
+    //         CodeMirror.autoLoadMode(self.editor, info.mode);
+    //     }
+    //     if (self.isNew(filename)) {
+    //         // New file
+    //         self.editor.setValue('');
+    //         self.editor.refresh();
+    //         self.editorPath = editorPath;
+    //     } else {
+    //         // Load the file
+    //         self.editorLoad(editorPath);
+    //     }
+    // }
 
     self.showBlob = function() {
         self.createBreadcrumb();
@@ -1516,11 +1516,11 @@ webui.FilesView = function(mainView, settings) {
 
     self.update = function() {
         self.show();
-        self.treeView.update();
+        // self.treeView.update();
     };
 
     self.element = jQuery('#files-view')[0];
-    self.treeView = new webui.TreeView('#files-tree', settings);
+    // self.treeView = new webui.TreeView('#files-tree', settings);
 };
 
 /*
@@ -1852,12 +1852,12 @@ function MainUi() {
         }
     });
 
-    // self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
-    // self.sideBarView = new webui.SideBarView(self, sideBarViewCallback, self.refsPopup);
-    // self.mainView = jQuery('#main-view')[0];
-    // self.historyView = new webui.HistoryView(self, self.settings);
-    // self.workspaceView = new webui.WorkspaceView(self);
-    // self.filesView = new webui.FilesView(self, self.settings);
+    self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
+    self.sideBarView = new webui.SideBarView(self, sideBarViewCallback, self.refsPopup);
+    self.mainView = jQuery('#main-view')[0];
+    self.historyView = new webui.HistoryView(self, self.settings);
+    self.workspaceView = new webui.WorkspaceView(self);
+    self.filesView = new webui.FilesView(self, self.settings);
 
     // self.app = new Vue({
     //     el: '#global-container',
@@ -1928,7 +1928,10 @@ function MainUi() {
             return {
                 editorPath: 0,
                 items: [],
-                stack: [ { name: webui.repo, object: null, uri: null } ]
+                isEditorOpen: false,
+                editor: null,
+                stack: [ { name: webui.repo, object: null, uri: null } ],
+                settings: self.settings
             }
         },
         methods: {
@@ -1961,16 +1964,20 @@ function MainUi() {
                 }
                 return path.split(/[/]+/).join('/');
             },
+            isNew: function(filename) {
+                return /✧$/.test(filename);
+            },
             editorLoad: function(path) {
                 // Load a file into the editor
+                var self = this;
                 jQuery.get('/code_editor/files' + path, function(res) {
                     // Replace tabs with spaces
-                    if (this.editor.getMode().name == 'python') {
+                    if (self.editor.getMode().name == 'python') {
                         res = res.replace(/\t/g, '    ');
                     }
-                    this.editor.setValue(res);
-                    this.editor.refresh();
-                    this.editorPath = path;
+                    self.editor.setValue(res);
+                    self.editor.refresh();
+                    self.editorPath = path;
                     // Update url hash
                     if (! path.startsWith('/~git/')) {
                         document.location.hash = 'edit' + path;
@@ -1979,8 +1986,9 @@ function MainUi() {
             },
             editorSave: function(path) {
                 // Save editor content
+                var self = this;
                 var data = {
-                    data: this.editor.getValue()
+                    data: self.editor.getValue()
                 };
 
                 jQuery.post("/code_editor/files" + path, data, function(res) {
@@ -1988,8 +1996,8 @@ function MainUi() {
                         webui.showError(res.error.message || 'Error saving file');
                     } else {
                         // Update editor path and the breadcrumb
-                        this.editorPath = path;
-                        this.updateStack(path);
+                        self.editorPath = path;
+                        self.updateStack(path);
                         // Update url hash
                         document.location.hash = 'edit' + path;
                     }
@@ -1997,7 +2005,8 @@ function MainUi() {
             },
             editorSaveAs: function(path) {
                 // Show 'Save as...' dialog
-                if (this.isNew(path)) {
+                var self = this;
+                if (self.isNew(path)) {
                     path = path.replace('✧', '');
                 }
                 BootstrapDialog.show({
@@ -2006,9 +2015,9 @@ function MainUi() {
                     buttons: [{
                         label: 'Save',
                         action: function(dialogRef) {
-                            var newPath = this.normalize(dialogRef.getModalBody().find('input').val().trim());
+                            var newPath = self.normalize(dialogRef.getModalBody().find('input').val().trim());
                             dialogRef.close();
-                            this.editorSave(newPath);
+                            self.editorSave(newPath);
                         }
                     },{
                         label: 'Cancel',
@@ -2020,30 +2029,130 @@ function MainUi() {
             },
             editorFormat: function() {
                 // Format code
+                var self = this;
                 var data = {
-                    data: this.editor.getValue()
+                    data: self.editor.getValue()
                 };
                 jQuery.post("/code_editor/format", data, function(res) {
                     if (res.error) {
                         webui.showError(res.error.message);
                     } else {
-                        this.editor.setValue(res.data);
-                        this.editor.refresh();
+                        self.editor.setValue(res.data);
+                        self.editor.refresh();
                     }
                 });
+            },
+            setOption: function(option, value) {
+                // Set editor option
+                var self = this;
+                if (self.editor) {
+                    self.editor.setOption(option, value);
+                }
+                // Store settings in localStorage
+                if (option == 'keyMap') {
+                    option = 'mode';
+                }
+                localStorage.setItem('airflow_code_editor_' + option, value);
+            },
+            setTheme: function(theme) {
+                // Set editor theme
+                var self = this;
+                if (theme == 'default') {
+                    self.setOption('theme', theme);
+                } else {
+                    var link = document.createElement('link');
+                    link.onload = function() { self.setOption('theme', theme); };
+                    var baseUrl = jQuery('link[rel=stylesheet]').filter(function(i, e) { return e.href.match(/gitweb.css/) !== null; })[0].href.split('/gitweb.css')[0];
+                    link.rel = 'stylesheet';
+                    link.type = 'text/css';
+                    link.href = baseUrl + '/theme/' + theme + '.css';
+                    document.getElementsByTagName('head')[0].appendChild(link);
+                }
             },
             click: function(item) {
                 console.log(item);
                 this.stack.push(item);
-                this.showTree();
+                if (item.type == 'tree') {
+                    this.showTree();
+                } else {
+                    this.showBlob();
+                }
                 return false;
             },
+            saveAction: function() {
+                var self = this;
+                if (self.isNew(self.editorPath)) {
+                    self.editorSaveAs(self.editorPath);
+                } else {
+                    self.editorSave(self.editorPath);
+                }
+            },
+            saveAsAction: function() {
+                var self = this;
+                self.editorSaveAs(self.editorPath);
+            },
+            revertAction: function() {
+                var self = this;
+                if (! self.isNew(self.editorPath)) {
+                    self.editorLoad(self.editorPath);
+                }
+            },
+            findAction: function() {
+                var self = this;
+                self.editor.execCommand('find');
+            },
+            replaceAction: function() {
+                var self = this;
+                self.editor.execCommand('replace');
+            },
+            formatAction: function() {
+                var self = this;
+                self.editorFormat();
+            },
+            settingsAction: function() {
+                var self = this;
+                jQuery('#settings-modal').modal({ backdrop: false, show: true });
+            },
             breadcrumbClicked: function(index, item) {
+                var self = this;
                 console.log(index);
                 return false;
             },
+            showBlob: function() {
+                var self = this;
+                self.isEditorOpen = true;
+                var object = self.stack[self.stack.length - 1].object;
+                var filename = self.stack[self.stack.length - 1].name;
+                if (object.startsWith('/')) { // File path
+                    self.editorPath = object;
+                } else { // Git hash
+                    self.editorPath = '/~git/' + object + '/'+ filename;
+                }
+                // Create CodeMirror instance and set the mode
+                var info;
+                if (self.isNew(filename)) {
+                    info = { 'mode': 'python' };
+                } else {
+                    info = CodeMirror.findModeByFileName(filename);
+                }
+                // self.editor.setOption('mode', info && info.mode);
+                self.setTheme(self.settings.theme);
+                // self.setOption('keyMap', settings.mode);
+                if (info) {
+                    CodeMirror.autoLoadMode(self.editor, info.mode);
+                }
+                if (self.isNew(filename)) {
+                    // New file
+                    self.editor.setValue('');
+                    self.editor.refresh();
+                } else {
+                    // Load the file
+                    self.editorLoad(self.editorPath);
+                }
+            },
             showTree: function() {
                 var self = this;
+                this.isEditorOpen = false;
                 // jQuery(self.element.lastElementChild).remove();
                 // var treeViewTreeContent = jQuery('<div id="tree-view-tree-content" class="list-group">')[0];
                 // self.element.appendChild(treeViewTreeContent);
@@ -2135,6 +2244,9 @@ function MainUi() {
         created: function() {
             this.updateStack('/');
             this.showTree();
+        },
+        mounted: function() {
+            this.editor = CodeMirror.fromTextArea(this.$el.querySelector('textarea'), webui.codeMirrorOptions);
         },
         template: jQuery('#button-counter').html()
     });

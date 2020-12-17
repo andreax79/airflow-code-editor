@@ -420,6 +420,7 @@ body {
   display: -webkit-flex;
   min-height: 0;
   min-width: 0;
+  height: 100%;
 }
 .tree-view .breadcrumb {
   padding: 10px 16px;

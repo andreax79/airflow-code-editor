@@ -1,38 +1,3 @@
-<!-- Settings modal dialog -->
-{% raw %}
-<div class="modal fade" id="settings-modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title">Settings</h4>
-            </div>
-            <div class="modal-body">
-<div id="settings-app" class="container">
-
-<span style="min-width: 8em; display: inline-block">Theme:</span>
-<select v-model="theme">
-    <option v-for="theme in themes">
-        {{ theme }}
-    </option>
-</select>
-<br/>
-
-<span style="min-width: 8em; display: inline-block">Mode:</span>
-<select v-model="mode">
-    <option selected>default</option>
-    <option>emacs</option>
-    <option>sublime</option>
-    <option>vim</option>
-</select>
-
-</div>
-<hr/>
-            </div>
-        </div>
-    </div>
-</div>
-{% endraw %}
 
 <!-- Refs dialog -->
 {% raw %}
@@ -138,31 +103,29 @@
         </div>
         <div id="files-view">
             <div id="components-demo" style="height: 100%">
-              <button-counter></button-counter>
+              <tree-view></tree-view>
             </div>
-            <!-- <div id="files&#45;editor"> -->
-            <!--     <div id="files&#45;tree" class="tree&#45;view"></div> -->
-            <!-- </div> -->
         </div>
     </div>
 </div>
 
 <div style='display: none'>
-    <div id='button-counter'>
+    <div id='tree-view'>
         <div class='tree-view'>
             <ol class="breadcrumb">
               <li v-for="(item, index) in stack" v-bind:key="item" v-bind:index="index">
-                  <a v-bind:href="item.uri" v-on:click="breadcrumbClicked(index, item)">{{ item.name }}</a>
+                  <a v-if="index != stack.length-1" v-bind:href="item.uri" v-on:click="breadcrumbClicked(index, item)">{{ item.name }}</a>
+                  <span class="active" v-if="index == stack.length-1">{{ item.name }}</span>
               </li>
             </ol>
             <div id="tree-view-tree-content" class="list-group" v-show="!isEditorOpen">
                 <span v-for="item in items" :key="item" class="list-group-item">
-                    <a class="name" v-on:click="click(item)" v-bind:href="item.href()" v-bind:class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink() ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
+                    <a class="name" v-on:click="click(item)" v-bind:href="item.href" v-bind:class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
                     <span class="mtime">{{ item.mtime }}</span>
-                    <span class="size">{{ item.formatedSize() }}</span>&nbsp;
+                    <span class="size">{{ item.formatedSize }}</span>&nbsp;
                     <span class="buttons">
-                        <a v-if="item.type == 'blob'" class="download" title="Download" v-bind:href="item.downloadHref()"><i class="fa fa-download" aria-hidden="true"></i></a>
-                        <a v-if="item.local" class="external-link" title="Open in a new window" target="_blank" v-bind:href="item.href()"><i class="fa fa-external-link" aria-hidden="true"></i></a>
+                        <a v-if="item.type == 'blob'" class="download" title="Download" v-bind:href="item.downloadHref"><i class="fa fa-download" aria-hidden="true"></i></a>
+                        <a v-if="item.local" class="external-link" title="Open in a new window" target="_blank" v-bind:href="item.href"><i class="fa fa-external-link" aria-hidden="true"></i></a>
                     </span>
                 </span>
             </div>
@@ -179,8 +142,36 @@
                     <button v-on:click="revertAction()" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>
                     <button v-on:click="findAction()" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>
                     <button v-on:click="replaceAction()" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>
-                    <button v-on:click="formatAction()" type="button" class="btn btn-default btn-sm">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>
+                    <button v-on:click="formatAction()" type="button" class="btn btn-default btn-sm" v-show="isPython">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>
                     <button v-on:click="settingsAction()" type="button" class="btn btn-default btn-sm" style="float: right">Settings <i class="fa fa-cog" aria-hidden="true"></i></button>
+                    </div>
+                </div>
+            </div>
+            <!-- Settings modal dialog -->
+            <div class="modal fade settings-modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span><span class="sr-only">Close</span></button>
+                            <h4 class="modal-title">Settings</h4>
+                        </div>
+                        <div class="modal-body">
+                            <span style="min-width: 8em; display: inline-block">Theme:</span>
+                            <select v-model="theme">
+                                <option v-for="theme in themes">
+                                {{ theme }}
+                                </option>
+                            </select>
+                            <br/>
+                            <span style="min-width: 8em; display: inline-block">Mode:</span>
+                            <select v-model="mode">
+                                <option selected>default</option>
+                                <option>emacs</option>
+                                <option>sublime</option>
+                                <option>vim</option>
+                            </select>
+                            <hr/>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -15,9 +15,7 @@
  */
 
 "use strict"
-
 var webui = webui || {};
-webui.repo = "root";
 
 webui.COLORS = ["#ffab1d", "#fd8c25", "#f36e4a", "#fc6148", "#d75ab6", "#b25ade", "#6575ff", "#7b77e9", "#4ea8ec", "#00d0f5", "#4eb94e", "#51af23", "#8b9f1c", "#d0b02f", "#d0853a", "#a4a4a4",
                 "#ffc51f", "#fe982c", "#fd7854", "#ff705f", "#e467c3", "#bd65e9", "#7183ff", "#8985f7", "#55b6ff", "#10dcff", "#51cd51", "#5cba2e", "#9eb22f", "#debe3d", "#e19344", "#b8b8b8",
@@ -223,8 +221,11 @@ webui.SideBarView = function(mainView, callback, refsPopup) {
                         if (id == "mounts") {
                             jQuery("*", self.element).removeClass("active");
                             filesElement.addClass("active");
+                            self.mainView.filesView.treeView.stack = [
+                                { name: 'root', object: undefined },
+                                { name: event.target.refName, object: '/~' + event.target.refName }
+                            ];
                             self.mainView.filesView.update();
-                            self.mainView.filesView.treeView.stack.push({ name: event.target.refName, object: '/~' + event.target.refName });
                             self.mainView.filesView.treeView.showTree();
                         } else if (id == "remote-branches") {
                             self.selectRef(event.target.refName);
@@ -302,7 +303,11 @@ webui.SideBarView = function(mainView, callback, refsPopup) {
     filesElement.click(function (event) {
         jQuery("*", self.element).removeClass("active");
         filesElement.addClass("active");
+        self.mainView.filesView.treeView.stack = [
+            { name: 'root', object: undefined }
+        ];
         self.mainView.filesView.update();
+        self.mainView.filesView.treeView.showTree();
     });
 
     self.fetchSections(callback);
@@ -983,439 +988,9 @@ webui.DiffView = function(id, sideBySide, hunkSelectionAllowed, parent) {
 };
 
 /*
- * == TreeView ================================================================
- */
-webui.TreeView = function(id, settings) {
-    var self = this;
-
-    function Entry(line) {
-        var self = this;
-
-        // https://en.wikipedia.org/wiki/Kilobyte
-        self.formatedSize = function(size) {
-            if (isNaN(self.size)) {
-                return "";
-            }
-            if (self.size < 10**3) {
-                return self.size.toString() + " B";
-            } else if (self.size < 10**6) {
-                return (self.size / 10**3).toFixed(2) + " kB";
-            } else if (self.size < 10**9) {
-                return (self.size / 10**6).toFixed(2) + " MB";
-            } else {
-                return (self.size / 10**9).toFixed(2) + " GB";
-            }
-        };
-
-        self.href = function() {
-            if (self.local) { // local file/dir
-                if (self.type == 'tree') {
-                    return '#files' + encodeURI(self.object);
-                } else {
-                    return '#edit' + encodeURI(self.object);
-                }
-            } else { // git blob
-                return '/code_editor/files/~git/' + self.object + '/' + self.name;
-            }
-        }
-
-        self.downloadHref = function() {
-            if (self.type == 'tree') { // tree
-                return '#';
-            } else if (self.local) {  // local file
-                return '/code_editor/files' + self.object;
-            } else { // git blob
-                return '/code_editor/files/~git/' + self.object + '/' + self.name;
-            }
-        }
-
-        self.isSymbolicLink = function() {
-            return (self.mode & 120000) == 120000; // S_IFLNK
-        }
-
-        var match = line.match(/^(\d+) (\w+) ([^ #]+)#?(\S+)?\s+(\S*)\t(\S+)/);
-        if (match !== undefined) {
-            self.mode = parseInt(match[1]);
-            self.type = match[2];
-            self.object = match[3];
-            self.mtime = match[4] ? match[4].replace('T', ' ') : '';
-            self.size = parseInt(match[5]);
-            self.name = match[6];
-            self.local = self.object[0] == '/';
-        }
-    }
-
-    self.update = function(treeRef) {
-        self.stack = [ { name: webui.repo, object: treeRef } ];
-        self.showTree();
-    }
-
-    self.createBreadcrumb = function() {
-        jQuery(breadcrumb).empty();
-        for (var i = 0; i < self.stack.length; ++i) {
-            var last = i == self.stack.length - 1;
-            var name = self.stack[i].name;
-            var object = self.stack[i].object;
-            var href = '#';
-            if (!last) {
-                if (object !== undefined && object.startsWith('/')) {
-                    href = '#files' + object;
-                }
-                name = '<a href="' + encodeURI(href) + '">' + name + '</a>';
-            }
-            var li = jQuery('<li>' + name + '</li>');
-            li.appendTo(breadcrumb);
-            if (!last) {
-                li.click(self.breadcrumbClicked);
-            } else {
-                li.addClass("active");
-            }
-        }
-        var newButton = jQuery('<button id="new" type="button" class="btn btn-default btn-sm" style="float: right">New <i class="fa fa-plus" aria-hidden="true"></i></button>');
-        newButton.click(function(t) {
-            var treeRef = self.stack[self.stack.length - 1].object;
-            self.updateStack(treeRef + '/✧');
-            self.showBlob();
-            return false;
-        });
-        newButton.appendTo(breadcrumb);
-    }
-
-    self.breadcrumbClicked = function(event) {
-        var to = webui.getNodeIndex(event.target.parentElement);
-        self.stack = self.stack.slice(0, to + 1);
-        self.showTree();
-        return false;
-    }
-
-    self.showTree = function() {
-        jQuery(self.element.lastElementChild).remove();
-        var treeViewTreeContent = jQuery('<div id="tree-view-tree-content" class="list-group">')[0];
-        self.element.appendChild(treeViewTreeContent);
-        self.createBreadcrumb();
-        var treeRef = self.stack[self.stack.length - 1].object;
-        var parentTreeRef = self.stack.length > 1 ? self.stack[self.stack.length - 2].object : undefined;
-        var cmd = (treeRef === undefined || treeRef.startsWith('/')) ? 'ls-local' : 'ls-tree';
-        // Update url hash
-        if (cmd == 'ls-local') {
-            document.location.hash = 'files' + (treeRef || '/');
-        }
-        webui.git([ cmd, "-l", treeRef ], function(data) {
-            var blobs = [];
-            var trees = [];
-            if (parentTreeRef || (treeRef !== undefined && treeRef.startsWith('/')) ) {
-                var href = (parentTreeRef !== undefined && parentTreeRef.startsWith('/')) ? ( '#files' + parentTreeRef ) : '#files/';
-                var node = jQuery('<a href="' + encodeURI(href) + '" class="list-group-item">' +
-                                    '<span class="tree-item-tree">..</span> ' +
-                                    '<span></span> ' +
-                                    '<span></span> ' +
-                                 '</a>');
-                node.click(function() {
-                    self.stack.pop();
-                    self.showTree();
-                    if (cmd == 'ls-local') {
-                        // Update url hash
-                        document.location.hash = 'files' + (self.stack[self.stack.length - 1].object || '/');
-                    }
-                    return false;
-                });
-                node.appendTo(treeViewTreeContent);
-            }
-            webui.splitLines(data).forEach(function(line) {
-                var entry = new Entry(line);
-                var external = '';
-                var download = '';
-                if (entry.type == 'blob') {
-                    download = '<a class="download" title="Download" href="' + entry.downloadHref() + '">' +
-                               '<i class="fa fa-download" aria-hidden="true"></i>' +
-                               '</a>';
-                }
-                if (entry.local) {
-                    external = '<a class="external-link" title="Open in a new window" target="_blank" href="' + entry.href() + '">' +
-                               '<i class="fa fa-external-link" aria-hidden="true"></i>' +
-                               '</a>';
-                }
-                var node = jQuery('<span class="list-group-item">' +
-                                 '<a class="name" href="' + entry.href() + '">' + entry.name + '</a> ' +
-                                 '<span class="mtime">' + entry.mtime + '</span>' +
-                                 '<span class="size">' + entry.formatedSize() + '</span>&nbsp;' +
-                                 '<span class="buttons">' + download + external + '</span>' +
-                                 '</span>')[0];
-                node.model = entry;
-                var aNode = jQuery("a", node)[0];
-                jQuery(aNode).addClass("tree-item-" + entry.type);
-                if (entry.isSymbolicLink()) {
-                    jQuery(aNode).addClass("tree-item-symlink");
-                }
-                if (entry.type == "tree") {
-                    trees.push(node);
-                    jQuery(node).children('.name').click(function(t) {
-                        self.stack.push({ name: entry.name, object: entry.object});
-                        self.showTree();
-                        return false;
-                    });
-                } else {
-                    blobs.push(node);
-                    jQuery(node).children('.name').click(function(t) {
-                        self.stack.push({ name: entry.name, object: entry.object});
-                        self.showBlob();
-                    });
-                    jQuery(node).children('.download').click(function(t) {
-                        window.location.href = entry.downloadHref();
-                    });
-                }
-            });
-            var compare = function(a, b) {
-                return a.model.name.toLowerCase().localeCompare(b.model.name.toLowerCase());
-            }
-            blobs.sort(compare);
-            trees.sort(compare);
-            trees.forEach(function (node) {
-                treeViewTreeContent.appendChild(node);
-            });
-            blobs.forEach(function (node) {
-                treeViewTreeContent.appendChild(node);
-            });
-        });
-    }
-
-    self.updateStack = function(path) {
-        self.stack = [];
-        var fullPath = null;
-        path.split('/').forEach(function(part, index) {
-            if (index === 0) {
-                self.stack.push({ name: webui.repo, object: undefined });
-                fullPath = '';
-            } else {
-                fullPath += '/' + part;
-                if (part[0] == '~') {
-                    part = part.substring(1);
-                }
-                self.stack.push({ name: part, object: fullPath });
-            }
-        });
-        self.createBreadcrumb();
-    }
-
-    self.normalize = function(path) {
-        if (path[0] != '/') {
-            path = '/' + path;
-        }
-        return path.split(/[/]+/).join('/');
-    }
-
-    self.editorLoad = function(path) {
-        // Load a file into the editor
-        jQuery.get('/code_editor/files' + path, function(res) {
-            // Replace tabs with spaces
-            if (self.editor.getMode().name == 'python') {
-                res = res.replace(/\t/g, '    ');
-            }
-            self.editor.setValue(res);
-            self.editor.refresh();
-            self.editorPath = path;
-            // Update url hash
-            if (! path.startsWith('/~git/')) {
-                document.location.hash = 'edit' + path;
-            }
-        }, 'text');
-    }
-
-    self.editorSave = function(path) {
-        // Save editor content
-        var data = {
-            data: self.editor.getValue()
-        };
-
-        jQuery.post("/code_editor/files" + path, data, function(res) {
-            if (res.error) {
-                webui.showError(res.error.message || 'Error saving file');
-            } else {
-                // Update editor path and the breadcrumb
-                self.editorPath = path;
-                self.updateStack(path);
-                // Update url hash
-                document.location.hash = 'edit' + path;
-            }
-        });
-    };
-
-    self.editorSaveAs = function(path) {
-        // Show 'Save as...' dialog
-        if (self.isNew(path)) {
-            path = path.replace('✧', '');
-        }
-        BootstrapDialog.show({
-            title: 'Save File',
-            message: 'File name <input type="text" class="form-control" value="' + path + '" />',
-            buttons: [{
-                label: 'Save',
-                action: function(dialogRef) {
-                    var newPath = self.normalize(dialogRef.getModalBody().find('input').val().trim());
-                    dialogRef.close();
-                    self.editorSave(newPath);
-                }
-            },{
-                label: 'Cancel',
-                action: function(dialogRef) {
-                    dialogRef.close();
-                }
-            }]
-        });
-    }
-
-    self.editorFormat = function() {
-        // Format code
-        var data = {
-            data: self.editor.getValue()
-        };
-        jQuery.post("/code_editor/format", data, function(res) {
-            if (res.error) {
-                webui.showError(res.error.message);
-            } else {
-                self.editor.setValue(res.data);
-                self.editor.refresh();
-            }
-        });
-    }
-
-    self.setOption = function(option, value) {
-        // Set editor option
-        if (self.editor) {
-            self.editor.setOption(option, value);
-        }
-        // Store settings in localStorage
-        if (option == 'keyMap') {
-            option = 'mode';
-        }
-        localStorage.setItem('airflow_code_editor_' + option, value);
-    };
-
-    self.setTheme = function(theme) {
-        // Set editor theme
-        if (theme == 'default') {
-            self.setOption('theme', theme);
-        } else {
-            var link = document.createElement('link');
-            link.onload = function() { self.setOption('theme', theme); };
-            var baseUrl = jQuery('link[rel=stylesheet]').filter(function(i, e) { return e.href.match(/gitweb.css/) !== null; })[0].href.split('/gitweb.css')[0];
-            link.rel = 'stylesheet';
-            link.type = 'text/css';
-            link.href = baseUrl + '/theme/' + theme + '.css';
-            document.getElementsByTagName('head')[0].appendChild(link);
-        }
-    };
-
-    self.isNew = function(filename) {
-        return /✧$/.test(filename);
-    }
-
-    // self.openEditor = function(editorPath, filename) {
-    //     // Create CodeMirror instance and set the mode
-    //     var info;
-    //     if (self.isNew(filename)) {
-    //         info = { 'mode': 'python' };
-    //     } else {
-    //         info = CodeMirror.findModeByFileName(filename);
-    //     }
-    //     var textarea = jQuery('#tree-view-blob-content textarea')[0];
-    //     var options = Object.assign({}, webui.codeMirrorOptions, { mode: info && info.mode });
-    //     self.editor = CodeMirror.fromTextArea(textarea, options);
-    //     self.setTheme(settings.theme);
-    //     self.setOption('keyMap', settings.mode);
-    //     if (info) {
-    //         CodeMirror.autoLoadMode(self.editor, info.mode);
-    //     }
-    //     if (self.isNew(filename)) {
-    //         // New file
-    //         self.editor.setValue('');
-    //         self.editor.refresh();
-    //         self.editorPath = editorPath;
-    //     } else {
-    //         // Load the file
-    //         self.editorLoad(editorPath);
-    //     }
-    // }
-
-    self.showBlob = function() {
-        self.createBreadcrumb();
-        jQuery(self.element.lastElementChild).remove();
-        var object = self.stack[self.stack.length - 1].object;
-        var filename = self.stack[self.stack.length - 1].name;
-        if (object.startsWith('/')) { // File path
-            self.editorPath = object;
-            jQuery('<div id="tree-view-blob-content">' +
-                   '    <div class="cm-fullscreen-container cm-flex-container">' +
-                   '        <div class="cm-toolbar cm-flex-child-fixed">' +
-                   '        </div>' +
-                   '        <div class="cm-body cm-flex-child-grow">' +
-                   '            <textarea rows="30" cols="80" id="editor" name="editor" style="display: none"></textarea>' +
-                   '        </div>' +
-                   '        <div class="cm-footer cm-flex-child-fixed">' +
-                   '        <button id="save" type="button" class="btn btn-default btn-sm">Save <i class="fa fa-save" aria-hidden="true"></i></button>' +
-                   '        <button id="saveAs" type="button" class="btn btn-default btn-sm">Save as...</i></button>' +
-                   '        <button id="revert" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>' +
-                   '        <button id="find" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>' +
-                   '        <button id="replace" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>' +
-                   '        <button id="format" type="button" class="btn btn-default btn-sm">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>' +
-                   '        <button id="settings" type="button" class="btn btn-default btn-sm" style="float: right">Settings <i class="fa fa-cog" aria-hidden="true"></i></button>' +
-                   '        </div>' +
-                   '    </div>' +
-                   '</div>').appendTo(self.element);
-        } else { // Git hash
-            self.editorPath = '/~git/' + object + '/'+ filename;
-            jQuery('<div id="tree-view-blob-content">' +
-                  '<textarea></textarea>' +
-                  '</div>').appendTo(self.element);
-        }
-        self.openEditor(self.editorPath, filename);
-        if (self.editor.getMode().name == 'python') {
-            jQuery('#format').show();
-        } else {
-            jQuery('#format').hide();
-        }
-        if (object.startsWith('/')) { // File path
-            jQuery('#save').click(function() {
-                if (self.isNew(self.editorPath)) {
-                    self.editorSaveAs(self.editorPath);
-                } else {
-                    self.editorSave(self.editorPath);
-                }
-            });
-            jQuery('#saveAs').click(function() {
-                self.editorSaveAs(self.editorPath);
-            });
-            jQuery('#revert').click(function() {
-                if (! self.isNew(self.editorPath)) {
-                    self.editorLoad(self.editorPath);
-                }
-            });
-            jQuery('#find').click(function() {
-                self.editor.execCommand('find');
-            });
-            jQuery('#replace').click(function() {
-                self.editor.execCommand('replace');
-            });
-            jQuery('#format').click(function() {
-                self.editorFormat();
-            });
-            jQuery('#settings').click(function() {
-                jQuery('#settings-modal').modal({ backdrop: false, show: true });
-            });
-        }
-    }
-
-    self.element = jQuery(id)[0];
-    var breadcrumb = jQuery('<ol class="breadcrumb">')[0];
-    self.element.appendChild(breadcrumb);
-    self.element.appendChild(jQuery('<div id="tree-view-tree-content">')[0]);
-    var stack;
-}
-
-/*
  * == CommitView ==============================================================
  */
-webui.CommitView = function(id, historyView, settings) {
+webui.CommitView = function(id, historyView) {
     var self = this;
 
     self.update = function(entry) {
@@ -1428,7 +1003,7 @@ webui.CommitView = function(id, historyView, settings) {
         self.showDiff();
         buttonBox.select(0);
         diffView.update([ "show" ], [entry.commit]);
-        treeView.update(entry.tree);
+        // treeView.update(entry.tree);
     };
 
     self.showDiff = function() {
@@ -1448,13 +1023,13 @@ webui.CommitView = function(id, historyView, settings) {
     var buttonBox = new webui.TabBox([["Commit", self.showDiff], ["Tree", self.showTree]]);
     commitViewHeader.appendChild(buttonBox.element);
     var diffView = new webui.DiffView(id + ' .diff-view-container', false, false, self);
-    var treeView = new webui.TreeView(id + ' .tree-view', settings);
+    // var treeView = new webui.TreeView(id + ' .tree-view');
 };
 
 /*
  * == HistoryView =============================================================
  */
-webui.HistoryView = function(mainView, settings) {
+webui.HistoryView = function(mainView) {
     var self = this;
 
     self.show = function() {
@@ -1468,7 +1043,7 @@ webui.HistoryView = function(mainView, settings) {
 
     self.element = jQuery('#history-view')[0];
     self.logView = new webui.LogView('#log-view', self);
-    self.commitView = new webui.CommitView('#commit-view', self, settings);
+    self.commitView = new webui.CommitView('#commit-view', self);
     self.mainView = mainView;
 };
 
@@ -1507,20 +1082,20 @@ webui.WorkspaceView = function(mainView) {
 /*
  * == FilesView ===========================================================
  */
-webui.FilesView = function(mainView, settings) {
+webui.FilesView = function(mainView) {
     var self = this;
 
     self.show = function() {
         mainView.switchTo(self.element);
+        jQuery('#files-view').show();
     };
 
     self.update = function() {
         self.show();
-        // self.treeView.update();
     };
 
     self.element = jQuery('#files-view')[0];
-    // self.treeView = new webui.TreeView('#files-tree', settings);
+    self.treeView = null;
 };
 
 /*
@@ -1784,6 +1359,7 @@ function MainUi() {
         var match = /#?([a-z-]+)(\/(.*))?/.exec(hash);
         var section = match !== null ? match[1] : 'files';
         var target = match !== null ? match[3] : null;
+
         if (section == 'tags') { // e.g. "tags/v1.2.0"
             jQuery('#sidebar-tags .sidebar-ref[title="' + target + '"]').click()
 
@@ -1816,24 +1392,6 @@ function MainUi() {
         }, 500);
     }
 
-    // Show Settings popup
-    self.settings = new Vue({
-        el: '#settings-app',
-        data: {
-            theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
-            mode: localStorage.getItem('airflow_code_editor_mode') || 'default',  // edit mode (default, vim, etc...)
-            themes: themes  // themes list from "themes.js"
-        },
-        watch: {
-            'theme': function(val, preVal) {
-                self.filesView.treeView.setTheme(val);
-            },
-            'mode': function(val, preVal) {
-                self.filesView.treeView.setOption('keyMap', val);
-            }
-        }
-    });
-
     // Select Branch/Tag popup
     self.refsPopup = new Vue({
         el: '#refs-modal',
@@ -1855,62 +1413,12 @@ function MainUi() {
     self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
     self.sideBarView = new webui.SideBarView(self, sideBarViewCallback, self.refsPopup);
     self.mainView = jQuery('#main-view')[0];
-    self.historyView = new webui.HistoryView(self, self.settings);
+    self.historyView = new webui.HistoryView(self);
     self.workspaceView = new webui.WorkspaceView(self);
-    self.filesView = new webui.FilesView(self, self.settings);
+    self.filesView = new webui.FilesView(self);
 
-    // self.app = new Vue({
-    //     el: '#global-container',
-    //     data: {
-    //     },
-    // });
-
-
-    function Entry(line) {
+    function TreeEntry(line) {
         var self = this;
-
-        // https://en.wikipedia.org/wiki/Kilobyte
-        self.formatedSize = function(size) {
-            if (isNaN(self.size)) {
-                return "";
-            }
-            if (self.size < 10**3) {
-                return self.size.toString() + " B";
-            } else if (self.size < 10**6) {
-                return (self.size / 10**3).toFixed(2) + " kB";
-            } else if (self.size < 10**9) {
-                return (self.size / 10**6).toFixed(2) + " MB";
-            } else {
-                return (self.size / 10**9).toFixed(2) + " GB";
-            }
-        };
-
-        self.href = function() {
-            if (self.local) { // local file/dir
-                if (self.type == 'tree') {
-                    return '#files' + encodeURI(self.object);
-                } else {
-                    return '#edit' + encodeURI(self.object);
-                }
-            } else { // git blob
-                return '/code_editor/files/~git/' + self.object + '/' + self.name;
-            }
-        }
-
-        self.downloadHref = function() {
-            if (self.type == 'tree') { // tree
-                return '#';
-            } else if (self.local) {  // local file
-                return '/code_editor/files' + self.object;
-            } else { // git blob
-                return '/code_editor/files/~git/' + self.object + '/' + self.name;
-            }
-        }
-
-        self.isSymbolicLink = function() {
-            return (self.mode & 120000) == 120000; // S_IFLNK
-        }
-
         var match = line.match(/^(\d+) (\w+) ([^ #]+)#?(\S+)?\s+(\S*)\t(\S+)/);
         if (match !== undefined) {
             self.mode = parseInt(match[1]);
@@ -1920,28 +1428,64 @@ function MainUi() {
             self.size = parseInt(match[5]);
             self.name = match[6];
             self.local = self.object[0] == '/';
+            self.isSymbolicLink = (self.mode & 120000) == 120000; // S_IFLNK
+            // href
+            if (self.local) { // local file/dir
+                if (self.type == 'tree') {
+                    self.href = '#files' + encodeURI(self.object);
+                } else {
+                    self.href = '#edit' + encodeURI(self.object);
+                }
+            } else { // git blob
+                self.href = '/code_editor/files/~git/' + self.object + '/' + self.name;
+            }
+            // download href
+            if (self.type == 'tree') { // tree
+                self.downloadHref = '#';
+            } else if (self.local) {  // local file
+                self.downloadHref = '/code_editor/files' + self.object;
+            } else { // git blob
+                self.downloadHref = '/code_editor/files/~git/' + self.object + '/' + self.name;
+            }
+            // size - https://en.wikipedia.org/wiki/Kilobyte
+            if (isNaN(self.size)) {
+                self.formatedSize = "";
+            } else if (self.size < 10**3) {
+                self.formatedSize = self.size.toString() + " B";
+            } else if (self.size < 10**6) {
+                self.formatedSize = (self.size / 10**3).toFixed(2) + " kB";
+            } else if (self.size < 10**9) {
+                self.formatedSize = (self.size / 10**6).toFixed(2) + " MB";
+            } else {
+                self.formatedSize = (self.size / 10**9).toFixed(2) + " GB";
+            }
         }
     }
 
-    Vue.component('button-counter', {
+    Vue.component('tree-view', {
         data: function () {
             return {
-                editorPath: 0,
-                items: [],
-                isEditorOpen: false,
-                editor: null,
-                stack: [ { name: webui.repo, object: null, uri: null } ],
-                settings: self.settings
+                editorPath: null, // path of the file open in editor
+                items: [], // tree items (blobs/trees)
+                editor: null, // CodeMirror instance
+                stack: [ { name: 'root', object: undefined } ],
+                isEditorOpen: false, // is editor open
+                isPython: false, // is editor open on a python file
+                theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
+                mode: localStorage.getItem('airflow_code_editor_mode') || 'default',  // edit mode (default, vim, etc...)
+                themes: themes  // themes list from "themes.js"
             }
         },
         methods: {
             updateStack: function(path) {
                 var stack = [];
                 var fullPath = null;
+                if (path == '/') {
+                    path = '';
+                }
                 path.split('/').forEach(function(part, index) {
-                    console.log(part);
                     if (index === 0) {
-                        stack.push({ name: webui.repo, object: undefined, uri: undefined });
+                        stack.push({ name: 'root', object: undefined });
                         fullPath = '';
                     } else {
                         fullPath += '/' + part;
@@ -1955,7 +1499,6 @@ function MainUi() {
                         });
                     }
                 });
-                console.log(stack);
                 this.stack = stack;
             },
             normalize: function(path) {
@@ -1966,6 +1509,10 @@ function MainUi() {
             },
             isNew: function(filename) {
                 return /✧$/.test(filename);
+            },
+            isGit: function(treeRef) {
+                // Return true if treeRef is git ref
+                return (treeRef !== undefined && !treeRef.startsWith('/'));
             },
             editorLoad: function(path) {
                 // Load a file into the editor
@@ -2070,16 +1617,38 @@ function MainUi() {
                 }
             },
             click: function(item) {
-                console.log(item);
-                this.stack.push(item);
-                if (item.type == 'tree') {
-                    this.showTree();
+                // File/directory action
+                var self = this;
+                if (item.name == '..') {
+                    self.stack.pop();
                 } else {
-                    this.showBlob();
+                    self.stack.push(item);
+                }
+                if (item.type == 'tree') {
+                    self.showTree();
+                } else {
+                    self.showBlob();
+                }
+                // Update href hash
+                if (!self.isGit(item.object)) {
+                    document.location.hash = 'files' + (item.object || '/');
+                }
+                return false;
+            },
+            breadcrumbClicked: function(index, item) {
+                // Breadcrumb action
+                var self = this;
+                self.stack = self.stack.slice(0, index + 1);
+                self.showTree();
+                var item = self.stack[self.stack.length-1]
+                // Update href hash
+                if (!self.isGit(item.object)) {
+                    document.location.hash = 'files' + (item.object || '/');
                 }
                 return false;
             },
             saveAction: function() {
+                // Save button action
                 var self = this;
                 if (self.isNew(self.editorPath)) {
                     self.editorSaveAs(self.editorPath);
@@ -2088,37 +1657,39 @@ function MainUi() {
                 }
             },
             saveAsAction: function() {
+                // Save as button action
                 var self = this;
                 self.editorSaveAs(self.editorPath);
             },
             revertAction: function() {
+                // Revert button action
                 var self = this;
                 if (! self.isNew(self.editorPath)) {
                     self.editorLoad(self.editorPath);
                 }
             },
             findAction: function() {
+                // Find button action
                 var self = this;
                 self.editor.execCommand('find');
             },
             replaceAction: function() {
+                // Replace button action
                 var self = this;
                 self.editor.execCommand('replace');
             },
             formatAction: function() {
+                // Format button action
                 var self = this;
                 self.editorFormat();
             },
             settingsAction: function() {
+                // Settings button action
                 var self = this;
-                jQuery('#settings-modal').modal({ backdrop: false, show: true });
-            },
-            breadcrumbClicked: function(index, item) {
-                var self = this;
-                console.log(index);
-                return false;
+                jQuery(this.$el.querySelector('.settings-modal')).modal({ backdrop: false, show: true });
             },
             showBlob: function() {
+                // Show editor
                 var self = this;
                 self.isEditorOpen = true;
                 var object = self.stack[self.stack.length - 1].object;
@@ -2135,9 +1706,10 @@ function MainUi() {
                 } else {
                     info = CodeMirror.findModeByFileName(filename);
                 }
-                // self.editor.setOption('mode', info && info.mode);
-                self.setTheme(self.settings.theme);
-                // self.setOption('keyMap', settings.mode);
+                self.editor.setOption('mode', info && info.mode);
+                self.isPython = info && info.mode == 'python';
+                self.setTheme(self.theme);
+                self.setOption('keyMap', self.mode);
                 if (info) {
                     CodeMirror.autoLoadMode(self.editor, info.mode);
                 }
@@ -2151,15 +1723,12 @@ function MainUi() {
                 }
             },
             showTree: function() {
+                // Show tree
                 var self = this;
                 this.isEditorOpen = false;
-                // jQuery(self.element.lastElementChild).remove();
-                // var treeViewTreeContent = jQuery('<div id="tree-view-tree-content" class="list-group">')[0];
-                // self.element.appendChild(treeViewTreeContent);
-                // self.createBreadcrumb();
                 var treeRef = this.stack[this.stack.length - 1].object;
                 var parentTreeRef = this.stack.length > 1 ? this.stack[this.stack.length - 2].object : undefined;
-                var cmd = (treeRef === undefined || treeRef.startsWith('/')) ? 'ls-local' : 'ls-tree';
+                var cmd = self.isGit(treeRef) ? 'ls-tree' : 'ls-local';
                 // Update url hash
                 if (cmd == 'ls-local') {
                     document.location.hash = 'files' + (treeRef || '/');
@@ -2168,69 +1737,15 @@ function MainUi() {
                     var blobs = [];
                     var trees = [];
                     if (parentTreeRef || (treeRef !== undefined && treeRef.startsWith('/')) ) {
-                    //     var href = (parentTreeRef !== undefined && parentTreeRef.startsWith('/')) ? ( '#files' + parentTreeRef ) : '#files/';
-                    //     var node = jQuery('<a href="' + encodeURI(href) + '" class="list-group-item">' +
-                    //                         '<span class="tree-item-tree">..</span> ' +
-                    //                         '<span></span> ' +
-                    //                         '<span></span> ' +
-                    //                      '</a>');
-                    //     node.click(function() {
-                    //         self.stack.pop();
-                    //         self.showTree();
-                    //         if (cmd == 'ls-local') {
-                    //             // Update url hash
-                    //             document.location.hash = 'files' + (self.stack[self.stack.length - 1].object || '/');
-                    //         }
-                    //         return false;
-                    //     });
-                    //     node.appendTo(treeViewTreeContent);
+                        trees.push({ type: 'tree', name: '..', isSymbolicLink: false });
                     }
                     webui.splitLines(data).forEach(function(line) {
-                        var item = new Entry(line);
-                        var external = '';
-                        var download = '';
-                        // if (entry.type == 'blob') {
-                        //     // download = '<a class="download" title="Download" href="' + entry.downloadHref() + '">' +
-                        //     //            '<i class="fa fa-download" aria-hidden="true"></i>' +
-                        //     //            '</a>';
-                        // }
-                        // if (entry.local) {
-                        //     // external = '<a class="external-link" title="Open in a new window" target="_blank" href="' + entry.href() + '">' +
-                        //     //            '<i class="fa fa-external-link" aria-hidden="true"></i>' +
-                        //     //            '</a>';
-                        // }
-                        // // var node = jQuery('<span class="list-group-item">' +
-                        // //                  '<a class="name" href="' + entry.href() + '">' + entry.name + '</a> ' +
-                        // //                  '<span class="mtime">' + entry.mtime + '</span>' +
-                        // //                  '<span class="size">' + entry.formatedSize() + '</span>&nbsp;' +
-                        // //                  '<span class="buttons">' + download + external + '</span>' +
-                        // //                  '</span>')[0];
-                        // node.model = entry;
-                        // var aNode = jQuery("a", node)[0];
-                        // jQuery(aNode).addClass("tree-item-" + entry.type);
-                        // if (entry.isSymbolicLink()) {
-                        //     jQuery(aNode).addClass("tree-item-symlink");
-                        // }
-                        if (item.type == "tree") {
+                        var item = new TreeEntry(line);
+                        if (item.type == 'tree') {
                             trees.push(item);
                         } else {
                             blobs.push(item);
                         }
-                        //     jQuery(node).children('.name').click(function(t) {
-                        //         self.stack.push({ name: entry.name, object: entry.object});
-                        //         self.showTree();
-                        //         return false;
-                        //     });
-                        // } else {
-                        //     blobs.push(node);
-                        //     jQuery(node).children('.name').click(function(t) {
-                        //         self.stack.push({ name: entry.name, object: entry.object});
-                        //         self.showBlob();
-                        //     });
-                        //     jQuery(node).children('.download').click(function(t) {
-                        //         window.location.href = entry.downloadHref();
-                        //     });
-                        // }
                     });
                     var compare = function(a, b) {
                         return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
@@ -2241,6 +1756,14 @@ function MainUi() {
                 });
             }
         },
+        watch: {
+            'theme': function(val, preVal) {
+                this.setTheme(val);
+            },
+            'mode': function(val, preVal) {
+                this.setOption('keyMap', val);
+            }
+        },
         created: function() {
             this.updateStack('/');
             this.showTree();
@@ -2248,9 +1771,9 @@ function MainUi() {
         mounted: function() {
             this.editor = CodeMirror.fromTextArea(this.$el.querySelector('textarea'), webui.codeMirrorOptions);
         },
-        template: jQuery('#button-counter').html()
+        template: jQuery('#tree-view').html()
     });
 
-    new Vue({ el: '#components-demo' });
+    self.filesView.treeView = new Vue({ el: '#files-view' }).$children[0];
 
 }

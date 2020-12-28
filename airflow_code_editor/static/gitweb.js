@@ -16,6 +16,13 @@
 
 "use strict"
 var webui = webui || {};
+var sharedState = {
+    section: 'mounts',
+    refName: null,
+    stack: [ { name: 'root', object: undefined } ],
+    workspaceView: null,
+    historyView: null,
+};
 
 webui.COLORS = ["#ffab1d", "#fd8c25", "#f36e4a", "#fc6148", "#d75ab6", "#b25ade", "#6575ff", "#7b77e9", "#4ea8ec", "#00d0f5", "#4eb94e", "#51af23", "#8b9f1c", "#d0b02f", "#d0853a", "#a4a4a4",
                 "#ffc51f", "#fe982c", "#fd7854", "#ff705f", "#e467c3", "#bd65e9", "#7183ff", "#8985f7", "#55b6ff", "#10dcff", "#51cd51", "#5cba2e", "#9eb22f", "#debe3d", "#e19344", "#b8b8b8",
@@ -133,185 +140,186 @@ webui.TabBox = function(buttons) {
 /*
  * == SideBarView =============================================================
  */
-webui.SideBarView = function(mainView, callback, refsPopup) {
-    var self = this;
-
-    self.selectRef = function(refName) {
-        var selected = jQuery(".active", self.element);
-        if (selected.length > 0) {
-            if (selected[0].refName != refName) {
-                selected.toggleClass("active");
-            }
-        }
-        var refElements = jQuery(".sidebar-ref", self.element);
-        var moreTag = undefined;
-        for (var i = 0; i < refElements.length; ++i) {
-            var refElement = refElements[i];
-            if (refElement.refName == refName) {
-                jQuery(refElement).toggleClass("active");
-                if (refElement.tagName == "LI") {
-                    moreTag = null;
-                } else if (moreTag !== null) {
-                    moreTag = jQuery(".sidebar-more", refElement.section);
-                }
-            }
-        }
-        if (moreTag && moreTag.length) {
-            moreTag.toggleClass("active");
-        }
-        self.refName = refName;
-        self.mainView.historyView.update(refName);
-    };
-
-    self.fetchSection = function(section, title, id, gitCommand, callback) {
-        webui.git(gitCommand, function(data) {
-            var refs = webui.splitLines(data);
-            if (id == "remote-branches") {
-                refs = refs.map(function(ref) {
-                    var end = ref.lastIndexOf(" -> ");
-                    if (end == -1) {
-                        return ref.substr(2);
-                    } else {
-                        return ref.substring(2, end);
-                    }
-                });
-            }
-            if (refs.length > 0) {
-                var ul = jQuery("<ul>").appendTo(section)[0];
-                refs = refs.sort(function(a, b) {
-                    if (id != "local-branches") {
-                        return -a.localeCompare(b);
-                    } else if (a[0] == "*") {
-                        return -1;
-                    } else if (b[0] == "*") {
-                        return 1;
-                    } else {
-                        return a.localeCompare(b);
-                    }
-                });
-
-                var maxRefsCount = 5;
-                if (id == "mounts") {
-                    maxRefsCount = refs.length;
-                    refs = refs.reverse();
-                }
-                for (var i = 0; i < refs.length && i < maxRefsCount; ++i) {
-                    var ref = refs[i];
-                    if (ref[2] == '(' && ref[ref.length - 1] == ')') {
-                        // This is a '(detached from XXXXXX)'
-                        var newref = ref.substring(ref.lastIndexOf(' ') + 1, ref.length - 1)
-                        if (ref[0] == '*') {
-                            ref = '* ' + newref;
-                        } else {
-                            ref = '  ' + newref;
-                        }
-                    }
-                    var li = jQuery('<li class="sidebar-ref">').appendTo(ul)[0];
-                    if (id == "local-branches") {
-                        li.refName = ref.substr(2);
-                        if (ref[0] == "*") {
-                            jQuery(li).addClass("branch-current");
-                        }
-                    } else {
-                        li.refName = ref;
-                    }
-                    jQuery(li).attr("title", li.refName);
-                    jQuery(li).text(li.refName);
-                    jQuery(li).click(function (event) {
-                        if (id == "mounts") {
-                            jQuery("*", self.element).removeClass("active");
-                            filesElement.addClass("active");
-                            self.mainView.filesView.treeView.stack = [
-                                { name: 'root', object: undefined },
-                                { name: event.target.refName, object: '/~' + event.target.refName }
-                            ];
-                            self.mainView.filesView.update();
-                            self.mainView.filesView.treeView.showTree();
-                        } else if (id == "remote-branches") {
-                            self.selectRef(event.target.refName);
-                            document.location.hash = 'remote-branches/' + event.target.refName;
-                        } else if (id == "local-branches") {
-                            self.selectRef(event.target.refName);
-                            document.location.hash = 'local-branches/' + event.target.refName;
-                        } else if (id == "tags") {
-                            self.selectRef(event.target.refName);
-                            document.location.hash = 'tags/' + event.target.refName;
-                        } else {
-                            self.selectRef(event.target.refName);
-                            document.location.hash = '';
-                        }
-                    });
-                }
-
-                if (refs.length > maxRefsCount) {
-                    jQuery('<li class="sidebar-more">More ...</li>')
-                        .appendTo(ul)
-                        .click(function() {
-                            refsPopup.title = title;
-                            refsPopup.refs = refs;
-                            refsPopup.ref = self.refName;
-                            jQuery('#refs-modal').modal({ backdrop: false, show: true });
-                        });
-                }
-            } else {
-                if (id != "mounts") {
-                    jQuery(section).remove();
-                }
-            }
-
-            if (callback !== undefined) {
-                callback(id);
-            }
-
-        });
-    };
-
-    self.fetchSections = function(callback) {
-        var sections = [
-            ["#sidebar-files", "Files", "mounts", [ "mounts" ]],
-            ["#sidebar-local-branches", "Local Branches", "local-branches", [ "branch" ]],
-            ["#sidebar-remote-branches", "Remote Branches", "remote-branches", [ "branch", "--remotes" ]],
-            ["#sidebar-tags", "Tags", "tags", [ "tag" ]],
-        ];
-        var remainingSection = sections.length;
-
-        var fetchSectionCallback = function(id) {
-            remainingSection--;
-            if (remainingSection == 0 && callback !== undefined) {
-                callback();
-            }
-        }
-
-        sections.forEach(function (args) {
-            self.fetchSection(jQuery(args[0], self.element)[0], args[1], args[2], args[3], fetchSectionCallback);
-        });
-    };
-
-    self.mainView = mainView;
-    self.element = jQuery('#sidebar')[0];
-
-    var workspaceElement = jQuery("#sidebar-workspace h4", self.element);
-    workspaceElement.click(function (event) {
-        jQuery("*", self.element).removeClass("active");
-        workspaceElement.addClass("active");
-        self.mainView.workspaceView.update([ "stage" ]);
-        // Update url hash
-        document.location.hash = 'workspace';
-    });
-
-    var filesElement = jQuery("#sidebar-files h4", self.element);
-    filesElement.click(function (event) {
-        jQuery("*", self.element).removeClass("active");
-        filesElement.addClass("active");
-        self.mainView.filesView.treeView.stack = [
-            { name: 'root', object: undefined }
-        ];
-        self.mainView.filesView.update();
-        self.mainView.filesView.treeView.showTree();
-    });
-
-    self.fetchSections(callback);
-};
+// webui.SideBarView = function(mainView, callback, refsPopup) {
+//     var self = this;
+//
+//     self.selectRef = function(refName) {
+//         var selected = jQuery(".active", self.element);
+//         if (selected.length > 0) {
+//             if (selected[0].refName != refName) {
+//                 selected.toggleClass("active");
+//             }
+//         }
+//         var refElements = jQuery(".sidebar-ref", self.element);
+//         var moreTag = undefined;
+//         for (var i = 0; i < refElements.length; ++i) {
+//             var refElement = refElements[i];
+//             if (refElement.refName == refName) {
+//                 jQuery(refElement).toggleClass("active");
+//                 if (refElement.tagName == "LI") {
+//                     moreTag = null;
+//                 } else if (moreTag !== null) {
+//                     moreTag = jQuery(".sidebar-more", refElement.section);
+//                 }
+//             }
+//         }
+//         if (moreTag && moreTag.length) {
+//             moreTag.toggleClass("active");
+//         }
+//         self.refName = refName;
+//         self.mainView.historyView.update(refName);
+//     };
+//
+//     self.fetchSection = function(section, title, id, gitCommand, callback) {
+//         webui.git(gitCommand, function(data) {
+//             var refs = webui.splitLines(data);
+//             if (id == "remote-branches") {
+//                 refs = refs.map(function(ref) {
+//                     var end = ref.lastIndexOf(" -> ");
+//                     if (end == -1) {
+//                         return ref.substr(2);
+//                     } else {
+//                         return ref.substring(2, end);
+//                     }
+//                 });
+//             }
+//             if (refs.length > 0) {
+//                 var ul = jQuery("<ul>").appendTo(section)[0];
+//                 refs = refs.sort(function(a, b) {
+//                     if (id != "local-branches") {
+//                         return -a.localeCompare(b);
+//                     } else if (a[0] == "*") {
+//                         return -1;
+//                     } else if (b[0] == "*") {
+//                         return 1;
+//                     } else {
+//                         return a.localeCompare(b);
+//                     }
+//                 });
+//
+//                 var maxRefsCount = 5;
+//                 if (id == "mounts") {
+//                     maxRefsCount = refs.length;
+//                     refs = refs.reverse();
+//                 }
+//                 for (var i = 0; i < refs.length && i < maxRefsCount; ++i) {
+//                     var ref = refs[i];
+//                     if (ref[2] == '(' && ref[ref.length - 1] == ')') {
+//                         // This is a '(detached from XXXXXX)'
+//                         var newref = ref.substring(ref.lastIndexOf(' ') + 1, ref.length - 1)
+//                         if (ref[0] == '*') {
+//                             ref = '* ' + newref;
+//                         } else {
+//                             ref = '  ' + newref;
+//                         }
+//                     }
+//                     var li = jQuery('<li class="sidebar-ref">').appendTo(ul)[0];
+//                     if (id == "local-branches") {
+//                         li.refName = ref.substr(2);
+//                         if (ref[0] == "*") {
+//                             jQuery(li).addClass("branch-current");
+//                         }
+//                     } else {
+//                         li.refName = ref;
+//                     }
+//                     jQuery(li).attr("title", li.refName);
+//                     jQuery(li).text(li.refName);
+//                     jQuery(li).click(function (event) {
+//                         if (id == "mounts") {
+//                             jQuery("*", self.element).removeClass("active");
+//                             filesElement.addClass("active");
+//                             self.mainView.filesView.treeView.stack = [
+//                                 { name: 'root', object: undefined },
+//                                 { name: event.target.refName, object: '/~' + event.target.refName }
+//                             ];
+//                             self.mainView.filesView.update();
+//                             self.mainView.filesView.treeView.showTree();
+//                         } else if (id == "remote-branches") {
+//                             self.selectRef(event.target.refName);
+//                             document.location.hash = 'remote-branches/' + event.target.refName;
+//                         } else if (id == "local-branches") {
+//                             self.selectRef(event.target.refName);
+//                             document.location.hash = 'local-branches/' + event.target.refName;
+//                         } else if (id == "tags") {
+//                             self.selectRef(event.target.refName);
+//                             document.location.hash = 'tags/' + event.target.refName;
+//                         } else {
+//                             self.selectRef(event.target.refName);
+//                             document.location.hash = '';
+//                         }
+//                     });
+//                 }
+//
+//                 if (refs.length > maxRefsCount) {
+//                     jQuery('<li class="sidebar-more">More ...</li>')
+//                         .appendTo(ul)
+//                         .click(function() {
+//                             refsPopup.title = title;
+//                             refsPopup.refs = refs;
+//                             refsPopup.ref = self.refName;
+//                             jQuery('#refs-modal').modal({ backdrop: false, show: true });
+//                         });
+//                 }
+//             } else {
+//                 if (id != "mounts") {
+//                     jQuery(section).remove();
+//                 }
+//             }
+//
+//             if (callback !== undefined) {
+//                 callback(id);
+//             }
+//
+//         });
+//     };
+//
+//     self.fetchSections = function(callback) {
+//         // var sections = [
+//         //     ["#sidebar-files", "Files", "mounts", [ "mounts" ]],
+//         //     ["#sidebar-local-branches", "Local Branches", "local-branches", [ "branch" ]],
+//         //     ["#sidebar-remote-branches", "Remote Branches", "remote-branches", [ "branch", "--remotes" ]],
+//         //     ["#sidebar-tags", "Tags", "tags", [ "tag" ]],
+//         // ];
+//         // var remainingSection = sections.length;
+//         //
+//         // var fetchSectionCallback = function(id) {
+//         //     remainingSection--;
+//         //     if (remainingSection == 0 && callback !== undefined) {
+//         //         callback();
+//         //     }
+//         // }
+//         //
+//         // sections.forEach(function (args) {
+//         //     self.fetchSection(jQuery(args[0], self.element)[0], args[1], args[2], args[3], fetchSectionCallback);
+//         // });
+//         callback();
+//     };
+//
+//     self.mainView = mainView;
+//     self.element = jQuery('#sidebar')[0];
+//
+//     var workspaceElement = jQuery("#sidebar-workspace h4", self.element);
+//     workspaceElement.click(function (event) {
+//         jQuery("*", self.element).removeClass("active");
+//         workspaceElement.addClass("active");
+//         self.mainView.workspaceView.update([ "stage" ]);
+//         // Update url hash
+//         document.location.hash = 'workspace';
+//     });
+//
+//     var filesElement = jQuery("#sidebar-files h4", self.element);
+//     filesElement.click(function (event) {
+//         jQuery("*", self.element).removeClass("active");
+//         filesElement.addClass("active");
+//         self.mainView.filesView.treeView.stack = [
+//             { name: 'root', object: undefined }
+//         ];
+//         self.mainView.filesView.update();
+//         self.mainView.filesView.treeView.showTree();
+//     });
+//
+//     self.fetchSections(callback);
+// };
 
 /*
  * == LogView =================================================================
@@ -1401,21 +1409,29 @@ function MainUi() {
             refs: []
         },
         watch: {
-            'ref': function(val, preVal) {
-                if (self.sideBarView.refName != val && val !== undefined) {
-                    self.sideBarView.selectRef(val);
-                    jQuery('#refs-modal').modal('hide');
-                }
-            },
+            // 'ref': function(val, preVal) {
+            //     if (self.sideBarView.refName != val && val !== undefined) {
+            //         self.sideBarView.selectRef(val);
+            //         jQuery('#refs-modal').modal('hide');
+            //     }
+            // },
         }
     });
 
     self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
-    self.sideBarView = new webui.SideBarView(self, sideBarViewCallback, self.refsPopup);
+    self.app = new Vue({
+        el: '#global-container',
+        data: sharedState
+    });
+
+    sideBarViewCallback();
     self.mainView = jQuery('#main-view')[0];
     self.historyView = new webui.HistoryView(self);
     self.workspaceView = new webui.WorkspaceView(self);
     self.filesView = new webui.FilesView(self);
-    self.filesView.treeView = new Vue({ el: '#files-view' }).$children[0];
 
+    sharedState.workspaceView = self.workspaceView;
+    sharedState.historyView = self.historyView;
+
+    // self.filesView.treeView = new Vue({ el: '#files-view' }).$children[0];
 }

@@ -24,27 +24,9 @@
 
 {% raw %}
 <div id="global-container" style="display: none">
-    <div id="sidebar">
-        <div id="sidebar-content">
-            <section id="sidebar-files">
-            <h4><i class="fa fa-home"></i> Files</h4>
-            </section>
-            <section id="sidebar-workspace">
-            <h4><i class="fa fa-briefcase"></i>Git Workspace</h4>
-            </section>
-            <section id="sidebar-local-branches">
-            <h4><i class="fa fa-code-fork"></i> Local Branches</h4>
-            </section>
-            <section id="sidebar-remote-branches">
-            <h4><i class="fa fa-globe"></i>Remote Branches</h4>
-            </section>
-            <section id="sidebar-tags">
-            <h4><i class="fa fa-tags"></i>Tags</h4>
-            </section>
-        </div>
-    </div>
+    <sidebar id="sidebar"></sidebar>
     <div id="main-view">
-        <div id="history-view">
+        <div id="history-view" v-show='section == "localBranches" | section == "remoteBranches" | section == "tags"'>
             <div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>
             <div id="commit-view">
                 <div class="commit-view-header"></div>
@@ -68,7 +50,7 @@
                 <div class="tree-view" class="display: none"></div>
             </div>
         </div>
-        <div id="workspace-view">
+        <div id="workspace-view" v-show='section == "workspace"'>
             <div id="workspace-diff-view">
                 <div class="diff-view-container panel panel-default">
                     <div class="panel-heading btn-toolbar" role="toolbar">
@@ -101,31 +83,72 @@
                 <!-- </div> -->
             </div>
         </div>
-        <div id="files-view">
-            <div id="components-demo" style="height: 100%">
-              <tree-view></tree-view>
+        <div id="files-view" v-show='section == "mounts"'>
+            <div style="height: 100%">
+                <tree-view :stack='stack'></tree-view>
             </div>
         </div>
     </div>
 </div>
 
 <div style='display: none'>
+    <div id='sidebar-template'>
+        <div>
+            <div id="sidebar-content">
+                <section id="sidebar-files" v-if="mounts.length > 0">
+                    <h4><i class="fa fa-home"></i> Files</h4>
+                    <ul>
+                        <template v-for="item in mounts" :key="item">
+                            <li :class="[ 'sidebar-ref', item.class ].join(' ')" v-on:click="click(item)">{{ item.refName }}</li>
+                        </template>
+                    </ul>
+                </section>
+                <section id="sidebar-workspace">
+                    <h4 v-on:click="click({ id: 'workspace' })"><i class="fa fa-briefcase"></i>Git Workspace</h4>
+                </section>
+                <section id="sidebar-local-branches" v-if="localBranches.length > 0">
+                    <h4><i class="fa fa-code-fork"></i> Local Branches</h4>
+                    <ul>
+                        <template v-for="item in localBranches" :key="item">
+                            <li :class="[ 'sidebar-ref', item.class ].join(' ')" v-on:click="click(item)">{{ item.refName }}</li>
+                        </template>
+                    </ul>
+                </section>
+                <section id="sidebar-remote-branches" v-if="remoteBranches.length > 0">
+                    <h4><i class="fa fa-globe"></i>Remote Branches</h4>
+                    <ul>
+                        <template v-for="item in remoteBranches" :key="item">
+                            <li :class="[ 'sidebar-ref', item.class ].join(' ')" v-on:click="click(item)">{{ item.refName }}</li>
+                        </template>
+                    </ul>
+                </section>
+                <section id="sidebar-tags" v-if="tags.length > 0">
+                    <h4><i class="fa fa-tags"></i>Tags</h4>
+                    <ul>
+                        <template v-for="item in tags" :key="item">
+                            <li :class="[ 'sidebar-ref', item.class ].join(' ')" v-on:click="click(item)">{{ item.refName }}</li>
+                        </template>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </div>
     <div id='tree-view'>
         <div class='tree-view'>
             <ol class="breadcrumb">
-              <li v-for="(item, index) in stack" v-bind:key="item" v-bind:index="index">
-                  <a v-if="index != stack.length-1" v-bind:href="item.uri" v-on:click="breadcrumbClicked(index, item)">{{ item.name }}</a>
+              <li v-for="(item, index) in stack" :key="item" :index="index">
+                  <a v-if="index != stack.length-1" :href="item.uri" v-on:click="breadcrumbClicked(index, item)">{{ item.name }}</a>
                   <span class="active" v-if="index == stack.length-1">{{ item.name }}</span>
               </li>
             </ol>
             <div id="tree-view-tree-content" class="list-group" v-show="!isEditorOpen">
                 <span v-for="item in items" :key="item" class="list-group-item">
-                    <a class="name" v-on:click="click(item)" v-bind:href="item.href" v-bind:class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
+                    <a class="name" v-on:click="click(item)" :href="item.href" :class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
                     <span class="mtime">{{ item.mtime }}</span>
                     <span class="size">{{ item.formatedSize }}</span>&nbsp;
                     <span class="buttons">
-                        <a v-if="item.type == 'blob'" class="download" title="Download" v-bind:href="item.downloadHref"><i class="fa fa-download" aria-hidden="true"></i></a>
-                        <a v-if="item.local" class="external-link" title="Open in a new window" target="_blank" v-bind:href="item.href"><i class="fa fa-external-link" aria-hidden="true"></i></a>
+                        <a v-if="item.type == 'blob'" class="download" title="Download" :href="item.downloadHref"><i class="fa fa-download" aria-hidden="true"></i></a>
+                        <a v-if="item.local" class="external-link" title="Open in a new window" target="_blank" :href="item.href"><i class="fa fa-external-link" aria-hidden="true"></i></a>
                     </span>
                 </span>
             </div>

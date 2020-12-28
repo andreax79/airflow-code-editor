@@ -46,12 +46,12 @@ function TreeEntry(line) {
 }
 
 Vue.component('tree-view', {
+    props: [ 'stack' ],
     data: function () {
         return {
             editorPath: null, // path of the file open in editor
             items: [], // tree items (blobs/trees)
             editor: null, // CodeMirror instance
-            stack: [ { name: 'root', object: undefined } ],
             isEditorOpen: false, // is editor open
             isPython: false, // is editor open on a python file
             theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
@@ -199,6 +199,14 @@ Vue.component('tree-view', {
                 document.getElementsByTagName('head')[0].appendChild(link);
             }
         },
+        updateLocation: function() {
+            // Update href hash
+            var self = this;
+            var last = self.stack[self.stack.length - 1];
+            if (!self.isGit(last.object)) {
+                document.location.hash = 'files' + (last.object || '/');
+            }
+        },
         click: function(item) {
             // File/directory action
             var self = this;
@@ -207,27 +215,16 @@ Vue.component('tree-view', {
             } else {
                 self.stack.push(item);
             }
-            if (item.type == 'tree') {
-                self.showTree();
-            } else {
-                self.showBlob();
-            }
             // Update href hash
-            if (!self.isGit(item.object)) {
-                document.location.hash = 'files' + (item.object || '/');
-            }
+            self.updateLocation();
             return false;
         },
         breadcrumbClicked: function(index, item) {
             // Breadcrumb action
             var self = this;
             self.stack = self.stack.slice(0, index + 1);
-            self.showTree();
-            var item = self.stack[self.stack.length-1]
             // Update href hash
-            if (!self.isGit(item.object)) {
-                document.location.hash = 'files' + (item.object || '/');
-            }
+            self.updateLocation();
             return false;
         },
         saveAction: function() {
@@ -345,14 +342,194 @@ Vue.component('tree-view', {
         },
         'mode': function(val, preVal) {
             this.setOption('keyMap', val);
+        },
+        'stack': function(val, preVal) {
+            var self = this;
+            if (self.stack[self.stack.length - 1].type == 'blob') {
+                self.showBlob();
+            } else {
+                self.showTree();
+            }
         }
     },
     created: function() {
         this.updateStack('/');
-        this.showTree();
     },
     mounted: function() {
         this.editor = CodeMirror.fromTextArea(this.$el.querySelector('textarea'), webui.codeMirrorOptions);
     },
     template: jQuery('#tree-view').html()
+});
+
+
+Vue.component('sidebar', {
+    data: function () {
+        return {
+            mounts: [],
+            localBranches: [],
+            remoteBranches: [],
+            tags: [],
+            refName: null,
+            sections: [
+                ["#sidebar-files", "Files", "mounts", [ "mounts" ]],
+                ["#sidebar-local-branches", "Local Branches", "localBranches", [ "branch" ]],
+                ["#sidebar-remote-branches", "Remote Branches", "remoteBranches", [ "branch", "--remotes" ]],
+                ["#sidebar-tags", "Tags", "tags", [ "tag" ]],
+            ],
+            sharedState: sharedState
+        }
+    },
+    methods: {
+        fetchSection: function(section, title, id, gitCommand) {
+            var self = this;
+            return new Promise(function(resolve, reject) {
+                webui.git(gitCommand, function(data) {
+                    var refs = webui.splitLines(data);
+                    if (id == "remoteBranches") {
+                        refs = refs.map(function(ref) {
+                            var end = ref.lastIndexOf(" -> ");
+                            if (end == -1) {
+                                return ref.substr(2);
+                            } else {
+                                return ref.substring(2, end);
+                            }
+                        });
+                    }
+                    if (refs.length > 0) {
+                        refs = refs.sort(function(a, b) {
+                            if (id != "localBranches") {
+                                return -a.localeCompare(b);
+                            } else if (a[0] == "*") {
+                                return -1;
+                            } else if (b[0] == "*") {
+                                return 1;
+                            } else {
+                                return a.localeCompare(b);
+                            }
+                        });
+
+                        var maxRefsCount = 5;
+                        if (id == "mounts") {
+                            maxRefsCount = refs.length;
+                            refs = refs.reverse();
+                        }
+                        self[id].length = 0;
+                        for (var i = 0; i < refs.length && i < maxRefsCount; ++i) {
+                            var ref = refs[i];
+                            if (ref[2] == '(' && ref[ref.length - 1] == ')') {
+                                // This is a '(detached from XXXXXX)'
+                                var newref = ref.substring(ref.lastIndexOf(' ') + 1, ref.length - 1)
+                                if (ref[0] == '*') {
+                                    ref = '* ' + newref;
+                                } else {
+                                    ref = '  ' + newref;
+                                }
+                            }
+                            var item = { id: id };
+                            if (id == "localBranches") {
+                                item.refName = ref.substr(2);
+                                if (ref[0] == "*") {
+                                    item.class = "branch-current";
+                                }
+                            } else {
+                                item.refName = ref;
+                            }
+                            self[id].push(item);
+                        }
+
+                        // if (refs.length > maxRefsCount) {
+                        //     jQuery('<li class="sidebar-more">More ...</li>')
+                        //         .appendTo(ul)
+                        //         .click(function() {
+                        //             refsPopup.title = title;
+                        //             refsPopup.refs = refs;
+                        //             refsPopup.ref = self.refName;
+                        //             jQuery('#refs-modal').modal({ backdrop: false, show: true });
+                        //         });
+                        // }
+                    }
+                    resolve(id);
+                });
+            });
+        },
+        fetchSections: function() {
+            var self = this;
+            return Promise.all(self.sections.map(function (args) {
+                return self.fetchSection(jQuery(args[0], self.element)[0], args[1], args[2], args[3]);
+            }));
+        },
+        // selectRef: function(id, refName) {
+        //     var self = this;
+        //     // var selected = jQuery(".active", self.element);
+        //     // if (selected.length > 0) {
+        //     //     if (selected[0].refName != refName) {
+        //     //         selected.toggleClass("active");
+        //     //     }
+        //     // }
+        //     // var refElements = jQuery(".sidebar-ref", self.element);
+        //     // var moreTag = undefined;
+        //     // for (var i = 0; i < refElements.length; ++i) {
+        //     //     var refElement = refElements[i];
+        //     //     if (refElement.refName == refName) {
+        //     //         jQuery(refElement).toggleClass("active");
+        //     //         if (refElement.tagName == "LI") {
+        //     //             moreTag = null;
+        //     //         } else if (moreTag !== null) {
+        //     //             moreTag = jQuery(".sidebar-more", refElement.section);
+        //     //         }
+        //     //     }
+        //     // }
+        //     // if (moreTag && moreTag.length) {
+        //     //     moreTag.toggleClass("active");
+        //     // }
+        //     self.refName = refName;
+        //     self.sharedState.section = id;
+        //     self.sharedState.refName = refName;
+        //     // self.mainView.historyView.update(refName);
+        // },
+        click: function(item) {
+            var self = this;
+            if (item.id == "mounts") {
+                self.sharedState.section = item.id;
+                self.sharedState.refName = null;
+                self.sharedState.stack = [
+                    { name: 'root', object: undefined },
+                    { name: item.refName, object: '/~' + item.refName }
+                ];
+
+            } else if (item.id == "workspace") {
+                self.sharedState.section = item.id;
+                self.sharedState.refName = null;
+                self.sharedState.workspaceView.update([ "stage" ]);
+                document.location.hash = "workspace";
+
+            } else if (item.id == "remoteBranches") {
+                self.sharedState.section = item.id;
+                self.sharedState.refName = item.refName;
+                self.sharedState.historyView.update(item.refName);
+                document.location.hash = 'remote-branches/' + item.refName;
+
+            } else if (item.id == "localBranches") {
+                self.sharedState.section = item.id;
+                self.sharedState.refName = item.refName;
+                self.sharedState.historyView.update(item.refName);
+                document.location.hash = 'local-branches/' + item.refName;
+
+            } else if (item.id == "tags") {
+                self.sharedState.section = item.id;
+                self.sharedState.refName = item.refName;
+                self.sharedState.historyView.update(item.refName);
+                document.location.hash = 'tags/' + item.refName;
+
+            }
+            return false;
+        },
+    },
+    created: function() {
+    },
+    mounted: function() {
+        var self = this;
+        self.fetchSections();
+    },
+    template: jQuery('#sidebar-template').html()
 });

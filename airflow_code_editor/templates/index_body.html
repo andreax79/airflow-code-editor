@@ -1,27 +1,3 @@
-
-<!-- Refs dialog -->
-{% raw %}
-<div class="modal fade" id="refs-modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title">{{ title }}</h4>
-            </div>
-            <div class="modal-body">
-<select v-model="ref">
-    <option v-for="ref in refs">
-        {{ ref }}
-    </option>
-</select>
-<br/>
-<hr/>
-            </div>
-        </div>
-    </div>
-</div>
-{% endraw %}
-
 {% raw %}
 <div id="global-container" style="display: none">
     <sidebar id="sidebar"></sidebar>
@@ -92,47 +68,33 @@
 </div>
 
 <div style='display: none'>
+    <div id='sidebar-section-template'>
+        <section v-if="items.length > 0">
+            <h4><i :class="'fa ' + icon"></i> {{ title }}</h4>
+            <ul>
+                <template v-for="(item, index) in items" :key="item" :index="index">
+                    <li v-if="index < limit" :class="{ 'active': sharedState.section == item.id && item.refName == sharedState.refName, 'sidebar-ref': true }" v-on:click="click(item)">{{ item.refName }}</li>
+                </template>
+                <li v-if="items.length > limit" class="sidebar-more" v-on:click="clickMore()">More ...</li>
+                <refs :title="title" :section="section" :items="items"></refs>
+            </ul>
+        </section>
+    </div>
+
     <div id='sidebar-template'>
         <div>
             <div id="sidebar-content">
-                <section id="sidebar-files" v-if="mounts.length > 0">
-                    <h4><i class="fa fa-home"></i> Files</h4>
-                    <ul>
-                        <template v-for="item in mounts" :key="item">
-                            <li :class="[ 'sidebar-ref', item.class ].join(' ')" v-on:click="click(item)">{{ item.refName }}</li>
-                        </template>
-                    </ul>
-                </section>
-                <section id="sidebar-workspace">
+                <sidebar-section title="Files" icon="fa-home" :items="mounts" :limit="100" section="mounts"></sidebar-section>
+                <section id="sidebar-workspace" :class="{ 'active': sharedState.section == 'workspace' }">
                     <h4 v-on:click="click({ id: 'workspace' })"><i class="fa fa-briefcase"></i>Git Workspace</h4>
                 </section>
-                <section id="sidebar-local-branches" v-if="localBranches.length > 0">
-                    <h4><i class="fa fa-code-fork"></i> Local Branches</h4>
-                    <ul>
-                        <template v-for="item in localBranches" :key="item">
-                            <li :class="[ 'sidebar-ref', item.class ].join(' ')" v-on:click="click(item)">{{ item.refName }}</li>
-                        </template>
-                    </ul>
-                </section>
-                <section id="sidebar-remote-branches" v-if="remoteBranches.length > 0">
-                    <h4><i class="fa fa-globe"></i>Remote Branches</h4>
-                    <ul>
-                        <template v-for="item in remoteBranches" :key="item">
-                            <li :class="[ 'sidebar-ref', item.class ].join(' ')" v-on:click="click(item)">{{ item.refName }}</li>
-                        </template>
-                    </ul>
-                </section>
-                <section id="sidebar-tags" v-if="tags.length > 0">
-                    <h4><i class="fa fa-tags"></i>Tags</h4>
-                    <ul>
-                        <template v-for="item in tags" :key="item">
-                            <li :class="[ 'sidebar-ref', item.class ].join(' ')" v-on:click="click(item)">{{ item.refName }}</li>
-                        </template>
-                    </ul>
-                </section>
+                <sidebar-section title="Local Branches" icon="fa-code-fork" :items="localBranches" :limit="5" section="localBranches"></sidebar-section>
+                <sidebar-section title="Remote Branches" icon="fa-globe" :items="remoteBranches" :limit="5" section="remoteBranches"></sidebar-section>
+                <sidebar-section title="Tags" icon="fa-tags" :items="tags" :limit="5" section="tags"></sidebar-section>
             </div>
         </div>
     </div>
+
     <div id='tree-view'>
         <div class='tree-view'>
             <ol class="breadcrumb">
@@ -200,6 +162,25 @@
             </div>
         </div>
     </div>
-</div>
 
+    <div id='refs-template'>
+        <div class="modal fade" tabindex="-1" role="dialog">
+            <div class="modal-dialog" style="color: #333">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title">{{ title }}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <select v-model="ref">
+                            <option v-for="item in items">{{ item.refName }}</option>
+                        </select>
+                        <br/>
+                        <hr/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endraw %}

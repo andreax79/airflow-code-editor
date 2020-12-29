@@ -353,7 +353,7 @@ Vue.component('tree-view', {
         }
     },
     created: function() {
-        this.updateStack('/');
+        // this.updateStack('/');
     },
     mounted: function() {
         this.editor = CodeMirror.fromTextArea(this.$el.querySelector('textarea'), webui.codeMirrorOptions);
@@ -374,14 +374,21 @@ Vue.component('sidebar-section', {
         selectItem: function(item) {
             var self = this;
             self.sharedState.section = item.id;
-            self.sharedState.refName = item.refName;
+            self.sharedState.refName = item.refName || null;
             if (item.id == "mounts") {
                 self.sharedState.section = item.id;
-                // self.sharedState.refName = null;
-                self.sharedState.stack = [
+                if (item.refName) {
+                    self.sharedState.stack = [
                     { name: 'root', object: undefined },
                     { name: item.refName, object: '/~' + item.refName }
                 ];
+                } else {
+                    self.sharedState.stack = [
+                        { name: 'root', object: undefined }
+                    ];
+                }
+            } else if (item.id == "workspace") {
+                self.sharedState.workspaceView.update([ "stage" ]);
             } else {
                 self.sharedState.historyView.update(item.refName);
             }
@@ -391,17 +398,21 @@ Vue.component('sidebar-section', {
             if (item.id == "mounts") {
                 self.selectItem(item);
 
-            } else if (item.id == "remoteBranches") {
+            } else if (item.id == "remoteBranches" && item.refName) {
                 self.selectItem(item);
                 document.location.hash = 'remote-branches/' + item.refName;
 
-            } else if (item.id == "localBranches") {
+            } else if (item.id == "localBranches" && item.refName) {
                 self.selectItem(item);
                 document.location.hash = 'local-branches/' + item.refName;
 
-            } else if (item.id == "tags") {
+            } else if (item.id == "tags" && item.refName) {
                 self.selectItem(item);
                 document.location.hash = 'tags/' + item.refName;
+
+            } else if (item.id == "workspace") {
+                self.selectItem(item);
+                document.location.hash = 'workspace';
             }
             return false;
         },
@@ -513,28 +524,62 @@ Vue.component('sidebar', {
                 });
             });
         },
+        initViews: function() {
+            var self = this;
+            return new Promise(function(resolve, reject) {
+                self.sharedState.historyView = new webui.HistoryView();
+                self.sharedState.workspaceView = new webui.WorkspaceView();
+                resolve(true);
+            });
+        },
         fetchSections: function() {
             var self = this;
             return Promise.all(self.sections.map(function (args) {
                 return self.fetchSection(args[0], args[1], args[2]);
             }));
         },
-        click: function(item) {
+        parseLocationHash: function() {
             var self = this;
-            if (item.id == "workspace") {
-                self.sharedState.section = item.id;
-                self.sharedState.refName = null;
-                self.sharedState.workspaceView.update([ "stage" ]);
-                document.location.hash = "workspace";
-            }
-            return false;
-        },
+            return new Promise(function(resolve, reject) {
+                var match = /#?([a-z-]+)(\/(.*))?/.exec(document.location.hash);
+                var section = match !== null ? match[1] : 'files';
+                var refName = match !== null ? match[3] : null;
+
+                if (section == 'tags' || section == 'local-branches' || section == 'remote-branches') {
+                    self.sharedState.section = section;
+                    self.sharedState.refName = refName;
+                    self.sharedState.historyView.update(refName);
+
+                } else if (section == 'workspace') {
+                    self.sharedState.section = section;
+                    self.sharedState.refName = null;
+                    self.sharedState.workspaceView.update([ "stage" ]);
+
+                } else { // files/edit
+                    self.sharedState.section = 'mounts';
+                    if (refName) {
+                        self.sharedState.stack = [
+                            { name: 'root', object: undefined },
+                            { name: refName.substr(1), object: '/' + refName, type: section == 'edit' ? 'blob' : 'tree' }
+                        ];
+                    } else {
+                        self.sharedState.stack = [
+                            { name: 'root', object: undefined }
+                        ];
+                    }
+                }
+                jQuery('#global-container').show();
+                resolve(true);
+            });
+        }
     },
     created: function() {
     },
     mounted: function() {
         var self = this;
-        self.fetchSections();
+        self.initViews()
+            .then(self.fetchSections)
+            .then(self.parseLocationHash);
     },
     template: jQuery('#sidebar-template').html()
 });

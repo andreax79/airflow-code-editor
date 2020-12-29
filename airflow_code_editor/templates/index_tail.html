@@ -28,23 +28,9 @@
 <script type="text/javascript">
 
 jQuery(document).ready(function() {
+    // Init
     var csrfToken = "{{ csrf_token() }}";
-    jQuery.ajaxSetup({
-        beforeSend: function(xhr, settings) {
-            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
-                xhr.setRequestHeader("X-CSRFToken", csrfToken);
-            }
-        }
-    });
-    window.main = new MainUi(csrfToken);
-    CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';
-    // Disable animation
-    BootstrapDialog.configDefaultOptions({ animate: false });
-    // Shortcuts
-    window.getEditor = function() {
-        return window.main.filesView.treeView.editor;
-    };
-
+    webui.init(csrfToken);
 });
 
 </script>

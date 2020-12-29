@@ -69,8 +69,10 @@
 
 <div style='display: none'>
     <div id='sidebar-section-template'>
-        <section v-if="items.length > 0">
-            <h4><i :class="'fa ' + icon"></i> {{ title }}</h4>
+        <section v-if="section == 'mounts' || section == 'workspace' || items.length > 0">
+            <h4 v-on:click="click({ id: section })">
+                <i :class="'fa ' + icon"></i> {{ title }}
+            </h4>
             <ul>
                 <template v-for="(item, index) in items" :key="item" :index="index">
                     <li v-if="index < limit" :class="{ 'active': sharedState.section == item.id && item.refName == sharedState.refName, 'sidebar-ref': true }" v-on:click="click(item)">{{ item.refName }}</li>
@@ -85,9 +87,7 @@
         <div>
             <div id="sidebar-content">
                 <sidebar-section title="Files" icon="fa-home" :items="mounts" :limit="100" section="mounts"></sidebar-section>
-                <section id="sidebar-workspace" :class="{ 'active': sharedState.section == 'workspace' }">
-                    <h4 v-on:click="click({ id: 'workspace' })"><i class="fa fa-briefcase"></i>Git Workspace</h4>
-                </section>
+                <sidebar-section title="Git Workspace" icon="fa-briefcase" :items="[]" :limit="5" section="workspace"></sidebar-section>
                 <sidebar-section title="Local Branches" icon="fa-code-fork" :items="localBranches" :limit="5" section="localBranches"></sidebar-section>
                 <sidebar-section title="Remote Branches" icon="fa-globe" :items="remoteBranches" :limit="5" section="remoteBranches"></sidebar-section>
                 <sidebar-section title="Tags" icon="fa-tags" :items="tags" :limit="5" section="tags"></sidebar-section>

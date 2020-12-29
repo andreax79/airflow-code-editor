@@ -18,7 +18,7 @@
 var webui = webui || {};
 
 webui.sharedState = {
-    section: 'mounts',
+    section: null,
     refName: null,
     stack: [ { name: 'root', object: undefined } ],
     workspaceView: null,
@@ -1122,72 +1122,24 @@ webui.CommitMessageView = function(workspaceView) {
 /*
  *  == Initialization =========================================================
  */
-function MainUi() {
-    var self = this;
-
-    //
-    // self.edit = function(target) {
-    //     jQuery("*", self.element).removeClass("active");
-    //     jQuery("#sidebar-files h4").addClass("active");
-    //     self.filesView.update();
-    //     if (target) {
-    //         self.filesView.treeView.updateStack('/' + target);
-    //         self.filesView.treeView.showBlob();
-    //     }
-    // }
-    //
-    // self.files = function(target) {
-    //     jQuery("*", self.element).removeClass("active");
-    //     jQuery("#sidebar-files h4").addClass("active");
-    //     self.filesView.update();
-    //     if (target) {
-    //         self.filesView.treeView.updateStack('/' + target);
-    //         self.filesView.treeView.showTree();
-    //     }
-    // }
-    //
-    // self.changeSection = function(hash) {
-    //     var match = /#?([a-z-]+)(\/(.*))?/.exec(hash);
-    //     var section = match !== null ? match[1] : 'files';
-    //     var target = match !== null ? match[3] : null;
-    //
-    //     if (section == 'tags') { // e.g. "tags/v1.2.0"
-    //         jQuery('#sidebar-tags .sidebar-ref[title="' + target + '"]').click()
-    //
-    //     } else if (section == 'local-branches') {
-    //         jQuery('#sidebar-local-branches .sidebar-ref[title="' + target + '"]').click();
-    //
-    //     } else if (section == 'remote-branches') {
-    //         jQuery('#sidebar-remote-branches .sidebar-ref[title="' + target + '"]').click();
-    //
-    //     } else if (section == 'workspace') {
-    //         jQuery("#sidebar-workspace h4").click();
-    //
-    //     } else if (section == 'edit') { // e.g. "edit/a/b/c/dag.py"
-    //         self.edit(target);
-    //
-    //     } else {
-    //         self.files(target);
-    //     }
-    // }
-
-    var sideBarViewCallback = function() {
-        setTimeout(function() {
-            // self.changeSection(document.location.hash);
-            jQuery('#global-container').show();
-        }, 500);
-    }
-
-    self.globalContainer = jQuery('#global-container').appendTo(jQuery("body"))[0];
+webui.init = function(csrfToken) {
+    // Init
+    CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';
+    // Disable animation
+    BootstrapDialog.configDefaultOptions({ animate: false });
+    // CSRF Token setup
+    jQuery.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            }
+        }
+    });
+    // Append global container to body
+    jQuery('#global-container').appendTo(jQuery("body"));
+    // Init app
     self.app = new Vue({
         el: '#global-container',
         data: webui.sharedState
     });
-
-    sideBarViewCallback();
-    self.historyView = new webui.HistoryView();
-    self.workspaceView = new webui.WorkspaceView();
-
-    webui.sharedState.workspaceView = self.workspaceView;
-    webui.sharedState.historyView = self.historyView;
 }

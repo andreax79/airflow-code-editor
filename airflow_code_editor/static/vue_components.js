@@ -389,30 +389,14 @@ Vue.component('sidebar-section', {
                 }
             } else if (item.id == "workspace") {
                 self.sharedState.workspaceView.update([ "stage" ]);
-            } else {
-                self.sharedState.historyView.update(item.refName);
+            } else { // remote-branches/local-branches/tags
+                self.sharedState.historyView.update(item);
             }
         },
         click: function(item) {
             var self = this;
-            if (item.id == "mounts") {
+            if (item.refName || item.id == "mounts" || item.id == "workspace") { // refName is not mandatory for files/workspace
                 self.selectItem(item);
-
-            } else if (item.id == "remoteBranches" && item.refName) {
-                self.selectItem(item);
-                document.location.hash = 'remote-branches/' + item.refName;
-
-            } else if (item.id == "localBranches" && item.refName) {
-                self.selectItem(item);
-                document.location.hash = 'local-branches/' + item.refName;
-
-            } else if (item.id == "tags" && item.refName) {
-                self.selectItem(item);
-                document.location.hash = 'tags/' + item.refName;
-
-            } else if (item.id == "workspace") {
-                self.selectItem(item);
-                document.location.hash = 'workspace';
             }
             return false;
         },
@@ -437,7 +421,7 @@ Vue.component('refs', {
             var self = this;
             self.sharedState.section = self.section;
             self.sharedState.refName = refName;
-            self.sharedState.historyView.update(refName);
+            self.sharedState.historyView.update({ id: self.section, refName: refName });
         }
     },
     watch: {
@@ -452,15 +436,17 @@ Vue.component('refs', {
 Vue.component('sidebar', {
     data: function () {
         return {
-            mounts: [],
-            localBranches: [],
-            remoteBranches: [],
-            tags: [],
-            refName: null,
-            sections: [
+            items: { // sidebar elements for each section
+                'mounts': [],
+                'local-branches': [],
+                'remote-branches': [],
+                'tags': [],
+                'workspace': []
+            },
+            sections: [ // sidebar sections (title, id, git command)
                 [ "Files", "mounts", [ "mounts" ]],
-                [ "Local Branches", "localBranches", [ "branch" ]],
-                [ "Remote Branches", "remoteBranches", [ "branch", "--remotes" ]],
+                [ "Local Branches", "local-branches", [ "branch" ]],
+                [ "Remote Branches", "remote-branches", [ "branch", "--remotes" ]],
                 [ "Tags", "tags", [ "tag" ]],
             ],
             sharedState: webui.sharedState
@@ -472,7 +458,7 @@ Vue.component('sidebar', {
             return new Promise(function(resolve, reject) {
                 webui.git(gitCommand, function(data) {
                     var refs = webui.splitLines(data);
-                    if (id == "remoteBranches") {
+                    if (id == "remote-branches") {
                         refs = refs.map(function(ref) {
                             var end = ref.lastIndexOf(" -> ");
                             if (end == -1) {
@@ -482,9 +468,10 @@ Vue.component('sidebar', {
                             }
                         });
                     }
+                    var items = [];
                     if (refs.length > 0) {
                         refs = refs.sort(function(a, b) {
-                            if (id != "localBranches") {
+                            if (id != "local-branches") {
                                 return -a.localeCompare(b);
                             } else if (a[0] == "*") {
                                 return -1;
@@ -498,7 +485,6 @@ Vue.component('sidebar', {
                         if (id == "mounts") {
                             refs = refs.reverse();
                         }
-                        self[id].length = 0;
                         for (var i = 0; i < refs.length; ++i) {
                             var ref = refs[i];
                             if (ref[2] == '(' && ref[ref.length - 1] == ')') {
@@ -511,15 +497,16 @@ Vue.component('sidebar', {
                                 }
                             }
                             var item = { id: id, refName: ref };
-                            if (id == "localBranches") {
+                            if (id == "local-branches") {
                                 item.refName = ref.substr(2);
                                 if (ref[0] == "*") {
                                     item.class = "branch-current";
                                 }
                             }
-                            self[id].push(item);
+                            items.push(item);
                         }
                     }
+                    self.items[id] = items;
                     resolve(id);
                 });
             });
@@ -548,7 +535,7 @@ Vue.component('sidebar', {
                 if (section == 'tags' || section == 'local-branches' || section == 'remote-branches') {
                     self.sharedState.section = section;
                     self.sharedState.refName = refName;
-                    self.sharedState.historyView.update(refName);
+                    self.sharedState.historyView.update({ id: section, refName: refName });
 
                 } else if (section == 'workspace') {
                     self.sharedState.section = section;
@@ -558,9 +545,13 @@ Vue.component('sidebar', {
                 } else { // files/edit
                     self.sharedState.section = 'mounts';
                     if (refName) {
+                        var name = refName;
+                        if (name[0] == '~') {
+                            name = name.substring(1);
+                        }
                         self.sharedState.stack = [
                             { name: 'root', object: undefined },
-                            { name: refName.substr(1), object: '/' + refName, type: section == 'edit' ? 'blob' : 'tree' }
+                            { name: name, object: '/' + refName, type: section == 'edit' ? 'blob' : 'tree' }
                         ];
                     } else {
                         self.sharedState.stack = [

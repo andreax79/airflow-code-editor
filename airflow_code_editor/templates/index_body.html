@@ -2,7 +2,7 @@
 <div id="global-container" style="display: none">
     <sidebar id="sidebar"></sidebar>
     <div id="main-view">
-        <div id="history-view" v-show='section == "localBranches" | section == "remoteBranches" | section == "tags"'>
+        <div id="history-view" v-show='section == "local-branches" | section == "remote-branches" | section == "tags"'>
             <div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>
             <div id="commit-view">
                 <div class="commit-view-header"></div>
@@ -69,16 +69,16 @@
 
 <div style='display: none'>
     <div id='sidebar-section-template'>
-        <section v-if="section == 'mounts' || section == 'workspace' || items.length > 0">
+        <section v-if="section == 'mounts' || section == 'workspace' || items[section].length > 0">
             <h4 v-on:click="click({ id: section })">
                 <i :class="'fa ' + icon"></i> {{ title }}
             </h4>
             <ul>
-                <template v-for="(item, index) in items" :key="item" :index="index">
+                <template v-for="(item, index) in items[section]" :key="item" :index="index">
                     <li v-if="index < limit" :class="{ 'active': sharedState.section == item.id && item.refName == sharedState.refName, 'sidebar-ref': true }" v-on:click="click(item)">{{ item.refName }}</li>
                 </template>
-                <li v-if="items.length > limit" class="sidebar-more" v-on:click="clickMore()">More ...</li>
-                <refs :title="title" :section="section" :items="items"></refs>
+                <li v-if="items[section].length > limit" class="sidebar-more" v-on:click="clickMore()">More ...</li>
+                <refs :title="title" :section="section" :items="items[section]"></refs>
             </ul>
         </section>
     </div>
@@ -86,11 +86,11 @@
     <div id='sidebar-template'>
         <div>
             <div id="sidebar-content">
-                <sidebar-section title="Files" icon="fa-home" :items="mounts" :limit="100" section="mounts"></sidebar-section>
-                <sidebar-section title="Git Workspace" icon="fa-briefcase" :items="[]" :limit="5" section="workspace"></sidebar-section>
-                <sidebar-section title="Local Branches" icon="fa-code-fork" :items="localBranches" :limit="5" section="localBranches"></sidebar-section>
-                <sidebar-section title="Remote Branches" icon="fa-globe" :items="remoteBranches" :limit="5" section="remoteBranches"></sidebar-section>
-                <sidebar-section title="Tags" icon="fa-tags" :items="tags" :limit="5" section="tags"></sidebar-section>
+                <sidebar-section title="Files" icon="fa-home" :items="items" :limit="100" section="mounts"></sidebar-section>
+                <sidebar-section title="Git Workspace" icon="fa-briefcase" :items="items" :limit="5" section="workspace"></sidebar-section>
+                <sidebar-section title="Local Branches" icon="fa-code-fork" :items="items" :limit="5" section="local-branches"></sidebar-section>
+                <sidebar-section title="Remote Branches" icon="fa-globe" :items="items" :limit="5" section="remote-branches"></sidebar-section>
+                <sidebar-section title="Tags" icon="fa-tags" :items="items" :limit="5" section="tags"></sidebar-section>
             </div>
         </div>
     </div>

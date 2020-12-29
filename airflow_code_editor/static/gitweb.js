@@ -857,8 +857,9 @@ webui.CommitView = function(id, historyView) {
 webui.HistoryView = function() {
     var self = this;
 
-    self.update = function(ref) {
-        self.logView.update(ref);
+    self.update = function(item) {
+        self.logView.update(item.refName);
+        document.location.hash = item.id + '/' + item.refName;
     };
 
     self.element = jQuery('#history-view')[0];
@@ -873,6 +874,7 @@ webui.WorkspaceView = function() {
     var self = this;
 
     self.update = function(mode) {
+        document.location.hash = 'workspace';
         self.workingCopyView.update();
         self.stagingAreaView.update();
         self.commitMessageView.update();

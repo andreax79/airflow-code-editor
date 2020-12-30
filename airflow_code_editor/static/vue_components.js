@@ -60,30 +60,6 @@ Vue.component('tree-view', {
         }
     },
     methods: {
-        updateStack: function(path) {
-            var stack = [];
-            var fullPath = null;
-            if (path == '/') {
-                path = '';
-            }
-            path.split('/').forEach(function(part, index) {
-                if (index === 0) {
-                    stack.push({ name: 'root', object: undefined });
-                    fullPath = '';
-                } else {
-                    fullPath += '/' + part;
-                    if (part[0] == '~') {
-                        part = part.substring(1);
-                    }
-                    stack.push({
-                        name: part,
-                        object: fullPath,
-                        uri: encodeURI((fullPath !== undefined && fullPath.startsWith('/')) ? ('#files' + fullPath) : fullPath)
-                    });
-                }
-            });
-            this.stack = stack;
-        },
         normalize: function(path) {
             if (path[0] != '/') {
                 path = '/' + path;
@@ -92,10 +68,6 @@ Vue.component('tree-view', {
         },
         isNew: function(filename) {
             return /✧$/.test(filename);
-        },
-        isGit: function(treeRef) {
-            // Return true if treeRef is git ref
-            return (treeRef !== undefined && !treeRef.startsWith('/'));
         },
         editorLoad: function(path) {
             // Load a file into the editor
@@ -127,7 +99,8 @@ Vue.component('tree-view', {
                 } else {
                     // Update editor path and the breadcrumb
                     self.editorPath = path;
-                    self.updateStack(path);
+                    self.stack.updateStack(path, 'blob');
+                    self.editor.openNotification('saved', { duration: 5000 })
                     // Update url hash
                     document.location.hash = 'edit' + path;
                 }
@@ -202,9 +175,8 @@ Vue.component('tree-view', {
         updateLocation: function() {
             // Update href hash
             var self = this;
-            var last = self.stack[self.stack.length - 1];
-            if (!self.isGit(last.object)) {
-                document.location.hash = 'files' + (last.object || '/');
+            if (!self.stack.isGit()) {
+                document.location.hash = 'files' + (self.stack.last().object || '/');
             }
         },
         click: function(item) {
@@ -222,7 +194,7 @@ Vue.component('tree-view', {
         breadcrumbClicked: function(index, item) {
             // Breadcrumb action
             var self = this;
-            self.stack = self.stack.slice(0, index + 1);
+            self.stack.slice(index + 1);
             // Update href hash
             self.updateLocation();
             return false;
@@ -272,19 +244,18 @@ Vue.component('tree-view', {
             // Show editor
             var self = this;
             self.isEditorOpen = true;
-            var object = self.stack[self.stack.length - 1].object;
-            var filename = self.stack[self.stack.length - 1].name;
-            if (object.startsWith('/')) { // File path
-                self.editorPath = object;
+            var last = self.stack.last();
+            if (last.object.startsWith('/')) { // File path
+                self.editorPath = last.object;
             } else { // Git hash
-                self.editorPath = '/~git/' + object + '/'+ filename;
+                self.editorPath = '/~git/' + last.object + '/'+ last.name;
             }
             // Create CodeMirror instance and set the mode
             var info;
-            if (self.isNew(filename)) {
+            if (self.isNew(last.name)) {
                 info = { 'mode': 'python' };
             } else {
-                info = CodeMirror.findModeByFileName(filename);
+                info = CodeMirror.findModeByFileName(last.name);
             }
             self.editor.setOption('mode', info && info.mode);
             self.isPython = info && info.mode == 'python';
@@ -293,7 +264,7 @@ Vue.component('tree-view', {
             if (info) {
                 CodeMirror.autoLoadMode(self.editor, info.mode);
             }
-            if (self.isNew(filename)) {
+            if (self.isNew(last.name)) {
                 // New file
                 self.editor.setValue('');
                 self.editor.refresh();
@@ -306,17 +277,16 @@ Vue.component('tree-view', {
             // Show tree
             var self = this;
             this.isEditorOpen = false;
-            var treeRef = this.stack[this.stack.length - 1].object;
-            var parentTreeRef = this.stack.length > 1 ? this.stack[this.stack.length - 2].object : undefined;
-            var cmd = self.isGit(treeRef) ? 'ls-tree' : 'ls-local';
+            var last = this.stack.last();
+            var cmd = self.stack.isGit() ? 'ls-tree' : 'ls-local';
             // Update url hash
             if (cmd == 'ls-local') {
-                document.location.hash = 'files' + (treeRef || '/');
+                document.location.hash = 'files' + (last.object || '/');
             }
-            webui.git([ cmd, "-l", treeRef ], function(data) {
+            webui.git([ cmd, "-l", last.object ], function(data) {
                 var blobs = [];
                 var trees = [];
-                if (parentTreeRef || (treeRef !== undefined && treeRef.startsWith('/')) ) {
+                if (self.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
                     trees.push({ type: 'tree', name: '..', isSymbolicLink: false });
                 }
                 webui.splitLines(data).forEach(function(line) {
@@ -343,17 +313,14 @@ Vue.component('tree-view', {
         'mode': function(val, preVal) {
             this.setOption('keyMap', val);
         },
-        'stack': function(val, preVal) {
+        'stack.stack': function(val, preVal) {
             var self = this;
-            if (self.stack[self.stack.length - 1].type == 'blob') {
+            if (self.stack.last().type == 'blob') {
                 self.showBlob();
             } else {
                 self.showTree();
             }
         }
-    },
-    created: function() {
-        // this.updateStack('/');
     },
     mounted: function() {
         this.editor = CodeMirror.fromTextArea(this.$el.querySelector('textarea'), webui.codeMirrorOptions);
@@ -366,7 +333,7 @@ Vue.component('sidebar-section', {
     props: [ 'title', 'section', 'icon', 'items', 'limit' ],
     data: function () {
         return {
-            ref: webui.sharedState.refName,
+            ref: webui.sharedState.object,
             sharedState: webui.sharedState
         }
     },
@@ -374,28 +341,18 @@ Vue.component('sidebar-section', {
         selectItem: function(item) {
             var self = this;
             self.sharedState.section = item.id;
-            self.sharedState.refName = item.refName || null;
+            self.sharedState.object = item.object || null;
             if (item.id == "mounts") {
-                self.sharedState.section = item.id;
-                if (item.refName) {
-                    self.sharedState.stack = [
-                    { name: 'root', object: undefined },
-                    { name: item.refName, object: '/~' + item.refName }
-                ];
-                } else {
-                    self.sharedState.stack = [
-                        { name: 'root', object: undefined }
-                    ];
-                }
+                self.sharedState.stack.updateStack(item.object, 'tree');
             } else if (item.id == "workspace") {
-                self.sharedState.workspaceView.update([ "stage" ]);
+                self.sharedState.workspaceView.update([ 'stage' ]);
             } else { // remote-branches/local-branches/tags
                 self.sharedState.historyView.update(item);
             }
         },
         click: function(item) {
             var self = this;
-            if (item.refName || item.id == "mounts" || item.id == "workspace") { // refName is not mandatory for files/workspace
+            if (item.object || item.id == "mounts" || item.id == "workspace") { // object is not mandatory for files/workspace
                 self.selectItem(item);
             }
             return false;
@@ -412,16 +369,16 @@ Vue.component('refs', {
     props: [ 'section', 'title', 'items' ],
     data: function () {
         return {
-            ref: webui.sharedState.refName,
+            ref: webui.sharedState.object,
             sharedState: webui.sharedState
         }
     },
     methods: {
-        selectRef: function(refName) {
+        selectRef: function(object) {
             var self = this;
             self.sharedState.section = self.section;
-            self.sharedState.refName = refName;
-            self.sharedState.historyView.update({ id: self.section, refName: refName });
+            self.sharedState.object = object;
+            self.sharedState.historyView.update({ id: self.section, object: object });
         }
     },
     watch: {
@@ -453,61 +410,47 @@ Vue.component('sidebar', {
         }
     },
     methods: {
-        fetchSection: function(title, id, gitCommand) {
+        fetchSection: function(title, section, gitCommand) {
             var self = this;
             return new Promise(function(resolve, reject) {
                 webui.git(gitCommand, function(data) {
                     var refs = webui.splitLines(data);
-                    if (id == "remote-branches") {
-                        refs = refs.map(function(ref) {
-                            var end = ref.lastIndexOf(" -> ");
-                            if (end == -1) {
-                                return ref.substr(2);
-                            } else {
-                                return ref.substring(2, end);
-                            }
-                        });
-                    }
                     var items = [];
                     if (refs.length > 0) {
-                        refs = refs.sort(function(a, b) {
-                            if (id != "local-branches") {
-                                return -a.localeCompare(b);
-                            } else if (a[0] == "*") {
-                                return -1;
-                            } else if (b[0] == "*") {
-                                return 1;
+                        // Prepare items
+                        items = refs.map(function(ref) {
+                            var item = {
+                                id: section,
+                                object: null,
+                                name: null,
+                                class: null
+                            }
+                            item.name = ref.trim().split(' ->')[0]; // Strip "->> ..."
+                            if (item.name[2] == '(' && item.name[item.name.length - 1] == ')') { // "(detached from ...)"
+                                item.name = item.name.substring(item.name.lastIndexOf(' ') + 1, item.name.length - 1)
+                            }
+                            if (item.name[0] == '*') { // Current branch
+                                item.name = item.name.substring(1).trim(); // remove "* "
+                                item.class = "branch-current";
+                            }
+                            if (section == 'mounts') {
+                                item.object = '/~' + item.name;
                             } else {
-                                return a.localeCompare(b);
+                                item.object = item.name;
+                            }
+                            return item;
+                        });
+                        // Sort
+                        items = items.sort(function(a, b) {
+                            if (section != 'local-branches' && section != 'mounts') {
+                                return -a.object.localeCompare(b.object);
+                            } else {
+                                return a.object.localeCompare(b.object);
                             }
                         });
-
-                        if (id == "mounts") {
-                            refs = refs.reverse();
-                        }
-                        for (var i = 0; i < refs.length; ++i) {
-                            var ref = refs[i];
-                            if (ref[2] == '(' && ref[ref.length - 1] == ')') {
-                                // This is a '(detached from XXXXXX)'
-                                var newref = ref.substring(ref.lastIndexOf(' ') + 1, ref.length - 1)
-                                if (ref[0] == '*') {
-                                    ref = '* ' + newref;
-                                } else {
-                                    ref = '  ' + newref;
-                                }
-                            }
-                            var item = { id: id, refName: ref };
-                            if (id == "local-branches") {
-                                item.refName = ref.substr(2);
-                                if (ref[0] == "*") {
-                                    item.class = "branch-current";
-                                }
-                            }
-                            items.push(item);
-                        }
                     }
-                    self.items[id] = items;
-                    resolve(id);
+                    self.items[section] = items;
+                    resolve(section);
                 });
             });
         },
@@ -530,34 +473,25 @@ Vue.component('sidebar', {
             return new Promise(function(resolve, reject) {
                 var match = /#?([a-z-]+)(\/(.*))?/.exec(document.location.hash);
                 var section = match !== null ? match[1] : 'files';
-                var refName = match !== null ? match[3] : null;
+                var object = match !== null ? match[3] : null;
 
                 if (section == 'tags' || section == 'local-branches' || section == 'remote-branches') {
                     self.sharedState.section = section;
-                    self.sharedState.refName = refName;
-                    self.sharedState.historyView.update({ id: section, refName: refName });
+                    self.sharedState.object = object;
+                    self.sharedState.historyView.update({ id: section, object: object });
 
                 } else if (section == 'workspace') {
                     self.sharedState.section = section;
-                    self.sharedState.refName = null;
-                    self.sharedState.workspaceView.update([ "stage" ]);
+                    self.sharedState.object = null;
+                    self.sharedState.workspaceView.update([ 'stage' ]);
 
-                } else { // files/edit
+                } else if (section == 'edit') {
                     self.sharedState.section = 'mounts';
-                    if (refName) {
-                        var name = refName;
-                        if (name[0] == '~') {
-                            name = name.substring(1);
-                        }
-                        self.sharedState.stack = [
-                            { name: 'root', object: undefined },
-                            { name: name, object: '/' + refName, type: section == 'edit' ? 'blob' : 'tree' }
-                        ];
-                    } else {
-                        self.sharedState.stack = [
-                            { name: 'root', object: undefined }
-                        ];
-                    }
+                    self.sharedState.stack.updateStack(object, 'blob');
+
+                } else { // files
+                    self.sharedState.section = 'mounts';
+                    self.sharedState.stack.updateStack(object, 'tree');
                 }
                 jQuery('#global-container').show();
                 resolve(true);

@@ -17,10 +17,73 @@
 "use strict"
 var webui = webui || {};
 
+webui.Stack = function() {
+    var self = this;
+
+    self.stack = [ { name: 'root', object: undefined } ],
+
+    self.updateStack = function(path, type) {
+        var stack = [];
+        var fullPath = null;
+        if (path == '/' || !path) {
+            path = '';
+        }
+        path.split('/').forEach(function(part, index) {
+            if (index === 0) {
+                stack.push({ name: 'root', object: undefined });
+                fullPath = '';
+            } else {
+                fullPath += '/' + part;
+                if (part[0] == '~') {
+                    part = part.substring(1);
+                }
+                stack.push({
+                    name: part,
+                    object: fullPath,
+                    uri: encodeURI((fullPath !== undefined && fullPath.startsWith('/')) ? ('#files' + fullPath) : fullPath),
+                    type: 'tree'
+                });
+            }
+        });
+        if (type == 'blob') {
+            stack[stack.length - 1].type = 'blob';
+        }
+        self.stack = stack;
+    }
+
+    self.last = function() {
+        // Return last stack element
+        return self.stack[self.stack.length - 1];
+    }
+
+    self.parent = function() {
+        // Return stack - 2 element
+        return self.stack.length > 1 ? self.stack[self.stack.length - 2] : undefined;
+    }
+
+    self.isGit = function() {
+        // Return true if last is a git ref
+        return (self.last().object !== undefined && !self.last().object.startsWith('/'));
+    }
+
+    self.pop = function() {
+        return self.stack.pop();
+    }
+
+    self.push = function(item) {
+        return self.stack.push(item);
+    }
+
+    self.slice = function(index) {
+        self.stack = self.stack.slice(0, index);
+    }
+
+};
+
 webui.sharedState = {
-    section: null,
-    refName: null,
-    stack: [ { name: 'root', object: undefined } ],
+    section: null, // current sidebar section (mounts, werkspace, ...)
+    object: null, // current sidebar object
+    stack: new webui.Stack(), // files stack
     workspaceView: null,
     historyView: null,
 };
@@ -858,8 +921,8 @@ webui.HistoryView = function() {
     var self = this;
 
     self.update = function(item) {
-        self.logView.update(item.refName);
-        document.location.hash = item.id + '/' + item.refName;
+        self.logView.update(item.name);
+        document.location.hash = item.id + '/' + item.name;
     };
 
     self.element = jQuery('#history-view')[0];

@@ -54,6 +54,7 @@ Vue.component('tree-view', {
             editor: null, // CodeMirror instance
             isEditorOpen: false, // is editor open
             isPython: false, // is editor open on a python file
+            readOnly: false,
             theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
             mode: localStorage.getItem('airflow_code_editor_mode') || 'default',  // edit mode (default, vim, etc...)
             themes: themes  // themes list from "themes.js"
@@ -100,7 +101,7 @@ Vue.component('tree-view', {
                     // Update editor path and the breadcrumb
                     self.editorPath = path;
                     self.stack.updateStack(path, 'blob');
-                    self.editor.openNotification('saved', { duration: 5000 })
+                    self.editor.openNotification('file saved', { duration: 5000 })
                     // Update url hash
                     document.location.hash = 'edit' + path;
                 }
@@ -244,11 +245,12 @@ Vue.component('tree-view', {
             // Show editor
             var self = this;
             self.isEditorOpen = true;
+            self.readOnly = self.stack.isGit();
             var last = self.stack.last();
-            if (last.object.startsWith('/')) { // File path
-                self.editorPath = last.object;
-            } else { // Git hash
+            if (self.stack.isGit()){ // Git hash
                 self.editorPath = '/~git/' + last.object + '/'+ last.name;
+            } else { // File path
+                self.editorPath = last.object;
             }
             // Create CodeMirror instance and set the mode
             var info;
@@ -261,6 +263,7 @@ Vue.component('tree-view', {
             self.isPython = info && info.mode == 'python';
             self.setTheme(self.theme);
             self.setOption('keyMap', self.mode);
+            self.setOption('readOnly', self.readOnly);
             if (info) {
                 CodeMirror.autoLoadMode(self.editor, info.mode);
             }
@@ -330,7 +333,7 @@ Vue.component('tree-view', {
 
 
 Vue.component('sidebar-section', {
-    props: [ 'title', 'section', 'icon', 'items', 'limit' ],
+    props: [ 'title', 'section', 'icon', 'items', 'limit', 'stack', 'historyView', 'workspaceView' ],
     data: function () {
         return {
             ref: webui.sharedState.object,
@@ -343,11 +346,11 @@ Vue.component('sidebar-section', {
             self.sharedState.section = item.id;
             self.sharedState.object = item.object || null;
             if (item.id == "mounts") {
-                self.sharedState.stack.updateStack(item.object, 'tree');
+                self.stack.updateStack(item.object, 'tree');
             } else if (item.id == "workspace") {
-                self.sharedState.workspaceView.update([ 'stage' ]);
+                self.workspaceView.update([ 'stage' ]);
             } else { // remote-branches/local-branches/tags
-                self.sharedState.historyView.update(item);
+                self.historyView.update(item);
             }
         },
         click: function(item) {
@@ -365,8 +368,9 @@ Vue.component('sidebar-section', {
     template: jQuery('#sidebar-section-template').html()
 });
 
+
 Vue.component('refs', {
-    props: [ 'section', 'title', 'items' ],
+    props: [ 'section', 'title', 'items', 'historyView' ],
     data: function () {
         return {
             ref: webui.sharedState.object,
@@ -378,7 +382,7 @@ Vue.component('refs', {
             var self = this;
             self.sharedState.section = self.section;
             self.sharedState.object = object;
-            self.sharedState.historyView.update({ id: self.section, object: object });
+            self.historyView.update({ id: self.section, name: object });
         }
     },
     watch: {
@@ -390,7 +394,9 @@ Vue.component('refs', {
     template: jQuery('#refs-template').html()
 });
 
+
 Vue.component('sidebar', {
+    props: [ 'stack' ],
     data: function () {
         return {
             items: { // sidebar elements for each section
@@ -406,11 +412,14 @@ Vue.component('sidebar', {
                 [ "Remote Branches", "remote-branches", [ "branch", "--remotes" ]],
                 [ "Tags", "tags", [ "tag" ]],
             ],
+            historyView: null,
+            workspaceView: null,
             sharedState: webui.sharedState
         }
     },
     methods: {
         fetchSection: function(title, section, gitCommand) {
+            // Fetch a single sidebar section
             var self = this;
             return new Promise(function(resolve, reject) {
                 webui.git(gitCommand, function(data) {
@@ -455,20 +464,23 @@ Vue.component('sidebar', {
             });
         },
         initViews: function() {
+            // Init views
             var self = this;
             return new Promise(function(resolve, reject) {
-                self.sharedState.historyView = new webui.HistoryView();
-                self.sharedState.workspaceView = new webui.WorkspaceView();
+                self.historyView = new webui.HistoryView();
+                self.workspaceView = new webui.WorkspaceView();
                 resolve(true);
             });
         },
         fetchSections: function() {
+            // Fetch sidebar sections
             var self = this;
             return Promise.all(self.sections.map(function (args) {
                 return self.fetchSection(args[0], args[1], args[2]);
             }));
         },
-        parseLocationHash: function() {
+        parseURIFragment: function() {
+            // Change the active section according to the uri fragment (hash)
             var self = this;
             return new Promise(function(resolve, reject) {
                 var match = /#?([a-z-]+)(\/(.*))?/.exec(document.location.hash);
@@ -478,33 +490,45 @@ Vue.component('sidebar', {
                 if (section == 'tags' || section == 'local-branches' || section == 'remote-branches') {
                     self.sharedState.section = section;
                     self.sharedState.object = object;
-                    self.sharedState.historyView.update({ id: section, object: object });
+                    self.historyView.update({ id: section, name: object });
 
                 } else if (section == 'workspace') {
                     self.sharedState.section = section;
                     self.sharedState.object = null;
-                    self.sharedState.workspaceView.update([ 'stage' ]);
+                    self.workspaceView.update([ 'stage' ]);
 
-                } else if (section == 'edit') {
+                } else if (section == 'edit' && object) {
                     self.sharedState.section = 'mounts';
-                    self.sharedState.stack.updateStack(object, 'blob');
+                    self.sharedState.object = '/' + object.split('/')[0];
+                    self.stack.updateStack('/' + object, 'blob');
 
                 } else { // files
                     self.sharedState.section = 'mounts';
-                    self.sharedState.stack.updateStack(object, 'tree');
+                    if (object) {
+                        self.sharedState.object = '/' + object.split('/')[0];
+                        self.stack.updateStack('/' + object, 'tree');
+                    } else {
+                        self.sharedState.object = null;
+                        self.stack.updateStack('/', 'tree');
+                    }
                 }
-                jQuery('#global-container').show();
                 resolve(true);
             });
-        }
-    },
-    created: function() {
+        },
+        showContainer: function() {
+            // Show global container
+            var self = this;
+            jQuery('#global-container').show();
+            return(Promise.resolve(true));
+        },
     },
     mounted: function() {
+        // Init
         var self = this;
         self.initViews()
             .then(self.fetchSections)
-            .then(self.parseLocationHash);
+            .then(self.parseURIFragment)
+            .then(self.showContainer);
     },
     template: jQuery('#sidebar-template').html()
 });

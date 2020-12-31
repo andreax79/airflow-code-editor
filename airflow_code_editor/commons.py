@@ -27,6 +27,7 @@ __all__ = [
     'HTTP_404_NOT_FOUND',
     'PLUGIN_DEFAULT_CONFIG',
     'ROOT_MOUNTPOUNT',
+    'JS_FILES',
 ]
 
 PLUGIN_NAME = 'code_editor'
@@ -65,3 +66,27 @@ PLUGIN_DEFAULT_CONFIG = {
     'string_normalization': False,
 }
 ROOT_MOUNTPOUNT = 'root'
+JS_FILES = [
+    'codemirror.js',
+    'mode/python/python.js',
+    'addon/fold/foldcode.js',
+    'addon/fold/foldgutter.js',
+    'addon/fold/indent-fold.js',
+    'addon/fold/comment-fold.js',
+    'addon/mode/loadmode.js',
+    'addon/mode/simple.js',
+    'addon/mode/overlay.js',
+    'addon/dialog/dialog.js',
+    'addon/search/searchcursor.js',
+    'addon/search/search.js',
+    'addon/search/jump-to-line.js',
+    'mode/meta.js',
+    'bootstrap-dialog.js',
+    'vim.js',
+    'emacs.js',
+    'sublime.js',
+    'vue.js',
+    'vue_components.js',
+    'themes.js',
+    'gitweb.js',
+]

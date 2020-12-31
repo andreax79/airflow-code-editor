@@ -1,27 +1,4 @@
-{% for filename in [
-    'codemirror.js',
-    'mode/python/python.js',
-    'addon/fold/foldcode.js',
-    'addon/fold/foldgutter.js',
-    'addon/fold/indent-fold.js',
-    'addon/fold/comment-fold.js',
-    'addon/mode/loadmode.js',
-    'addon/mode/simple.js',
-    'addon/mode/overlay.js',
-    'addon/dialog/dialog.js',
-    'addon/search/searchcursor.js',
-    'addon/search/search.js',
-    'addon/search/jump-to-line.js',
-    'mode/meta.js',
-    'bootstrap-dialog.js',
-    'vim.js',
-    'emacs.js',
-    'sublime.js',
-    'vue.js',
-    'vue_components.js',
-    'themes.js',
-    'gitweb.js'
-] -%}
+{% for filename in js_files -%}
 <script src="{{ url_for('static', filename='code_editor/' + filename) }}"></script>
 {% endfor %}
 

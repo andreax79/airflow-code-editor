@@ -17,77 +17,6 @@
 "use strict"
 var webui = webui || {};
 
-webui.Stack = function() {
-    var self = this;
-
-    self.stack = [ { name: 'root', object: undefined } ],
-
-    self.updateStack = function(path, type) {
-        var stack = [];
-        var fullPath = null;
-        if (path == '/' || !path) {
-            path = '';
-        }
-        path.split('/').forEach(function(part, index) {
-            if (index === 0) {
-                stack.push({ name: 'root', object: undefined });
-                fullPath = '';
-            } else {
-                fullPath += '/' + part;
-                if (part[0] == '~') {
-                    part = part.substring(1);
-                }
-                stack.push({
-                    name: part,
-                    object: fullPath,
-                    uri: encodeURI((fullPath !== undefined && fullPath.startsWith('/')) ? ('#files' + fullPath) : fullPath),
-                    type: 'tree'
-                });
-            }
-        });
-        if (type == 'blob') {
-            stack[stack.length - 1].type = 'blob';
-        }
-        self.stack = stack;
-    }
-
-    self.last = function() {
-        // Return last stack element
-        return self.stack[self.stack.length - 1];
-    }
-
-    self.parent = function() {
-        // Return stack - 2 element
-        return self.stack.length > 1 ? self.stack[self.stack.length - 2] : undefined;
-    }
-
-    self.isGit = function() {
-        // Return true if last is a git ref
-        return (self.last().object !== undefined && !self.last().object.startsWith('/'));
-    }
-
-    self.pop = function() {
-        return self.stack.pop();
-    }
-
-    self.push = function(item) {
-        return self.stack.push(item);
-    }
-
-    self.slice = function(index) {
-        self.stack = self.stack.slice(0, index);
-    }
-
-};
-
-webui.sharedState = {
-    section: null, // current sidebar section (mounts, werkspace, ...)
-    object: null, // current sidebar object
-    stack: new webui.Stack(), // files stack
-    workspaceView: null,
-    historyView: null,
-};
-
 webui.COLORS = ["#ffab1d", "#fd8c25", "#f36e4a", "#fc6148", "#d75ab6", "#b25ade", "#6575ff", "#7b77e9", "#4ea8ec", "#00d0f5", "#4eb94e", "#51af23", "#8b9f1c", "#d0b02f", "#d0853a", "#a4a4a4",
                 "#ffc51f", "#fe982c", "#fd7854", "#ff705f", "#e467c3", "#bd65e9", "#7183ff", "#8985f7", "#55b6ff", "#10dcff", "#51cd51", "#5cba2e", "#9eb22f", "#debe3d", "#e19344", "#b8b8b8",
                 "#ffd03b", "#ffae38", "#ff8a6a", "#ff7e7e", "#ef72ce", "#c56df1", "#8091ff", "#918dff", "#69caff", "#3ee1ff", "#72da72", "#71cf43", "#abbf3c", "#e6c645", "#eda04e", "#c5c5c5",
@@ -378,6 +307,7 @@ webui.LogView = function(id, historyView) {
         var secs = data.substr(emailEnd + 2, dateEnd - emailEnd - 2);
         this.date = new Date(0);
         this.date.setUTCSeconds(parseInt(secs));
+        this.formattedDate = this.date.toISOString().substring(0, 16).replace('T', ' ');
     };
 
     function Entry(logView, data) {
@@ -400,7 +330,7 @@ webui.LogView = function(id, historyView) {
             self.element = jQuery('<a class="log-entry list-group-item">' +
                                 '<header>' +
                                     '<h6></h6>' +
-                                    '<span class="log-entry-date">' + self.author.date.toLocaleString() + '&nbsp;</span> ' +
+                                    '<span class="log-entry-date">' + self.author.formattedDate + '&nbsp;</span> ' +
                                     '<span class="badge">' + self.abbrevCommitHash() + '</span>' +
                                 '</header>' +
                                 '<p class="list-group-item-text"></p>' +
@@ -885,13 +815,13 @@ webui.CommitView = function(id, historyView) {
         if (currentCommit == entry.commit) {
             // We already display the right data. No need to update.
             return;
-
         }
         currentCommit = entry.commit;
         self.showDiff();
         buttonBox.select(0);
         diffView.update([ "show" ], [entry.commit]);
-        // treeView.update(entry.tree);
+        // Update tree
+        webui.sharedState.historyStack.updateStack(entry.tree)
     };
 
     self.showDiff = function() {
@@ -911,7 +841,6 @@ webui.CommitView = function(id, historyView) {
     var buttonBox = new webui.TabBox([["Commit", self.showDiff], ["Tree", self.showTree]]);
     commitViewHeader.appendChild(buttonBox.element);
     var diffView = new webui.DiffView(id + ' .diff-view-container', false, false, self);
-    // var treeView = new webui.TreeView(id + ' .tree-view');
 };
 
 /*
@@ -923,6 +852,7 @@ webui.HistoryView = function() {
     self.update = function(item) {
         self.logView.update(item.name);
         document.location.hash = item.id + '/' + item.name;
+        webui.sharedState.historyStack.updateStack(item.name)
     };
 
     self.element = jQuery('#history-view')[0];
@@ -1187,6 +1117,83 @@ webui.CommitMessageView = function(workspaceView) {
 /*
  *  == Initialization =========================================================
  */
+
+webui.Stack = function() {
+    var self = this;
+
+    self.stack = [ { name: 'root', object: undefined } ],
+
+    self.updateStack = function(path, type) {
+        // path: absolute path (local file) or ref/path (git)
+        // type: last item type (tree or blob)
+        var stack = [];
+        var fullPath = null;
+        if (path == '/' || !path) {
+            path = '';
+        }
+        path.split('/').forEach(function(part, index) {
+            if (index === 0 && !part) {
+                stack.push({ name: 'root', object: undefined });
+                fullPath = '';
+            } else {
+                if (fullPath === null) {
+                    fullPath = part;
+                } else {
+                    fullPath += '/' + part;
+                }
+                if (part[0] == '~') {
+                    part = part.substring(1);
+                }
+                stack.push({
+                    name: part,
+                    object: fullPath,
+                    uri: encodeURI((fullPath !== undefined && fullPath.startsWith('/')) ? ('#files' + fullPath) : null),
+                    type: 'tree'
+                });
+            }
+        });
+        if (type == 'blob') {
+            stack[stack.length - 1].type = 'blob';
+        }
+        self.stack = stack;
+    }
+
+    self.last = function() {
+        // Return last stack element
+        return self.stack[self.stack.length - 1];
+    }
+
+    self.parent = function() {
+        // Return stack - 2 element
+        return self.stack.length > 1 ? self.stack[self.stack.length - 2] : undefined;
+    }
+
+    self.isGit = function() {
+        // Return true if last is a git ref
+        return (self.last().object !== undefined && !self.last().object.startsWith('/'));
+    }
+
+    self.pop = function() {
+        return self.stack.pop();
+    }
+
+    self.push = function(item) {
+        return self.stack.push(item);
+    }
+
+    self.slice = function(index) {
+        self.stack = self.stack.slice(0, index);
+    }
+
+};
+
+webui.sharedState = {
+    section: null, // current sidebar section (mounts, werkspace, ...)
+    object: null, // current sidebar object
+    stack: new webui.Stack(), // files stack
+    historyStack: new webui.Stack(), // history view files stack
+};
+
 webui.init = function(csrfToken) {
     // Init
     CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';

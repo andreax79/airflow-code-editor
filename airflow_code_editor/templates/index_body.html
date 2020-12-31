@@ -1,6 +1,6 @@
 {% raw %}
 <div id="global-container" style="display: none">
-    <sidebar id="sidebar"></sidebar>
+    <sidebar id="sidebar" :stack="stack"></sidebar>
     <div id="main-view">
         <div id="history-view" v-show='section == "local-branches" | section == "remote-branches" | section == "tags"'>
             <div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>
@@ -23,7 +23,9 @@
                     </div>
                     <div class="panel-body"></div>
                 </div>
-                <div class="tree-view" class="display: none"></div>
+                <div class="tree-view" class="display: none">
+                    <tree-view :stack='historyStack'></tree-view>
+                </div>
             </div>
         </div>
         <div id="workspace-view" v-show='section == "workspace"'>
@@ -70,15 +72,15 @@
 <div style='display: none'>
     <div id='sidebar-section-template'>
         <section v-if="section == 'mounts' || section == 'workspace' || items[section].length > 0">
-            <h4 v-on:click="click({ id: section })">
+            <h4 v-on:click="click({ id: section })" :class="{ 'active': (section == 'workspace' && sharedState.section == 'workspace') || (section == 'mounts' && sharedState.section == 'mounts' && !sharedState.object) }">
                 <i :class="'fa ' + icon"></i> {{ title }}
             </h4>
             <ul>
                 <template v-for="(item, index) in items[section]" :key="item" :index="index">
-                    <li v-if="index < limit" :class="{ 'active': sharedState.section == item.id && item.refName == sharedState.refName, 'sidebar-ref': true }" v-on:click="click(item)">{{ item.refName }}</li>
+                    <li v-if="index < limit" :class="{ 'active': sharedState.section == item.id && item.object == sharedState.object, 'sidebar-ref': true }" v-on:click="click(item)">{{ item.name }}</li>
                 </template>
                 <li v-if="items[section].length > limit" class="sidebar-more" v-on:click="clickMore()">More ...</li>
-                <refs :title="title" :section="section" :items="items[section]"></refs>
+                <refs :title="title" :section="section" :items="items[section]" :history-view="historyView"></refs>
             </ul>
         </section>
     </div>
@@ -86,11 +88,11 @@
     <div id='sidebar-template'>
         <div>
             <div id="sidebar-content">
-                <sidebar-section title="Files" icon="fa-home" :items="items" :limit="100" section="mounts"></sidebar-section>
-                <sidebar-section title="Git Workspace" icon="fa-briefcase" :items="items" :limit="5" section="workspace"></sidebar-section>
-                <sidebar-section title="Local Branches" icon="fa-code-fork" :items="items" :limit="5" section="local-branches"></sidebar-section>
-                <sidebar-section title="Remote Branches" icon="fa-globe" :items="items" :limit="5" section="remote-branches"></sidebar-section>
-                <sidebar-section title="Tags" icon="fa-tags" :items="items" :limit="5" section="tags"></sidebar-section>
+                <sidebar-section title="Files" icon="fa-home" :items="items" :limit="100" section="mounts" :stack="stack" :history-view="historyView" :workspace-view="workspaceView"></sidebar-section>
+                <sidebar-section title="Git Workspace" icon="fa-briefcase" :items="items" :limit="5" section="workspace" :stack="stack" :history-view="historyView" :workspace-view="workspaceView"></sidebar-section>
+                <sidebar-section title="Local Branches" icon="fa-code-fork" :items="items" :limit="5" section="local-branches" :stack="stack" :history-view="historyView" :workspace-view="workspaceView"></sidebar-section>
+                <sidebar-section title="Remote Branches" icon="fa-globe" :items="items" :limit="5" section="remote-branches" :stack="stack" :history-view="historyView" :workspace-view="workspaceView"></sidebar-section>
+                <sidebar-section title="Tags" icon="fa-tags" :items="items" :limit="5" section="tags" :history-view="historyView" :stack="stack" :workspace-view="workspaceView"></sidebar-section>
             </div>
         </div>
     </div>
@@ -98,14 +100,14 @@
     <div id='tree-view'>
         <div class='tree-view'>
             <ol class="breadcrumb">
-              <li v-for="(item, index) in stack" :key="item" :index="index">
-                  <a v-if="index != stack.length-1" :href="item.uri" v-on:click="breadcrumbClicked(index, item)">{{ item.name }}</a>
-                  <span class="active" v-if="index == stack.length-1">{{ item.name }}</span>
+              <li v-for="(item, index) in stack.stack" :key="item" :index="index">
+                  <a v-if="index != stack.stack.length-1" :href="item.uri" v-on:click.prevent="breadcrumbClicked(index, item)">{{ item.name }}</a>
+                  <span class="active" v-if="index == stack.stack.length-1">{{ item.name }}</span>
               </li>
             </ol>
             <div id="tree-view-tree-content" class="list-group" v-show="!isEditorOpen">
                 <span v-for="item in items" :key="item" class="list-group-item">
-                    <a class="name" v-on:click="click(item)" :href="item.href" :class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
+                    <a class="name" v-on:click.prevent="click(item)" :href="item.href" :class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
                     <span class="mtime">{{ item.mtime }}</span>
                     <span class="size">{{ item.formatedSize }}</span>&nbsp;
                     <span class="buttons">
@@ -122,12 +124,12 @@
                         <textarea rows="30" cols="80" id="editor" name="editor" style="display: none"></textarea>
                     </div>
                     <div class="cm-footer cm-flex-child-fixed">
-                    <button v-on:click="saveAction()" type="button" class="btn btn-default btn-sm">Save <i class="fa fa-save" aria-hidden="true"></i></button>
-                    <button v-on:click="saveAsAction()" type="button" class="btn btn-default btn-sm">Save as...</i></button>
-                    <button v-on:click="revertAction()" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>
+                    <button v-on:click="saveAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Save <i class="fa fa-save" aria-hidden="true"></i></button>
+                    <button v-on:click="saveAsAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Save as...</i></button>
+                    <button v-on:click="revertAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>
                     <button v-on:click="findAction()" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>
-                    <button v-on:click="replaceAction()" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>
-                    <button v-on:click="formatAction()" type="button" class="btn btn-default btn-sm" v-show="isPython">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>
+                    <button v-on:click="replaceAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>
+                    <button v-on:click="formatAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm" v-show="isPython">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>
                     <button v-on:click="settingsAction()" type="button" class="btn btn-default btn-sm" style="float: right">Settings <i class="fa fa-cog" aria-hidden="true"></i></button>
                     </div>
                 </div>
@@ -173,7 +175,7 @@
                     </div>
                     <div class="modal-body">
                         <select v-model="ref">
-                            <option v-for="item in items">{{ item.refName }}</option>
+                            <option v-for="item in items">{{ item.name }}</option>
                         </select>
                         <br/>
                         <hr/>

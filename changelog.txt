@@ -146,3 +146,14 @@
 
 - fix git revert (checkout)
 
+## 3.2.0
+
+2021-01-01
+
+### Changed
+
+- refactoring gui with Vue.js
+
+### Added
+
+- New file button added

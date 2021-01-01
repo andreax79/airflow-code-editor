@@ -57,12 +57,6 @@ body {
   width: 14em;
   background-color: #333333;
 }
-#sidebar #sidebar-logo {
-  display: block;
-  margin: 8px auto 8px auto;
-  height: 2em;
-  text-align: center;
-}
 #sidebar .branch-current {
   font-weight: bold;
 }
@@ -72,42 +66,38 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   cursor: default;
-  border-top: 1px solid #1a1a1a;
   color: #eeeeee;
 }
-#sidebar #sidebar-content > :first-child {
-  border-top: 1px solid #5e5e5e;
-}
-#sidebar #sidebar-content h4:before {
+#sidebar #sidebar-content h1:before {
   vertical-align: middle;
   margin: 12px;
 }
-#sidebar #sidebar-content h4 {
+#sidebar #sidebar-content h1 {
   vertical-align: baseline;
   margin: 0.5em 0 0 0;
 }
-#sidebar #sidebar-content > section h4 {
+#sidebar #sidebar-content > section h1 {
   font-size: 1em;
-  padding: 5px 0;
+  padding: 0.5rem 0 0.4rem 1.5rem;
 }
-#sidebar #sidebar-content > section h4 {
+#sidebar #sidebar-content > section h1.clickable {
   cursor: pointer;
-  padding-left: 15px;
 }
-#sidebar #sidebar-content > section h4 .fa {
-  margin-right: 10px;
+#sidebar #sidebar-content > section h1 .fa {
+  margin-right: 0.5rem;
+  width: 1rem;
 }
 #sidebar #sidebar-content ul {
   margin: 0;
   padding: 0;
 }
 #sidebar #sidebar-content li:before {
-  content: "\2022";
-  margin: 12px;
+  content: "-";
+  margin: 1rem;
 }
 #sidebar #sidebar-content li {
   cursor: pointer;
-  padding: 6px 0 6px 1em;
+  padding: 0.4rem 0 0.4rem 1rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -423,16 +413,30 @@ body {
   height: 100%;
 }
 .tree-view .breadcrumb {
-  padding: 10px 16px;
+  padding: 0.5rem 1rem 0.5rem 1rem;
   margin-bottom: 0;
   border-bottom: 1px #dddddd solid;
   border-radius: 0px;
+}
+.tree-view .breadcrumb li {
+  margin-top: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.tree-view .breadcrumb a {
+  text-decoration: none;
+  cursor: pointer;
+}
+.tree-view .breadcrumb-buttons {
+  float: right;
 }
 .tree-view #tree-view-tree-content {
   overflow: auto;
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
   margin: 0;
+}
+.tree-view #tree-view-tree-content a:hover {
+  text-decoration: none;
 }
 .tree-view #tree-view-blob-content {
   display: flex;
@@ -489,6 +493,7 @@ body {
   -webkit-flex-direction: column;
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
+  border-top: 1px #dddddd solid;
 }
 #workspace-view #workspace-diff-view,
 #files-view #workspace-diff-view,

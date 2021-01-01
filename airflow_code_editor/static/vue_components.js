@@ -60,6 +60,12 @@ Vue.component('tree-view', {
             themes: themes  // themes list from "themes.js"
         }
     },
+    computed: {
+        isGit: function () {
+            var self = this;
+            return self.stack.isGit();
+        }
+    },
     methods: {
         normalize: function(path) {
             if (path[0] != '/') {
@@ -73,19 +79,26 @@ Vue.component('tree-view', {
         editorLoad: function(path) {
             // Load a file into the editor
             var self = this;
-            jQuery.get('/code_editor/files' + path, function(res) {
-                // Replace tabs with spaces
-                if (self.editor.getMode().name == 'python') {
-                    res = res.replace(/\t/g, '    ');
-                }
-                self.editor.setValue(res);
-                self.editor.refresh();
-                self.editorPath = path;
-                // Update url hash
-                if (! path.startsWith('/~git/')) {
-                    document.location.hash = 'edit' + path;
-                }
-            }, 'text');
+            jQuery.get('/code_editor/files' + path)
+                  .done(function(data) {
+                      // Replace tabs with spaces
+                      if (self.editor.getMode().name == 'python') {
+                          data = data.replace(/\t/g, '    ');
+                      }
+                      self.editor.setValue(data);
+                      self.editor.refresh();
+                      self.editorPath = path;
+                      // Update url hash
+                      if (! path.startsWith('/~git/')) {
+                          document.location.hash = 'edit' + path;
+                      }
+                  })
+                  .fail(function(jqXHR, textStatus, errorThrown) {
+                      self.editor.setValue('');
+                      self.editor.refresh();
+                      self.editorPath = path;
+                      self.editor.openNotification('file not found', { duration: 5000 })
+                  });
         },
         editorSave: function(path) {
             // Save editor content
@@ -241,8 +254,14 @@ Vue.component('tree-view', {
             var self = this;
             jQuery(this.$el.querySelector('.settings-modal')).modal({ backdrop: false, show: true });
         },
+        newAction: function() {
+            // New file button action
+            var self = this;
+            var item = { name: '✧', type: 'blob', object: (self.stack.last().object || '') + '/✧' };
+            self.stack.push(item);
+        },
         showBlob: function() {
-            // Show editor
+            // Show file in editor
             var self = this;
             self.isEditorOpen = true;
             self.readOnly = self.stack.isGit();
@@ -270,14 +289,16 @@ Vue.component('tree-view', {
             if (self.isNew(last.name)) {
                 // New file
                 self.editor.setValue('');
-                self.editor.refresh();
+                setTimeout(function(){
+                    self.editor.refresh();
+                }, 100);
             } else {
                 // Load the file
                 self.editorLoad(self.editorPath);
             }
         },
-        showTree: function() {
-            // Show tree
+        updateTreeView: function() {
+            // Update tree view
             var self = this;
             this.isEditorOpen = false;
             var last = this.stack.last();
@@ -287,11 +308,8 @@ Vue.component('tree-view', {
                 document.location.hash = 'files' + (last.object || '/');
             }
             webui.git([ cmd, "-l", last.object ], function(data) {
-                var blobs = [];
-                var trees = [];
-                if (self.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
-                    trees.push({ type: 'tree', name: '..', isSymbolicLink: false });
-                }
+                var blobs = []; // files
+                var trees = []; // directories
                 webui.splitLines(data).forEach(function(line) {
                     var item = new TreeEntry(line);
                     if (item.type == 'tree') {
@@ -300,11 +318,16 @@ Vue.component('tree-view', {
                         blobs.push(item);
                     }
                 });
+                // Sort files and directories
                 var compare = function(a, b) {
                     return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
                 }
                 blobs.sort(compare);
                 trees.sort(compare);
+                // Add link to parent directory on top
+                if (self.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
+                    trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false });
+                }
                 self.items = trees.concat(blobs);
             });
         }
@@ -321,7 +344,7 @@ Vue.component('tree-view', {
             if (self.stack.last().type == 'blob') {
                 self.showBlob();
             } else {
-                self.showTree();
+                self.updateTreeView();
             }
         }
     },
@@ -338,6 +361,15 @@ Vue.component('sidebar-section', {
         return {
             ref: webui.sharedState.object,
             sharedState: webui.sharedState
+        }
+    },
+    computed: {
+        cssClass: function () {
+            var self = this;
+            return {
+                'active': (self.section == 'workspace' && self.sharedState.section == 'workspace') || (self.section == 'mounts' && self.sharedState.section == 'mounts' && !self.sharedState.object),
+                'clickable': (self.section == 'workspace' || self.section == 'mounts')
+            }
         }
     },
     methods: {
@@ -467,7 +499,7 @@ Vue.component('sidebar', {
             // Init views
             var self = this;
             return new Promise(function(resolve, reject) {
-                self.historyView = new webui.HistoryView();
+                self.historyView = new webui.HistoryView(self.sharedState.historyStack);
                 self.workspaceView = new webui.WorkspaceView();
                 resolve(true);
             });

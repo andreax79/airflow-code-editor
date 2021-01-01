@@ -49,16 +49,6 @@
                 </div>
             </div>
             <div id="workspace-editor">
-                <!-- <div id="commit&#45;message&#45;view" class="panel panel&#45;default"> -->
-                <!--     <div class="panel&#45;heading"> -->
-                <!--         <h5>Message</h5> -->
-                <!--         <div class="btn&#45;group btn&#45;group&#45;sm"> -->
-                <!--             <button type="button" class="btn btn&#45;default commit&#45;message&#45;amend" data&#45;toggle="button">Amend</button> -->
-                <!--             <button type="button" class="btn btn&#45;default commit&#45;message&#45;commit">Commit</button> -->
-                <!--         </div> -->
-                <!--     </div> -->
-                <!--     <textarea></textarea> -->
-                <!-- </div> -->
             </div>
         </div>
         <div id="files-view" v-show='section == "mounts"'>
@@ -72,9 +62,9 @@
 <div style='display: none'>
     <div id='sidebar-section-template'>
         <section v-if="section == 'mounts' || section == 'workspace' || items[section].length > 0">
-            <h4 v-on:click="click({ id: section })" :class="{ 'active': (section == 'workspace' && sharedState.section == 'workspace') || (section == 'mounts' && sharedState.section == 'mounts' && !sharedState.object) }">
+            <h1 v-on:click="click({ id: section })" :class="cssClass">
                 <i :class="'fa ' + icon"></i> {{ title }}
-            </h4>
+            </h1>
             <ul>
                 <template v-for="(item, index) in items[section]" :key="item" :index="index">
                     <li v-if="index < limit" :class="{ 'active': sharedState.section == item.id && item.object == sharedState.object, 'sidebar-ref': true }" v-on:click="click(item)">{{ item.name }}</li>
@@ -100,10 +90,13 @@
     <div id='tree-view'>
         <div class='tree-view'>
             <ol class="breadcrumb">
-              <li v-for="(item, index) in stack.stack" :key="item" :index="index">
+              <li v-for="(item, index) in stack.stack" :key="item" :index="index" class="breadcrumb-item">
                   <a v-if="index != stack.stack.length-1" :href="item.uri" v-on:click.prevent="breadcrumbClicked(index, item)">{{ item.name }}</a>
                   <span class="active" v-if="index == stack.stack.length-1">{{ item.name }}</span>
               </li>
+              <div class="breadcrumb-buttons">
+                  <button v-on:click="newAction()" v-if="!isEditorOpen && !isGit" type="button" class="btn btn-default btn-sm">New <i class="fa fa-plus-square" aria-hidden="true"></i></button>
+              </div>
             </ol>
             <div id="tree-view-tree-content" class="list-group" v-show="!isEditorOpen">
                 <span v-for="item in items" :key="item" class="list-group-item">
@@ -174,6 +167,7 @@
                         <h4 class="modal-title">{{ title }}</h4>
                     </div>
                     <div class="modal-body">
+                        Switch branches/tags
                         <select v-model="ref">
                             <option v-for="item in items">{{ item.name }}</option>
                         </select>

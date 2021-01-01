@@ -808,7 +808,7 @@ webui.DiffView = function(id, sideBySide, hunkSelectionAllowed, parent) {
 /*
  * == CommitView ==============================================================
  */
-webui.CommitView = function(id, historyView) {
+webui.CommitView = function(id, stack) {
     var self = this;
 
     self.update = function(entry) {
@@ -821,7 +821,7 @@ webui.CommitView = function(id, historyView) {
         buttonBox.select(0);
         diffView.update([ "show" ], [entry.commit]);
         // Update tree
-        webui.sharedState.historyStack.updateStack(entry.tree)
+        self.stack.updateStack(entry.tree)
     };
 
     self.showDiff = function() {
@@ -834,7 +834,7 @@ webui.CommitView = function(id, historyView) {
         jQuery(id).find('.tree-view').show();
     };
 
-    self.historyView = historyView;
+    self.stack = stack;
     var currentCommit = null;
     self.element = jQuery(id)[0];
     var commitViewHeader = jQuery(id).find('.commit-view-header')[0];
@@ -846,18 +846,19 @@ webui.CommitView = function(id, historyView) {
 /*
  * == HistoryView =============================================================
  */
-webui.HistoryView = function() {
+webui.HistoryView = function(stack) {
     var self = this;
 
     self.update = function(item) {
         self.logView.update(item.name);
         document.location.hash = item.id + '/' + item.name;
-        webui.sharedState.historyStack.updateStack(item.name)
+        self.stack.updateStack(item.name)
     };
 
+    self.stack = stack;
     self.element = jQuery('#history-view')[0];
     self.logView = new webui.LogView('#log-view', self);
-    self.commitView = new webui.CommitView('#commit-view', self);
+    self.commitView = new webui.CommitView('#commit-view', stack);
 };
 
 /*
@@ -1138,6 +1139,7 @@ webui.Stack = function() {
             } else {
                 if (fullPath === null) {
                     fullPath = part;
+                    part = 'root';
                 } else {
                     fullPath += '/' + part;
                 }

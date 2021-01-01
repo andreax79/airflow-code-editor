@@ -24,7 +24,7 @@
                     <div class="panel-body"></div>
                 </div>
                 <div class="tree-view" class="display: none">
-                    <tree-view :stack='historyStack'></tree-view>
+                    <tree-view :stack='historyStack' :config="editorConfig"></tree-view>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
         </div>
         <div id="files-view" v-show='section == "mounts"'>
             <div style="height: 100%">
-                <tree-view :stack='stack'></tree-view>
+                <tree-view :stack='stack' :config="editorConfig"></tree-view>
             </div>
         </div>
     </div>
@@ -137,14 +137,14 @@
                         </div>
                         <div class="modal-body">
                             <span style="min-width: 8em; display: inline-block">Theme:</span>
-                            <select v-model="theme">
+                            <select v-model="config.theme">
                                 <option v-for="theme in themes">
                                 {{ theme }}
                                 </option>
                             </select>
                             <br/>
                             <span style="min-width: 8em; display: inline-block">Mode:</span>
-                            <select v-model="mode">
+                            <select v-model="config.mode">
                                 <option selected>default</option>
                                 <option>emacs</option>
                                 <option>sublime</option>

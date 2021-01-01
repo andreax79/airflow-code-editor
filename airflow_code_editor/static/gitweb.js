@@ -1189,11 +1189,20 @@ webui.Stack = function() {
 
 };
 
+webui.EditorConfig = function() {
+    // Editor configuration
+    var self = this;
+    self.theme = localStorage.getItem('airflow_code_editor_theme') || 'default'; // editor theme
+    self.mode = localStorage.getItem('airflow_code_editor_mode') || 'default';  // edit mode (default, vim, etc...)
+    self.themes = themes;  // themes list from "themes.js"
+}
+
 webui.sharedState = {
     section: null, // current sidebar section (mounts, werkspace, ...)
     object: null, // current sidebar object
     stack: new webui.Stack(), // files stack
     historyStack: new webui.Stack(), // history view files stack
+    editorConfig: new webui.EditorConfig(), // editor config
 };
 
 webui.init = function(csrfToken) {
@@ -1212,7 +1221,7 @@ webui.init = function(csrfToken) {
     // Append global container to body
     jQuery('#global-container').appendTo(jQuery("body"));
     // Init app
-    self.app = new Vue({
+    webui.app = new Vue({
         el: '#global-container',
         data: webui.sharedState
     });

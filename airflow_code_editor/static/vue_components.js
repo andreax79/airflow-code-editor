@@ -46,7 +46,7 @@ function TreeEntry(line) {
 }
 
 Vue.component('tree-view', {
-    props: [ 'stack' ],
+    props: [ 'stack', 'config' ],
     data: function () {
         return {
             editorPath: null, // path of the file open in editor
@@ -54,10 +54,7 @@ Vue.component('tree-view', {
             editor: null, // CodeMirror instance
             isEditorOpen: false, // is editor open
             isPython: false, // is editor open on a python file
-            readOnly: false,
-            theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
-            mode: localStorage.getItem('airflow_code_editor_mode') || 'default',  // edit mode (default, vim, etc...)
-            themes: themes  // themes list from "themes.js"
+            readOnly: false
         }
     },
     computed: {
@@ -280,8 +277,8 @@ Vue.component('tree-view', {
             }
             self.editor.setOption('mode', info && info.mode);
             self.isPython = info && info.mode == 'python';
-            self.setTheme(self.theme);
-            self.setOption('keyMap', self.mode);
+            self.setTheme(self.config.theme);
+            self.setOption('keyMap', self.config.mode);
             self.setOption('readOnly', self.readOnly);
             if (info) {
                 CodeMirror.autoLoadMode(self.editor, info.mode);
@@ -333,10 +330,10 @@ Vue.component('tree-view', {
         }
     },
     watch: {
-        'theme': function(val, preVal) {
+        'config.theme': function(val, preVal) {
             this.setTheme(val);
         },
-        'mode': function(val, preVal) {
+        'config.mode': function(val, preVal) {
             this.setOption('keyMap', val);
         },
         'stack.stack': function(val, preVal) {

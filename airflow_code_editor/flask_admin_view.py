@@ -18,7 +18,7 @@
 import airflow
 from functools import wraps
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
-from airflow_code_editor.commons import ROUTE, MENU_CATEGORY, MENU_LABEL
+from airflow_code_editor.commons import ROUTE, MENU_CATEGORY, MENU_LABEL, JS_FILES
 
 __all__ = ["admin_view"]
 
@@ -73,6 +73,7 @@ try:
             return self.render(
                 template + "_admin.html",
                 airflow_major_version=self.airflow_major_version,
+                js_files=JS_FILES,
                 *args,
                 **kargs
             )

@@ -1,36 +1,182 @@
-<!-- Error modal dialog -->
-<div class="modal fade" id="session-modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title">Settings</h4>
-            </div>
-            <div class="modal-body">
 {% raw %}
-<div id="settings-app" class="container">
-
-<span style="min-width: 8em; display: inline-block">Theme:</span>
-<select v-model="theme">
-    <option v-for="theme in themes">
-        {{ theme }}
-    </option>
-</select>
-<br/>
-
-<span style="min-width: 8em; display: inline-block">Mode:</span>
-<select v-model="mode">
-    <option selected>default</option>
-    <option>emacs</option>
-    <option>sublime</option>
-    <option>vim</option>
-</select>
-
-</div>
-<hr/>
-{% endraw %}
+<div id="global-container" style="display: none">
+    <sidebar id="sidebar" :stack="stack" :current="current" :history-view="historyView" :workspace-view="workspaceView"></sidebar>
+    <div id="main-view">
+        <div id="history-view" v-show='current.section == "local-branches" | current.section == "remote-branches" | current.section == "tags"'>
+            <div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>
+            <div id="commit-view">
+                <div class="commit-view-header"></div>
+                <div class="diff-view-container panel panel-default">
+                    <div class="panel-heading btn-toolbar" role="toolbar">
+                        <button type="button" class="btn btn-sm btn-default diff-ignore-whitespace" data-toggle="button">Ignore Whitespace</button>
+                        <button type="button" class="btn btn-sm btn-default diff-context-all" data-toggle="button">Complete file</button>
+                        <div class="btn-group btn-group-sm">
+                            <span></span>&nbsp;
+                            <button type="button" class="btn btn-default diff-context-remove">-</button>
+                            <button type="button" class="btn btn-default diff-context-add">+</button>
+                        </div>
+                        <div class="btn-group btn-group-sm diff-selection-buttons">
+                            <button type="button" class="btn btn-default diff-stage" style="display:none">Stage</button>
+                            <button type="button" class="btn btn-default diff-cancel" style="display:none">Cancel</button>
+                            <button type="button" class="btn btn-default diff-unstage" style="display:none">Unstage</button>
+                        </div>
+                    </div>
+                    <div class="panel-body"></div>
+                </div>
+                <div class="tree-view" class="display: none">
+                    <tree-view :stack='historyStack' :config="editorConfig"></tree-view>
+                </div>
+            </div>
+        </div>
+        <div id="workspace-view" v-show='current.section == "workspace"'>
+            <div id="workspace-diff-view">
+                <div class="diff-view-container panel panel-default">
+                    <div class="panel-heading btn-toolbar" role="toolbar">
+                        <button type="button" class="btn btn-sm btn-default diff-ignore-whitespace" data-toggle="button">Ignore Whitespace</button>
+                        <button type="button" class="btn btn-sm btn-default diff-context-all" data-toggle="button">Complete file</button>
+                        <div class="btn-group btn-group-sm">
+                            <span></span>&nbsp;
+                            <button type="button" class="btn btn-default diff-context-remove">-</button>
+                            <button type="button" class="btn btn-default diff-context-add">+</button>
+                        </div>
+                        <div class="btn-group btn-group-sm diff-selection-buttons">
+                            <button type="button" class="btn btn-default diff-stage" style="display:none">Stage</button>
+                            <button type="button" class="btn btn-default diff-cancel" style="display:none">Cancel</button>
+                            <button type="button" class="btn btn-default diff-unstage" style="display:none">Unstage</button>
+                        </div>
+                    </div>
+                    <div class="panel-body"></div>
+                </div>
+            </div>
+            <div id="workspace-editor">
+            </div>
+        </div>
+        <div id="files-view" v-show='current.section == "mounts"'>
+            <div style="height: 100%">
+                <tree-view :stack='stack' :config="editorConfig"></tree-view>
             </div>
         </div>
     </div>
 </div>
 
+<div style='display: none'>
+    <div id='sidebar-section-template'>
+        <section v-if="section == 'mounts' || section == 'workspace' || items[section].length > 0">
+            <h1 v-on:click="click({ id: section })" :class="cssClass">
+                <i :class="'fa ' + icon"></i> {{ title }}
+            </h1>
+            <ul>
+                <template v-for="(item, index) in items[section]" :key="item" :index="index">
+                    <li v-if="index < limit" :class="{ 'active': current.section == item.id && item.object == current.object, 'sidebar-ref': true }" v-on:click="click(item)">{{ item.name }}</li>
+                </template>
+                <li v-if="items[section].length > limit" class="sidebar-more" v-on:click="clickMore()">More ...</li>
+                <refs :title="title" :section="section" :items="items[section]" :history-view="historyView" :current="current"></refs>
+            </ul>
+        </section>
+    </div>
+
+    <div id='sidebar-template'>
+        <div>
+            <div id="sidebar-content">
+                <sidebar-section title="Files" icon="fa-home" :items="items" :limit="100" section="mounts" :stack="stack" :history-view="historyView" :workspace-view="workspaceView" :current="current"></sidebar-section>
+                <sidebar-section title="Git Workspace" icon="fa-briefcase" :items="items" :limit="5" section="workspace" :stack="stack" :history-view="historyView" :workspace-view="workspaceView" :current="current"></sidebar-section>
+                <sidebar-section title="Local Branches" icon="fa-code-fork" :items="items" :limit="5" section="local-branches" :stack="stack" :history-view="historyView" :workspace-view="workspaceView" :current="current"></sidebar-section>
+                <sidebar-section title="Remote Branches" icon="fa-globe" :items="items" :limit="5" section="remote-branches" :stack="stack" :history-view="historyView" :workspace-view="workspaceView" :current="current"></sidebar-section>
+                <sidebar-section title="Tags" icon="fa-tags" :items="items" :limit="5" section="tags" :history-view="historyView" :stack="stack" :workspace-view="workspaceView" :current="current"></sidebar-section>
+            </div>
+        </div>
+    </div>
+
+    <div id='tree-view'>
+        <div class='tree-view'>
+            <ol class="breadcrumb">
+              <li v-for="(item, index) in stack.stack" :key="item" :index="index" class="breadcrumb-item">
+                  <a v-if="index != stack.stack.length-1" :href="item.uri" v-on:click.prevent="breadcrumbClicked(index, item)">{{ item.name }}</a>
+                  <span class="active" v-if="index == stack.stack.length-1">{{ item.name }}</span>
+              </li>
+              <div class="breadcrumb-buttons">
+                  <button v-on:click="newAction()" v-if="!isEditorOpen && !isGit" type="button" class="btn btn-default btn-sm">New <i class="fa fa-plus-square" aria-hidden="true"></i></button>
+              </div>
+            </ol>
+            <div id="tree-view-tree-content" class="list-group" v-show="!isEditorOpen">
+                <span v-for="item in items" :key="item" class="list-group-item">
+                    <a class="name" v-on:click.prevent="click(item)" :href="item.href" :class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
+                    <span class="mtime">{{ item.mtime }}</span>
+                    <span class="size">{{ item.formatedSize }}</span>&nbsp;
+                    <span class="buttons">
+                        <a v-if="item.type == 'blob'" class="download" title="Download" :href="item.downloadHref"><i class="fa fa-download" aria-hidden="true"></i></a>
+                        <a v-if="item.local" class="external-link" title="Open in a new window" target="_blank" :href="item.href"><i class="fa fa-external-link" aria-hidden="true"></i></a>
+                    </span>
+                </span>
+            </div>
+            <div id="tree-view-blob-content" v-show="isEditorOpen">
+                <div class="cm-fullscreen-container cm-flex-container">
+                    <div class="cm-toolbar cm-flex-child-fixed">
+                    </div>
+                    <div class="cm-body cm-flex-child-grow">
+                        <textarea rows="30" cols="80" id="editor" name="editor" style="display: none"></textarea>
+                    </div>
+                    <div class="cm-footer cm-flex-child-fixed">
+                    <button v-on:click="saveAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Save <i class="fa fa-save" aria-hidden="true"></i></button>
+                    <button v-on:click="saveAsAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Save as...</i></button>
+                    <button v-on:click="revertAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>
+                    <button v-on:click="findAction()" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>
+                    <button v-on:click="replaceAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>
+                    <button v-on:click="formatAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm" v-show="isPython">Format code <i class="fa fa-align-left" aria-hidden="true"></i></button>
+                    <button v-on:click="settingsAction()" type="button" class="btn btn-default btn-sm" style="float: right">Settings <i class="fa fa-cog" aria-hidden="true"></i></button>
+                    </div>
+                </div>
+            </div>
+            <!-- Settings modal dialog -->
+            <div class="modal fade settings-modal" tabindex="-1" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span><span class="sr-only">Close</span></button>
+                            <h4 class="modal-title">Settings</h4>
+                        </div>
+                        <div class="modal-body">
+                            <span style="min-width: 8em; display: inline-block">Theme:</span>
+                            <select v-model="config.theme">
+                                <option v-for="theme in themes">
+                                {{ theme }}
+                                </option>
+                            </select>
+                            <br/>
+                            <span style="min-width: 8em; display: inline-block">Mode:</span>
+                            <select v-model="config.mode">
+                                <option selected>default</option>
+                                <option>emacs</option>
+                                <option>sublime</option>
+                                <option>vim</option>
+                            </select>
+                            <hr/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id='refs-template'>
+        <div class="modal fade" tabindex="-1" role="dialog">
+            <div class="modal-dialog" style="color: #333">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title">{{ title }}</h4>
+                    </div>
+                    <div class="modal-body">
+                        Switch branches/tags
+                        <select v-model="ref" @change="selectRef($event.target.value)" >
+                            <option v-for="item in items">{{ item.name }}</option>
+                        </select>
+                        <br/>
+                        <hr/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endraw %}

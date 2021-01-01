@@ -1,47 +1,13 @@
-{% for filename in [
-    'codemirror.js',
-    'mode/python/python.js',
-    'addon/fold/foldcode.js',
-    'addon/fold/foldgutter.js',
-    'addon/fold/indent-fold.js',
-    'addon/fold/comment-fold.js',
-    'addon/mode/loadmode.js',
-    'addon/dialog/dialog.js',
-    'addon/search/searchcursor.js',
-    'addon/search/search.js',
-    'addon/search/jump-to-line.js',
-    'mode/meta.js',
-    'bootstrap-dialog.js',
-    'vim.js',
-    'emacs.js',
-    'sublime.js',
-    'vue.js',
-    'themes.js',
-    'gitweb.js'
-] -%}
+{% for filename in js_files -%}
 <script src="{{ url_for('static', filename='code_editor/' + filename) }}"></script>
 {% endfor %}
 
 <script type="text/javascript">
 
 jQuery(document).ready(function() {
+    // Init
     var csrfToken = "{{ csrf_token() }}";
-    jQuery.ajaxSetup({
-        beforeSend: function(xhr, settings) {
-            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
-                xhr.setRequestHeader("X-CSRFToken", csrfToken);
-            }
-        }
-    });
-    window.main = new MainUi(csrfToken);
-    CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';
-    // Disable animation
-    BootstrapDialog.configDefaultOptions({ animate: false });
-    // Shortcuts
-    window.getEditor = function() {
-        return window.main.filesView.treeView.editor;
-    };
-
+    webui.init(csrfToken);
 });
 
 </script>

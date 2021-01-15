@@ -157,3 +157,12 @@
 ### Added
 
 - New file button added
+
+## 3.2.1
+
+2021-01-05
+
+### Fix
+
+- keep cursor position after save
+

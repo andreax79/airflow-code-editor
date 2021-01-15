@@ -210,8 +210,10 @@
                         webui.showError(res.error.message || 'Error saving file');
                     } else {
                         // Update editor path and the breadcrumb
-                        self.editorPath = path;
-                        self.stack.updateStack(path, 'blob');
+                        if (path != self.editorPath) {
+                            self.editorPath = path;
+                            self.stack.updateStack(path, 'blob');
+                        }
                         self.editor.openNotification('file saved', { duration: 5000 })
                         // Update url hash
                         document.location.hash = 'edit' + path;
@@ -449,6 +451,8 @@
         mounted: function() {
             var self = this;
             self.editor = CodeMirror.fromTextArea(self.$el.querySelector('textarea'), self.config.codeMirrorOptions);
+            self.editor.save = function() { self.saveAction(); }; // save file command
+            // window._editor = self.editor;
         },
         template: jQuery('#tree-view').html()
     });

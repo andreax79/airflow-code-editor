@@ -32,12 +32,6 @@ from airflow_code_editor.utils import (
     prepare_api_response,
 )
 
-# Optional Code Formatter
-try:
-    import black
-except ImportError:
-    black = None
-
 
 __all__ = ['AbstractCodeEditorView']
 
@@ -113,11 +107,9 @@ class AbstractCodeEditorView(object):
 
     def _format(self):
         " Format code "
-        if black is None:
-            return prepare_api_response(
-                error_message='black dependency is not installed: to install black `pip install black`'
-            )
         try:
+            import black
+
             data = request.form['data']
             # Newline fix (remove cr)
             data = data.replace('\r', '').rstrip()
@@ -127,6 +119,10 @@ class AbstractCodeEditorView(object):
             )
             data = black.format_str(src_contents=data, mode=mode)
             return prepare_api_response(data=data)
+        except ImportError:
+            return prepare_api_response(
+                error_message='black dependency is not installed: to install black `pip install black`'
+            )
         except Exception as ex:
             logging.error(ex)
             return prepare_api_response(

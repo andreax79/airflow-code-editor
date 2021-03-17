@@ -313,6 +313,30 @@
                 self.updateLocation();
                 return false;
             },
+            deleteAction: function(item) {
+                // Delete a file
+                var self = this;
+                BootstrapDialog.show({
+                    title: 'Confirm Delete',
+                    message: 'Are you sure you want to delete ' + item.name + ' ?',
+                    buttons: [{
+                        label: 'Delete',
+                        cssClass: 'btn-danger',
+                        action: function(dialogRef) {
+                            webui.git([ 'rm-local', item.object ], function(data) {
+                                self.refresh();
+                            });
+                            dialogRef.close();
+                        }
+                    },{
+                        label: 'Cancel',
+                        action: function(dialogRef) {
+                            dialogRef.close();
+                        }
+                    }]
+                });
+                return false;
+            },
             saveAction: function() {
                 // Save button action
                 var self = this;
@@ -397,7 +421,7 @@
                     self.editorLoad(self.editorPath);
                 }
             },
-            updateTreeView: function() {
+            refresh: function() {
                 // Update tree view
                 var self = this;
                 this.isEditorOpen = false;
@@ -444,7 +468,7 @@
                 if (self.stack.last().type == 'blob') {
                     self.showBlob();
                 } else {
-                    self.updateTreeView();
+                    self.refresh();
                 }
             }
         },

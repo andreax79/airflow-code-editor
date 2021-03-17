@@ -115,19 +115,19 @@ body {
   width: 100px;
   text-align: right;
 }
-.list-group-item .external-link {
-  margin-left: 0.25em;
-  color: #000000;
-}
-.list-group-item .fa-external-link {
-  color: #000000;
-}
+.list-group-item .external-link,
+.list-group-item .trash-o,
 .list-group-item .download {
   margin-left: 0.25em;
   color: #000000;
 }
+.list-group-item .fa-external-link,
+.list-group-item .fa-trash-o,
+.list-group-item .fa-download {
+  color: #000000;
+}
 .list-group-item .buttons {
-  width: 3em !important;
+  width: 4em !important;
   text-align: right;
   display: inline-block;
 }

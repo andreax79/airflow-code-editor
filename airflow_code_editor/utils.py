@@ -153,18 +153,16 @@ def execute_git_command(git_args):
         git_cmd = git_args[0] if git_args else None
         try:
             cwd = get_root_folder()
+            # Init git repo
             if not os.path.exists(
                 os.path.join(cwd, '.git')
             ) and get_plugin_boolean_config('git_init_repo'):
                 init_git_repo()
-            if git_cmd == 'ls-local':
-                stdout = git_ls_local(git_args)
-                stderr = None
-                returncode = 0
-            elif git_cmd == 'mounts':
-                stdout = git_mounts(git_args)
-                stderr = None
-                returncode = 0
+            # Local commands
+            if git_cmd in LOCAL_COMMANDS:
+                handler = LOCAL_COMMANDS[git_cmd]
+                stdout, stderr, returncode = handler(git_args)
+            # Git commands
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
                 git_default_args = shlex.split(get_plugin_config('git_default_args'))
                 cmd = [get_plugin_config('git_cmd')] + git_default_args + git_args
@@ -226,12 +224,32 @@ def git_ls_local(git_args):
             )
         else:
             result.append('%06o %s %s\t%s' % (s.st_mode, type_, relname, name))
-    return '\n'.join(result)
+    return '\n'.join(result), None, 0
 
 
 def git_mounts(git_args):
     " List mountpoints "
-    return '\n'.join(sorted(k for k, v in mount_points.items() if not v.default))
+    return (
+        '\n'.join(sorted(k for k, v in mount_points.items() if not v.default)),
+        None,
+        0,
+    )
+
+
+def git_rm_local(git_args):
+    " Delete files "
+    for arg in git_args[1:]:
+        if arg:
+            path = git_absolute_path(arg)
+            os.unlink(path)
+    return '', None, 0
+
+
+LOCAL_COMMANDS = {
+    'ls-local': git_ls_local,
+    'mounts': git_mounts,
+    'rm-local': git_rm_local,
+}
 
 
 def init_git_repo():

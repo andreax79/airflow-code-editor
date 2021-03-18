@@ -20,6 +20,7 @@ import logging
 import subprocess
 import threading
 import shlex
+import shutil
 from datetime import datetime
 from collections import namedtuple
 from flask import jsonify, make_response
@@ -151,6 +152,8 @@ def execute_git_command(git_args):
     with _execute_git_command_lock:
         logging.info(' '.join(git_args))
         git_cmd = git_args[0] if git_args else None
+        stderr = None
+        returncode = 0
         try:
             cwd = get_root_folder()
             # Init git repo
@@ -161,7 +164,7 @@ def execute_git_command(git_args):
             # Local commands
             if git_cmd in LOCAL_COMMANDS:
                 handler = LOCAL_COMMANDS[git_cmd]
-                stdout, stderr, returncode = handler(git_args)
+                stdout = handler(git_args)
             # Git commands
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
                 git_default_args = shlex.split(get_plugin_config('git_default_args'))
@@ -224,31 +227,39 @@ def git_ls_local(git_args):
             )
         else:
             result.append('%06o %s %s\t%s' % (s.st_mode, type_, relname, name))
-    return '\n'.join(result), None, 0
+    return '\n'.join(result)
 
 
 def git_mounts(git_args):
     " List mountpoints "
-    return (
-        '\n'.join(sorted(k for k, v in mount_points.items() if not v.default)),
-        None,
-        0,
-    )
+    return '\n'.join(sorted(k for k, v in mount_points.items() if not v.default))
 
 
 def git_rm_local(git_args):
-    " Delete files "
+    " Delete local files "
     for arg in git_args[1:]:
         if arg:
             path = git_absolute_path(arg)
             os.unlink(path)
-    return '', None, 0
+    return ''
+
+
+def git_mv_local(git_args):
+    " Rename/Move local files "
+    if len(git_args) < 3:
+        raise Exception('Missing source/destination args')
+    target = git_absolute_path(git_args[-1])
+    for arg in git_args[1:-1]:
+        source = git_absolute_path(arg)
+        shutil.move(source, target)
+    return ''
 
 
 LOCAL_COMMANDS = {
-    'ls-local': git_ls_local,
     'mounts': git_mounts,
+    'ls-local': git_ls_local,
     'rm-local': git_rm_local,
+    'mv-local': git_mv_local,
 }
 
 

@@ -20,6 +20,12 @@ app = Flask(__name__)
 
 
 class TestUtils(TestCase):
+
+    def setUp(self):
+        self.root_dir = os.path.dirname(os.path.realpath(__file__))
+        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
+        configuration.conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
+
     def test_get_root_folder(self):
         self.assertIsNotNone(get_root_folder())
 
@@ -75,9 +81,6 @@ class TestUtils(TestCase):
         self.assertEqual(t, 'airflow_home\nlogs')
 
     def test_ls_local_logs(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
-        configuration.conf.set(PLUGIN_NAME, 'root_directory', path)
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', '~logs'])
         t = r.data.decode('utf-8')
@@ -85,9 +88,6 @@ class TestUtils(TestCase):
         self.assertIsNotNone(t)
 
     def test_ls_local_airflow_hone(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
-        configuration.conf.set(PLUGIN_NAME, 'root_directory', path)
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', '~airflow_home'])
         t = r.data.decode('utf-8')
@@ -99,9 +99,6 @@ class TestUtils(TestCase):
             self.assertTrue(i[2].startswith('/~airflow_home/'))
 
     def test_ls_local_folder(self):
-        path = os.path.dirname(os.path.realpath(__file__))
-        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
-        configuration.conf.set(PLUGIN_NAME, 'root_directory', path)
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', 'folder'])
         t = r.data.decode('utf-8')
@@ -114,6 +111,40 @@ class TestUtils(TestCase):
             self.assertEqual(i[3], '2')
             self.assertTrue(i[4] in ['1', '2', '3'])
 
+    def test_rm_local(self):
+        try:
+            source = os.path.join(self.root_dir, 'new.file')
+            with open(source, 'w') as f:
+                f.write('test')
+            self.assertTrue(os.path.exists(source))
+            with app.app_context():
+                execute_git_command(['rm-local', 'new.file'])
+            self.assertFalse(os.path.exists(source))
+        finally:
+            try:
+                os.unlink(source)
+            except Exception:
+                pass
+
+    def test_mv_local(self):
+        try:
+            source = os.path.join(self.root_dir, 'new.file')
+            target = os.path.join(self.root_dir, 'folder', 'new.file')
+            self.assertFalse(os.path.exists(target))
+            with open(source, 'w') as f:
+                f.write('test')
+            with app.app_context():
+                execute_git_command(['mv-local', 'new.file', 'folder'])
+            self.assertTrue(os.path.exists(target))
+        finally:
+            try:
+                os.unlink(source)
+            except Exception:
+                pass
+            try:
+                os.unlink(target)
+            except Exception:
+                pass
 
 if __name__ == '__main__':
     main()

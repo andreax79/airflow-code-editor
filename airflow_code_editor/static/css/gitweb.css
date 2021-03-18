@@ -117,17 +117,19 @@ body {
 }
 .list-group-item .external-link,
 .list-group-item .trash-o,
+.list-group-item .i-cursor,
 .list-group-item .download {
   margin-left: 0.25em;
   color: #000000;
 }
 .list-group-item .fa-external-link,
 .list-group-item .fa-trash-o,
+.list-group-item .fa-i-cursor,
 .list-group-item .fa-download {
   color: #000000;
 }
 .list-group-item .buttons {
-  width: 4em !important;
+  width: 5em !important;
   text-align: right;
   display: inline-block;
 }

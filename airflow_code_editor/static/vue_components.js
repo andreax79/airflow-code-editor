@@ -313,6 +313,31 @@
                 self.updateLocation();
                 return false;
             },
+            moveAction: function(item) {
+                // Delete a file
+                var self = this;
+                BootstrapDialog.show({
+                    title: 'Move/Rename File',
+                    message: 'Destination <input type="text" class="form-control" value="' + item.object + '" />',
+                    buttons: [{
+                        label: 'Ok',
+                        action: function(dialogRef) {
+                            var target = dialogRef.getModalBody().find('input').val().trim();
+                            console.log(target);
+                            webui.git([ 'mv-local', item.object, target ], function(data) {
+                                self.refresh();
+                            });
+                            dialogRef.close();
+                        }
+                    },{
+                        label: 'Cancel',
+                        action: function(dialogRef) {
+                            dialogRef.close();
+                        }
+                    }]
+                });
+                return false;
+            },
             deleteAction: function(item) {
                 // Delete a file
                 var self = this;

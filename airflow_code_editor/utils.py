@@ -214,7 +214,10 @@ def git_ls_local(git_args):
         s = os.stat(fullname)
         if os.path.isdir(fullname):
             type_ = 'tree'
-            size_ = '-'
+            try:
+                size_ = len(os.listdir(fullname))
+            except:
+                size_ = '-'
         else:
             type_ = 'blob'
             size_ = s.st_size
@@ -236,11 +239,14 @@ def git_mounts(git_args):
 
 
 def git_rm_local(git_args):
-    " Delete local files "
+    " Delete local files/directories "
     for arg in git_args[1:]:
         if arg:
             path = git_absolute_path(arg)
-            os.unlink(path)
+            if os.path.isdir(path):
+                os.rmdir(path)
+            else:
+                os.unlink(path)
     return ''
 
 

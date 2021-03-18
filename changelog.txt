@@ -166,3 +166,12 @@
 
 - keep cursor position after save
 
+## 3.3.0
+
+2021-03-18
+
+### Added
+
+- Delete button added
+- Move/rename button added
+- Show number of files in a directory

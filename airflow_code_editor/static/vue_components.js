@@ -39,7 +39,9 @@
                 self.downloadHref = '/code_editor/files/~git/' + self.object + '/' + self.name;
             }
             // size - https://en.wikipedia.org/wiki/Kilobyte
-            if (isNaN(self.size)) {
+            if (self.type == 'tree') { // tree
+                self.formatedSize = self.size;
+            } else if (isNaN(self.size)) {
                 self.formatedSize = "";
             } else if (self.size < 10**3) {
                 self.formatedSize = self.size.toString() + " B";

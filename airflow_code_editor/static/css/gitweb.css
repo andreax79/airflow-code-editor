@@ -119,7 +119,7 @@ body {
 .list-group-item .trash-o,
 .list-group-item .i-cursor,
 .list-group-item .download {
-  margin-left: 0.25em;
+  margin-left: 0.15em;
   color: #000000;
 }
 .list-group-item .fa-external-link,
@@ -129,7 +129,7 @@ body {
   color: #000000;
 }
 .list-group-item .buttons {
-  width: 5em !important;
+  width: 7em !important;
   text-align: right;
   display: inline-block;
 }

@@ -471,15 +471,8 @@ body {
 .tree-view .list-group-item > :last-child {
   width: 2em;
 }
-.tree-view .tree-item-tree:before {
-  content: url(/static/code_editor/img/folder.svg);
-  vertical-align: middle;
-  margin: 0.3em;
-}
-.tree-view .tree-item-blob:before {
-  content: url(/static/code_editor/img/file.svg);
-  vertical-align: middle;
-  margin: 0.3em;
+.tree-view a i.fa {
+  margin-right: 0.5em;
 }
 .tree-view .tree-item-symlink {
   font-style: italic;

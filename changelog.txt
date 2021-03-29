@@ -175,3 +175,12 @@
 - Delete button added
 - Move/rename button added
 - Show number of files in a directory
+
+## 3.3.1
+
+2021-03-29
+
+### Fix
+
+- Support different base URL
+

@@ -100,7 +100,10 @@
             </ol>
             <div id="tree-view-tree-content" class="list-group" v-show="!isEditorOpen">
                 <span v-for="item in items" :key="item" class="list-group-item">
-                    <a class="name" v-on:click.prevent="click(item)" :href="item.href" :class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >{{ item.name }}</a>
+                    <a class="name" v-on:click.prevent="click(item)" :href="item.href" :class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >
+                        <i :class="'fa ' + item.icon" aria-hidden="true"></i>
+                        {{ item.name }}
+                    </a>
                     <span class="mtime">{{ item.mtime }}</span>
                     <span class="size">{{ item.formatedSize }}</span>&nbsp;
                     <span class="buttons">

@@ -8,6 +8,11 @@
 })(function(webui) {
     "use strict";
 
+    function prepareHref(path) {
+        // Return the full path of the URL
+        return document.location.pathname + path;
+    }
+
     function TreeEntry(line) {
         var self = this;
         var match = line.match(/^(\d+) (\w+) ([^ #]+)#?(\S+)?\s+(\S*)\t(\S+)/);
@@ -20,6 +25,7 @@
             self.name = match[6];
             self.local = self.object[0] == '/';
             self.isSymbolicLink = (self.mode & 120000) == 120000; // S_IFLNK
+            self.icon = (self.type == 'tree') ? 'fa-folder' : 'fa-file-o';
             // href
             if (self.local) { // local file/dir
                 if (self.type == 'tree') {
@@ -28,21 +34,21 @@
                     self.href = '#edit' + encodeURI(self.object);
                 }
             } else { // git blob
-                self.href = '/code_editor/files/~git/' + self.object + '/' + self.name;
+                self.href = prepareHref('files/~git/' + self.object + '/' + self.name);
             }
             // download href
             if (self.type == 'tree') { // tree
                 self.downloadHref = '#';
             } else if (self.local) {  // local file
-                self.downloadHref = '/code_editor/files' + self.object;
+                self.downloadHref = prepareHref('files' + self.object);
             } else { // git blob
-                self.downloadHref = '/code_editor/files/~git/' + self.object + '/' + self.name;
+                self.downloadHref = prepareHref('files/~git/' + self.object + '/' + self.name);
             }
             // size - https://en.wikipedia.org/wiki/Kilobyte
-            if (self.type == 'tree') { // tree
-                self.formatedSize = self.size;
-            } else if (isNaN(self.size)) {
+            if (isNaN(self.size)) {
                 self.formatedSize = "";
+            } else if (self.type == 'tree') { // tree - number of files in the folder
+                self.formatedSize = self.size;
             } else if (self.size < 10**3) {
                 self.formatedSize = self.size.toString() + " B";
             } else if (self.size < 10**6) {
@@ -179,7 +185,7 @@
             editorLoad: function(path) {
                 // Load a file into the editor
                 var self = this;
-                jQuery.get('/code_editor/files' + path)
+                jQuery.get(prepareHref('files' + path))
                       .done(function(data) {
                           // Replace tabs with spaces
                           if (self.editor.getMode().name == 'python') {
@@ -207,7 +213,7 @@
                     data: self.editor.getValue()
                 };
 
-                jQuery.post("/code_editor/files" + path, data, function(res) {
+                jQuery.post(prepareHref('files' + path), data, function(res) {
                     if (res.error) {
                         webui.showError(res.error.message || 'Error saving file');
                     } else {
@@ -252,7 +258,7 @@
                 var data = {
                     data: self.editor.getValue()
                 };
-                jQuery.post("/code_editor/format", data, function(res) {
+                jQuery.post(prepareHref('format'), data, function(res) {
                     if (res.error) {
                         webui.showError(res.error.message);
                     } else {
@@ -477,7 +483,7 @@
                     trees.sort(compare);
                     // Add link to parent directory on top
                     if (self.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
-                        trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false });
+                        trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'fa-folder', href: '#' });
                     }
                     self.items = trees.concat(blobs);
                 });

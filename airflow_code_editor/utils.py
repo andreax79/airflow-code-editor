@@ -41,6 +41,7 @@ __all__ = [
     'get_plugin_boolean_config',
     'get_plugin_int_config',
     'get_root_folder',
+    'get_tree',
     'git_absolute_path',
     'execute_git_command',
     'error_message',
@@ -331,3 +332,79 @@ def prepare_api_response(error_message=None, **kargs):
     if error_message is not None:
         result['error'] = {'message': error_message}
     return jsonify(result)
+
+
+def get_tree(path=None):
+    " Get tree nodes "
+    result = []
+    # Mounts
+    mounts = []
+    for path in sorted(k for k, v in mount_points.items() if not v.default):
+        path = path.rstrip('/')
+        mounts.append({'id': '/~' + path, 'label': path, 'icon': 'fa-folder'})
+    result.append(
+        {
+            'id': '/',
+            'label': 'Files',
+            'icon': 'fa-home',
+            'children': mounts,
+            'treeNodeSpec': {
+                'expandable': True,
+                'state': {
+                    'expanded': True,
+                },
+            },
+        }
+    )
+    # Git Workspace
+    result.append({
+        'id': 'workspace',
+        'label': 'Git Workspace',
+        'icon': 'fa-briefcase',
+    })
+    # Tags
+    tags = []
+    r = execute_git_command(['tag'])
+    for line in r.data.decode('utf-8').split('\n'):
+        if line:
+            path = line.strip()
+            tags.append({'id': 'tags/' + path, 'label': path, 'icon': 'fa-tags'})
+    if tags:
+        result.append({
+            'id': 'tags',
+            'label': 'Tags',
+            'icon': 'fa-tags',
+            'children': tags
+        })
+    # Local branches
+    branches = []
+    r = execute_git_command(['branch'])
+    for line in r.data.decode('utf-8').split('\n'):
+        if line:
+            path = line.strip()
+            if path.startswith('*'):
+                path = path[1:].strip()
+            branches.append({'id': 'local-branches/' + path, 'label': path, 'icon': 'fa-code-fork'})
+    if branches:
+        result.append({
+            'id': 'local-branches',
+            'label': 'Local Branches',
+            'icon': 'fa-code-fork',
+            'children': branches})
+    # Remote branches
+    remote = []
+    r = execute_git_command(['branch', '--remotes'])
+    for line in r.data.decode('utf-8').split('\n'):
+        if line:
+            path = line.split('->')[0].strip()
+            if path.startswith('*'):
+                path = path[1:].strip()
+            remote.append({'id': 'remote-branches/' + path, 'label': path, 'icon': 'fa-globe'})
+    if remote:
+        result.append({
+            'id': 'remote-branches',
+            'label': 'Remote Branches',
+            'icon': 'fa-globe',
+            'children': remote
+        })
+    return {'value': result}

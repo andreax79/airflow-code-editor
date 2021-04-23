@@ -331,7 +331,6 @@
                         label: 'Ok',
                         action: function(dialogRef) {
                             var target = dialogRef.getModalBody().find('input').val().trim();
-                            console.log(target);
                             webui.git([ 'mv-local', item.object, target ], function(data) {
                                 self.refresh();
                             });
@@ -514,147 +513,20 @@
         template: jQuery('#tree-view').html()
     });
 
-
-    Vue.component('sidebar-section', {
-        props: [ 'title', 'section', 'icon', 'items', 'limit', 'stack', 'historyView', 'workspaceView', 'current' ],
-        computed: {
-            cssClass: function () {
-                var self = this;
-                return {
-                    'active': (self.section == 'workspace' && self.current.section == 'workspace') || (self.section == 'mounts' && self.current.section == 'mounts' && !self.current.object),
-                    'clickable': (self.section == 'workspace' || self.section == 'mounts')
-                }
-            }
-        },
-        methods: {
-            selectItem: function(item) {
-                var self = this;
-                self.current.section = item.id;
-                self.current.object = item.object || null;
-                if (item.id == "mounts") {
-                    self.stack.updateStack(item.object, 'tree');
-                } else if (item.id == "workspace") {
-                    self.workspaceView.update([ 'stage' ]);
-                } else { // remote-branches/local-branches/tags
-                    self.historyView.update(item);
-                }
-            },
-            click: function(item) {
-                var self = this;
-                if (item.object || item.id == "mounts" || item.id == "workspace") { // object is not mandatory for files/workspace
-                    self.selectItem(item);
-                }
-                return false;
-            },
-            clickMore: function() {
-                var self = this;
-                jQuery(this.$el.querySelector('.modal.fade')).modal({ backdrop: false, show: true });
-            }
-        },
-        template: jQuery('#sidebar-section-template').html()
-    });
-
-
-    Vue.component('refs', {
-        props: [ 'section', 'title', 'items', 'historyView', 'current' ],
-        data: function () {
-            var self = this;
-            return {
-                ref: self.current.object,
-            }
-        },
-        methods: {
-            selectRef: function(object) {
-                // Change current section/ref
-                var self = this;
-                self.current.section = self.section;
-                self.current.object = object;
-                self.historyView.update({ id: self.section, name: object });
-            }
-        },
-        watch: {
-            'current.object': function(val, preVal) {
-                // Update ref when the current object is changed outside this component
-                var self = this;
-                self.ref = self.current.object;
-            }
-        },
-        template: jQuery('#refs-template').html()
-    });
-
-
     Vue.component('sidebar', {
         props: [ 'stack', 'current', 'historyView', 'workspaceView' ],
+        components: {
+            tree: window['vue-tree']
+        },
         data: function () {
             return {
-                items: { // sidebar elements for each section
-                    'mounts': [],
-                    'local-branches': [],
-                    'remote-branches': [],
-                    'tags': [],
-                    'workspace': []
-                },
-                sections: [ // sidebar sections (title, id, git command)
-                    [ "Files", "mounts", [ "mounts" ]],
-                    [ "Local Branches", "local-branches", [ "branch" ]],
-                    [ "Remote Branches", "remote-branches", [ "branch", "--remotes" ]],
-                    [ "Tags", "tags", [ "tag" ]],
-                ],
+                model: [],
+                modelDefaults: {
+                    // loadChildrenAsync: this.loadChildrenAsync
+                }
             }
         },
         methods: {
-            fetchSection: function(title, section, gitCommand) {
-                // Fetch a single sidebar section
-                var self = this;
-                return new Promise(function(resolve, reject) {
-                    webui.git(gitCommand, function(data) {
-                        var refs = webui.splitLines(data);
-                        var items = [];
-                        if (refs.length > 0) {
-                            // Prepare items
-                            items = refs.map(function(ref) {
-                                var item = {
-                                    id: section,
-                                    object: null,
-                                    name: null,
-                                    class: null
-                                }
-                                item.name = ref.trim().split(' ->')[0]; // Strip "->> ..."
-                                if (item.name[2] == '(' && item.name[item.name.length - 1] == ')') { // "(detached from ...)"
-                                    item.name = item.name.substring(item.name.lastIndexOf(' ') + 1, item.name.length - 1)
-                                }
-                                if (item.name[0] == '*') { // Current branch
-                                    item.name = item.name.substring(1).trim(); // remove "* "
-                                    item.class = "branch-current";
-                                }
-                                if (section == 'mounts') {
-                                    item.object = '/~' + item.name;
-                                } else {
-                                    item.object = item.name;
-                                }
-                                return item;
-                            });
-                            // Sort
-                            items = items.sort(function(a, b) {
-                                if (section != 'local-branches' && section != 'mounts') {
-                                    return -a.object.localeCompare(b.object);
-                                } else {
-                                    return a.object.localeCompare(b.object);
-                                }
-                            });
-                        }
-                        self.items[section] = items;
-                        resolve(section);
-                    });
-                });
-            },
-            fetchSections: function() {
-                // Fetch sidebar sections
-                var self = this;
-                return Promise.all(self.sections.map(function (args) {
-                    return self.fetchSection(args[0], args[1], args[2]);
-                }));
-            },
             parseURIFragment: function() {
                 // Change the active section according to the uri fragment (hash)
                 var self = this;
@@ -697,11 +569,57 @@
                 jQuery('#global-container').show();
                 return(Promise.resolve(true));
             },
+            fetchTree: function() {
+                // Load tree nodes
+                var self = this;
+                return new Promise(function(resolve, reject) {
+                    jQuery.get(prepareHref('tree'))
+                          .done(function(data) {
+                                self.model.length = 0;
+                                data.value.forEach(function(part) {
+                                    self.model.push(part);
+                                });
+                                resolve(true);
+                          })
+                          .fail(function(jqXHR, textStatus, errorThrown) {
+                                reject();
+                          })
+                    });
+            },
+            selectItem: function(item) {
+                var self = this;
+                self.current.section = item.id; // mounts, workspace, local-branches, remote-branches, tags
+                self.current.object = item.name || null;
+                if (item.id == "mounts") { // Files
+                    self.stack.updateStack(item.name, 'tree');
+                } else if (item.id == "workspace") { // Git Workspace
+                    self.workspaceView.update([ 'stage' ]);
+                } else { // remote-branches/local-branches/tags
+                    self.historyView.update(item);
+                }
+            },
+            click: function(model) {
+                var self = this;
+                if (model.id[0] == '/') { // Files
+                    self.selectItem({ id: 'mounts', name: model.id });
+                } else if (model.id == 'workspace') { // Git Workspace
+                    self.selectItem({ id: 'workspace', name: null });
+                } else if (model.id.startsWith('tags/')) { // Tags
+                    self.selectItem({ id: 'tags', name: model.id });
+                } else if (model.id.startsWith('remote-branches/')) { // Remote Branches
+                    self.selectItem({ id: 'remote-branches', name: model.id.substring(model.id.indexOf('/') + 1) });
+                } else if (model.id.startsWith('local-branches/')) { // Local Branches
+                    self.selectItem({ id: 'local-branches', name: model.id.substring(model.id.indexOf('/') + 1) });
+                } else {
+                    model.treeNodeSpec.state.expanded = true; // expand the node
+                }
+                return false;
+            },
         },
         mounted: function() {
             // Init
             var self = this;
-            self.fetchSections()
+            self.fetchTree()
                 .then(self.parseURIFragment)
                 .then(self.showContainer);
         },

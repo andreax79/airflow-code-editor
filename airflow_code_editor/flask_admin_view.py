@@ -69,6 +69,16 @@ try:
         def format(self, path=None):
             return self._load(path)
 
+        @expose("/tree", methods=["GET"])
+        @login_required
+        def tree_base(self, path=None):
+            return self._tree(path)
+
+        @expose("/tree/<path:path>", methods=["GET"])
+        @login_required
+        def tree(self, path=None):
+            return self._tree(path)
+
         def _render(self, template, *args, **kargs):
             return self.render(
                 template + "_admin.html",

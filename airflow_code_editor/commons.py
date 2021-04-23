@@ -90,6 +90,7 @@ JS_FILES = [
     'emacs.js',
     'sublime.js',
     'vue.js',
+    'vue-tree.js',
     'themes.js',
     'gitweb.js',
     'vue_components.js',

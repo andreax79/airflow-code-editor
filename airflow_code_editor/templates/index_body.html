@@ -60,29 +60,21 @@
 </div>
 
 <div style='display: none'>
-    <div id='sidebar-section-template'>
-        <section v-if="section == 'mounts' || section == 'workspace' || items[section].length > 0">
-            <h1 v-on:click="click({ id: section })" :class="cssClass">
-                <i :class="'fa ' + icon"></i> {{ title }}
-            </h1>
-            <ul>
-                <template v-for="(item, index) in items[section]" :key="item" :index="index">
-                    <li v-if="index < limit" :class="{ 'active': current.section == item.id && item.object == current.object, 'sidebar-ref': true }" v-on:click="click(item)">{{ item.name }}</li>
-                </template>
-                <li v-if="items[section].length > limit" class="sidebar-more" v-on:click="clickMore()">More ...</li>
-                <refs :title="title" :section="section" :items="items[section]" :history-view="historyView" :current="current"></refs>
-            </ul>
-        </section>
-    </div>
-
     <div id='sidebar-template'>
         <div>
             <div id="sidebar-content">
-                <sidebar-section title="Files" icon="fa-home" :items="items" :limit="100" section="mounts" :stack="stack" :history-view="historyView" :workspace-view="workspaceView" :current="current"></sidebar-section>
-                <sidebar-section title="Git Workspace" icon="fa-briefcase" :items="items" :limit="5" section="workspace" :stack="stack" :history-view="historyView" :workspace-view="workspaceView" :current="current"></sidebar-section>
-                <sidebar-section title="Local Branches" icon="fa-code-fork" :items="items" :limit="5" section="local-branches" :stack="stack" :history-view="historyView" :workspace-view="workspaceView" :current="current"></sidebar-section>
-                <sidebar-section title="Remote Branches" icon="fa-globe" :items="items" :limit="5" section="remote-branches" :stack="stack" :history-view="historyView" :workspace-view="workspaceView" :current="current"></sidebar-section>
-                <sidebar-section title="Tags" icon="fa-tags" :items="items" :limit="5" section="tags" :history-view="historyView" :stack="stack" :workspace-view="workspaceView" :current="current"></sidebar-section>
+                <tree :initial-model="model"
+                      :model-defaults="modelDefaults">
+                    <template #text="{ model, customClasses }">
+                        <div :title="model.treeNodeSpec.title"
+                             class="grtvn-self-text"
+                             v-on:click="click(model)"
+                             :class="customClasses.treeViewNodeSelfText">
+                             <i v-if="model.icon" :class="'fa ' + model.icon" aria-hidden="true"></i>
+                             {{ model.label }}
+                        <div>
+                    </template>
+                </tree>
             </div>
         </div>
     </div>

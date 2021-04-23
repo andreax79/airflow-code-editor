@@ -67,7 +67,9 @@ body {
   overflow-y: auto;
   cursor: default;
   color: #eeeeee;
+  padding: 1em;
 }
+/*
 #sidebar #sidebar-content h1:before {
   vertical-align: middle;
   margin: 12px;
@@ -108,6 +110,7 @@ body {
 #sidebar .modal-dialog .list-group-item {
   border: 0;
 }
+*/
 .list-group-item .name {
   color: #000000;
 }

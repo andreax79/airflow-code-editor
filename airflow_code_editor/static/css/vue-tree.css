@@ -1,0 +1,97 @@
+.grtv-wrapper.grtv-default-skin .grtvn{
+    padding-left:0;
+    line-height: 2em;
+}
+.grtv-wrapper.grtv-default-skin .grtvn:first-child{
+    margin-top:0;
+}
+.grtv-wrapper.grtv-default-skin .grtvn[role=treeitem]:focus{
+    outline:0;
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self{
+    display:flex;
+    align-items:flex-start;
+}
+.grtv-wrapper.grtv-default-skin .grtvn-dragging .grtvn-self{
+    opacity:.5
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-drop-target{
+    flex-wrap:wrap
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-drop-target.grtvn-self-child-drop-target{
+    opacity:.5
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-drop-target .grtvn-self-sibling-drop-target{
+    width:100%;
+    height:7px;
+    background-color:#ddd
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-drop-target .grtvn-self-sibling-drop-target.grtvn-self-sibling-drop-target-hover{
+    background-color:#bbb
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-expander{
+    padding:0;
+    background:none;
+    border:none;
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-expander i.grtvn-self-expanded-indicator{
+    font-style:normal
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-expander i.grtvn-self-expanded-indicator:before{
+    font: normal normal normal 14px/1 FontAwesome;
+    content:"\f105"; /* fa-angle-right */
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-expander.grtvn-self-expanded i.grtvn-self-expanded-indicator:before{
+    font: normal normal normal 14px/1 FontAwesome;
+    content:"\f107"; /* fa-angle-down */
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-selected{
+    background-color:#f0f0f8
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-action,.grtv-wrapper.grtv-default-skin .grtvn-self-checkbox,.grtv-wrapper.grtv-default-skin .grtvn-self-expander,.grtv-wrapper.grtv-default-skin .grtvn-self-radio,.grtv-wrapper.grtv-default-skin .grtvn-self-spacer{
+    min-width:1rem
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-expander,.grtv-wrapper.grtv-default-skin .grtvn-self-spacer{
+    margin:0
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-checkbox,.grtv-wrapper.grtv-default-skin .grtvn-self-radio{
+    margin:0 0 0 -1.2rem;
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-label,.grtv-wrapper.grtv-default-skin .grtvn-self-text{
+    margin-left: 0.5em;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-label,.grtv-wrapper.grtv-default-skin .grtvn-self-text .fa{
+    width: 1em;
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self-action{
+    padding:0;
+    background:none;
+    border:none;
+    height:1.2rem;
+}
+.grtv-wrapper.grtv-default-skin i.grtvn-self-add-child-icon{
+    font-style:normal;
+}
+.grtv-wrapper.grtv-default-skin i.grtvn-self-add-child-icon:before{
+    content:"+"
+}
+.grtv-wrapper.grtv-default-skin i.grtvn-self-delete-icon{
+    font-style:normal
+}
+.grtv-wrapper.grtv-default-skin i.grtvn-self-delete-icon:before{
+    content:"x"
+}
+.grtv-wrapper.grtv-default-skin .grtvn-children-wrapper{
+    margin:0 0 0 1rem
+}
+.grtv-wrapper.grtv-default-skin .grtvn-children{
+    padding: 0 0 0 0.5em;
+    list-style:none
+}
+.grtv-wrapper.grtv-default-skin>.grtv{
+    margin:0;
+    padding:0;
+    list-style:none
+}

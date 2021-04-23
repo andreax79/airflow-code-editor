@@ -26,6 +26,7 @@ from airflow_code_editor.utils import (
     get_plugin_boolean_config,
     get_plugin_int_config,
     git_absolute_path,
+    get_tree,
     execute_git_command,
     error_message,
     normalize_path,
@@ -33,39 +34,39 @@ from airflow_code_editor.utils import (
 )
 
 
-__all__ = ['AbstractCodeEditorView']
+__all__ = ["AbstractCodeEditorView"]
 
-AIRFLOW_MAJOR_VERSION = int(version.split('.')[0])
+AIRFLOW_MAJOR_VERSION = int(version.split(".")[0])
 
 
 class AbstractCodeEditorView(object):
     airflow_major_version = AIRFLOW_MAJOR_VERSION
 
     def _index(self):
-        return self._render('index')
+        return self._render("index")
 
     def _save(self, path=None):
         try:
-            data = request.form['data']
+            data = request.form["data"]
             # Newline fix (remove cr)
-            data = data.replace('\r', '').rstrip()
+            data = data.replace("\r", "").rstrip()
             fullpath = git_absolute_path(path)
             os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-            with open(fullpath, 'w') as f:
+            with open(fullpath, "w") as f:
                 f.write(data)
-                f.write('\n')
+                f.write("\n")
             return prepare_api_response(path=normalize_path(path))
         except Exception as ex:
             logging.error(ex)
             return prepare_api_response(
                 path=normalize_path(path),
-                error_message='Error saving {path}: {message}'.format(
+                error_message="Error saving {path}: {message}".format(
                     path=path, message=error_message(ex)
                 ),
             )
 
     def _git_repo(self, path):
-        if request.method == 'POST':
+        if request.method == "POST":
             return self._git_repo_post(path)
         else:
             return self._git_repo_get(path)
@@ -76,24 +77,24 @@ class AbstractCodeEditorView(object):
 
     def _git_repo_post(self, path):
         " Execute a GIT command (invoked by the HTTP POST method) "
-        git_args = request.form.getlist('args[]')
+        git_args = request.form.getlist("args[]")
         return execute_git_command(git_args)
 
     def _load(self, path):
         " Send the contents of a file to the client "
         try:
             path = normalize_path(path)
-            if path.startswith('~git/'):
+            if path.startswith("~git/"):
                 # Download git blob - path = '~git/<hash>/<name>'
-                _, path, filename = path.split('/', 3)
+                _, path, filename = path.split("/", 3)
                 response = execute_git_command(["cat-file", "-p", path])
-                response.headers['Content-Disposition'] = (
+                response.headers["Content-Disposition"] = (
                     'attachment; filename="%s"' % filename
                 )
                 try:
                     content_type = mimetypes.guess_type(filename)[0]
                     if content_type:
-                        response.headers['Content-Type'] = content_type
+                        response.headers["Content-Type"] = content_type
                 except Exception:
                     pass
                 return response
@@ -110,23 +111,26 @@ class AbstractCodeEditorView(object):
         try:
             import black
 
-            data = request.form['data']
+            data = request.form["data"]
             # Newline fix (remove cr)
-            data = data.replace('\r', '').rstrip()
+            data = data.replace("\r", "").rstrip()
             mode = black.Mode(
-                string_normalization=get_plugin_boolean_config('string_normalization'),
-                line_length=get_plugin_int_config('line_length'),
+                string_normalization=get_plugin_boolean_config("string_normalization"),
+                line_length=get_plugin_int_config("line_length"),
             )
             data = black.format_str(src_contents=data, mode=mode)
             return prepare_api_response(data=data)
         except ImportError:
             return prepare_api_response(
-                error_message='black dependency is not installed: to install black `pip install black`'
+                error_message="black dependency is not installed: to install black `pip install black`"
             )
         except Exception as ex:
             logging.error(ex)
             return prepare_api_response(
-                error_message='Error formatting: {message}'.format(
+                error_message="Error formatting: {message}".format(
                     message=error_message(ex)
                 )
             )
+
+    def _tree(self, path):
+        return get_tree(path)

@@ -13,6 +13,24 @@
         return document.location.pathname + path;
     }
 
+    function splitPath(path) {
+        // Split path into head, tail
+        if (!path) {
+            return ['', ''];
+        } else {
+            if (path[0] == '/') {
+                path = path.substring(1);
+            }
+            var head = path.substring(0, path.indexOf('/'));
+            var tail = path.substring(path.indexOf('/') + 1);
+            if (!head) {
+                head = tail;
+                tail = '';
+            }
+            return [head, tail];
+        }
+    }
+
     function TreeEntry(line) {
         var self = this;
         var match = line.match(/^(\d+) (\w+) ([^ #]+)#?(\S+)?\s+(\S*)\t(\S+)/);
@@ -522,7 +540,7 @@
             return {
                 model: [],
                 modelDefaults: {
-                    // loadChildrenAsync: this.loadChildrenAsync
+                    loadChildrenAsync: this.loadChildrenAsync
                 }
             }
         },
@@ -546,12 +564,12 @@
                         self.workspaceView.update([ 'stage' ]);
 
                     } else if (section == 'edit' && object) {
-                        self.current.section = 'mounts';
+                        self.current.section = 'files';
                         self.current.object = '/' + object.split('/')[0];
                         self.stack.updateStack('/' + object, 'blob');
 
                     } else { // files
-                        self.current.section = 'mounts';
+                        self.current.section = 'files';
                         if (object) {
                             self.current.object = '/' + object.split('/')[0];
                             self.stack.updateStack('/' + object, 'tree');
@@ -575,8 +593,15 @@
                 return new Promise(function(resolve, reject) {
                     jQuery.get(prepareHref('tree'))
                           .done(function(data) {
-                                self.model.length = 0;
+                                self.model.length = 0; // flush model
                                 data.value.forEach(function(part) {
+                                    part.label = part.label || part.id;
+                                    part.treeNodeSpec = {
+                                        'expandable': !part.leaf,
+                                    }
+                                    if (!part.leaf) {
+                                        part.children = [];
+                                    }
                                     self.model.push(part);
                                 });
                                 resolve(true);
@@ -586,34 +611,54 @@
                           })
                     });
             },
-            selectItem: function(item) {
-                var self = this;
-                self.current.section = item.id; // mounts, workspace, local-branches, remote-branches, tags
-                self.current.object = item.name || null;
-                if (item.id == "mounts") { // Files
-                    self.stack.updateStack(item.name, 'tree');
-                } else if (item.id == "workspace") { // Git Workspace
-                    self.workspaceView.update([ 'stage' ]);
-                } else { // remote-branches/local-branches/tags
-                    self.historyView.update(item);
-                }
-            },
             click: function(model) {
                 var self = this;
-                if (model.id[0] == '/') { // Files
-                    self.selectItem({ id: 'mounts', name: model.id });
-                } else if (model.id == 'workspace') { // Git Workspace
-                    self.selectItem({ id: 'workspace', name: null });
-                } else if (model.id.startsWith('tags/')) { // Tags
-                    self.selectItem({ id: 'tags', name: model.id });
-                } else if (model.id.startsWith('remote-branches/')) { // Remote Branches
-                    self.selectItem({ id: 'remote-branches', name: model.id.substring(model.id.indexOf('/') + 1) });
-                } else if (model.id.startsWith('local-branches/')) { // Local Branches
-                    self.selectItem({ id: 'local-branches', name: model.id.substring(model.id.indexOf('/') + 1) });
-                } else {
-                    model.treeNodeSpec.state.expanded = true; // expand the node
+                var sectionAndName = splitPath(model.id);
+                var section = sectionAndName[0];
+                var name = sectionAndName[1];
+
+                if (section == 'workspace') { // Workspace
+                    self.current.section = section;
+                    self.current.object = name;
+                    self.workspaceView.update([ 'stage' ]);
+
+                } else if (section == 'files') { // Files
+                    self.current.section = section
+                    self.current.object = '/' + name;
+                    self.stack.updateStack('/' + name, model.leaf ? 'blob' : 'tree');
+
+                } else if (section == 'tags' ||
+                           section == 'remote-branches' ||
+                           section == 'local-branches') {
+                    if (name) {
+                        self.current.section = section;
+                        self.current.object = name;
+                        self.historyView.update({ id: section, name: name });
+                    }
                 }
                 return false;
+            },
+            loadChildrenAsync: function(parent) {
+                var self = this;
+                return new Promise(function(resolve, reject) {
+                    jQuery.get(prepareHref('tree/' + parent.id))
+                          .done(function(data) {
+                                data.value.forEach(function(part) {
+                                    part.label = part.label || part.id;
+                                    part.treeNodeSpec = {
+                                        'expandable': !part.leaf,
+                                    }
+                                    if (!part.leaf) {
+                                        part.children = [];
+                                    }
+                                    part.id = parent.id + '/' + part.id;
+                                });
+                                resolve(data.value);
+                          })
+                          .fail(function(jqXHR, textStatus, errorThrown) {
+                                reject();
+                          })
+                    });
             },
         },
         mounted: function() {
@@ -647,7 +692,7 @@
             el: '#global-container',
             data:{
                 current: {
-                    section: null, // current sidebar section (mounts, werkspace, ...)
+                    section: null, // current sidebar section (files, werkspace, ...)
                     object: null, // current sidebar object
                 },
                 stack: new Stack(), // files stack

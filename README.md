@@ -77,4 +77,4 @@ Example:
 * Codemirror, In-browser code editor - https://github.com/codemirror/codemirror
 * Git WebUI, A standalone local web based user interface for git repositories - https://github.com/alberthier/git-webui
 * Black, The Uncompromising Code Formatter - https://github.com/psf/black
-
+* Splitpanes - https://github.com/antoniandre/splitpanes

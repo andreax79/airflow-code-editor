@@ -86,6 +86,7 @@ JS_FILES = [
     'addon/search/jump-to-line.js',
     'mode/meta.js',
     'bootstrap-dialog.js',
+    'splitpanes.js',
     'vim.js',
     'emacs.js',
     'sublime.js',

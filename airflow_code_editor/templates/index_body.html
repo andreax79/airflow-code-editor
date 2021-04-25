@@ -1,7 +1,10 @@
 {% raw %}
 <div id="global-container" style="display: none">
-    <sidebar id="sidebar" :stack="stack" :current="current" :history-view="historyView" :workspace-view="workspaceView"></sidebar>
-    <div id="main-view">
+  <splitpanes class="default-theme">
+    <pane key="1" :size="sidebarSize">
+      <sidebar id="sidebar" :stack="stack" :current="current" :history-view="historyView" :workspace-view="workspaceView"></sidebar>
+    </pane>
+    <pane key="2" :size="100 - sidebarSize" id="main-view">
         <div id="history-view" v-show='current.section == "local-branches" | current.section == "remote-branches" | current.section == "tags"'>
             <div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>
             <div id="commit-view">
@@ -56,7 +59,8 @@
                 <tree-view :stack='stack' :config="editorConfig"></tree-view>
             </div>
         </div>
-    </div>
+    </pane>
+  </splitpanes>
 </div>
 
 <div style='display: none'>

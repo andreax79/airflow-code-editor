@@ -31,11 +31,6 @@ body {
 #error-modal .modal-body {
   margin-bottom: 0;
 }
-#help-modal img {
-  display: block;
-  margin: 0 auto;
-  border: 1px solid #dddddd;
-}
 #message-box .alert {
   margin: 0;
 }
@@ -48,13 +43,8 @@ body {
   -webkit-flex: 1 1 0;
 }
 #sidebar {
-  display: flex;
-  display: -webkit-flex;
-  min-height: 0;
-  min-width: 0;
-  flex-direction: column;
-  -webkit-flex-direction: column;
-  width: 14em;
+  height: 100%;
+  overflow-y: auto;
   background-color: #333333;
 }
 #sidebar .branch-current {
@@ -69,48 +59,6 @@ body {
   color: #eeeeee;
   padding: 1em;
 }
-/*
-#sidebar #sidebar-content h1:before {
-  vertical-align: middle;
-  margin: 12px;
-}
-#sidebar #sidebar-content h1 {
-  vertical-align: baseline;
-  margin: 0.5em 0 0 0;
-}
-#sidebar #sidebar-content > section h1 {
-  font-size: 1em;
-  padding: 0.5rem 0 0.4rem 1.5rem;
-}
-#sidebar #sidebar-content > section h1.clickable {
-  cursor: pointer;
-}
-#sidebar #sidebar-content > section h1 .fa {
-  margin-right: 0.5rem;
-  width: 1rem;
-}
-#sidebar #sidebar-content ul {
-  margin: 0;
-  padding: 0;
-}
-#sidebar #sidebar-content li:before {
-  content: "-";
-  margin: 1rem;
-}
-#sidebar #sidebar-content li {
-  cursor: pointer;
-  padding: 0.4rem 0 0.4rem 1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-#sidebar #sidebar-content .active {
-  background-color: #005c66;
-}
-#sidebar .modal-dialog .list-group-item {
-  border: 0;
-}
-*/
 .list-group-item .name {
   color: #000000;
 }

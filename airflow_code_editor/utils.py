@@ -21,6 +21,7 @@ import subprocess
 import threading
 import shlex
 import shutil
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 from collections import namedtuple
 from flask import jsonify, make_response
@@ -49,9 +50,9 @@ __all__ = [
 ]
 
 
-def normalize_path(path):
+def normalize_path(path: Optional[str]) -> str:
     comps = (path or '/').split('/')
-    result = []
+    result: List[str] = []
     for comp in comps:
         if comp in ('', '.'):
             pass
@@ -62,26 +63,26 @@ def normalize_path(path):
     return '/'.join(result)
 
 
-def get_plugin_config(key):
+def get_plugin_config(key: str) -> str:
     " Get a plugin configuration/default for a given key "
     return configuration.conf.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
 
 
-def get_plugin_boolean_config(key):
+def get_plugin_boolean_config(key: str) -> bool:
     " Get a plugin boolean configuration/default for a given key "
     return configuration.conf.getboolean(
         PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
     )
 
 
-def get_plugin_int_config(key):
+def get_plugin_int_config(key: str) -> int:
     " Get a plugin int configuration/default for a given key "
     return configuration.conf.getint(
         PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
     )
 
 
-def prepare_git_response(git_cmd, result=None, stderr=None, returncode=0):
+def prepare_git_response(git_cmd: str, result=None, stderr=None, returncode=0):
     if result is None:
         result = stderr
     elif stderr:
@@ -98,7 +99,7 @@ def prepare_git_response(git_cmd, result=None, stderr=None, returncode=0):
     return response
 
 
-def prepare_git_env():
+def prepare_git_env() -> Dict[str, str]:
     " Prepare the environ for git "
     env = dict(os.environ)
     git_author_name = get_plugin_config('git_author_name')
@@ -125,7 +126,7 @@ def prepare_git_env():
     return env
 
 
-def get_root_folder():
+def get_root_folder() -> str:
     " Return the configured root folder or Airflow DAGs folder "
     return os.path.abspath(
         get_plugin_config('root_directory')
@@ -133,9 +134,9 @@ def get_root_folder():
     )
 
 
-def git_absolute_path(git_path):
+def git_absolute_path(git_path: Optional[str]) -> str:
     " Git relative path to absolute path "
-    path = normalize_path(git_path)
+    path: str = normalize_path(git_path)
     if path.startswith('~'):
         # Expand paths beginning with '~'
         prefix, remain = path.split('/', 1) if '/' in path else (path, '')
@@ -270,7 +271,7 @@ LOCAL_COMMANDS = {
 }
 
 
-def init_git_repo():
+def init_git_repo() -> None:
     " Initialize the git repository in root folder "
     cwd = get_root_folder()
     subprocess.call(['git', 'init', '.'], cwd=cwd)
@@ -287,9 +288,8 @@ def init_git_repo():
 MountPoint = namedtuple('MountPoint', 'path default')
 
 
-def read_mount_points_config():
+def read_mount_points_config() -> Dict[str, MountPoint]:
     " Return the plugin configuration "
-    global mount_points
     config = {ROOT_MOUNTPOUNT: MountPoint(path=get_root_folder(), default=True)}
     i = 0
     # Iterate over the configurations
@@ -308,13 +308,13 @@ def read_mount_points_config():
         path = configuration.conf.get(PLUGIN_NAME, 'mount{}_path'.format(suffix))
         config[name] = MountPoint(path=path, default=False)
         i = i + 1
-    mount_points = config
+    return config
 
 
-read_mount_points_config()
+mount_points = read_mount_points_config()
 
 
-def error_message(ex: Exception):
+def error_message(ex: Exception) -> str:
     " Get exception error message "
     if ex is None:
         return ''
@@ -334,77 +334,139 @@ def prepare_api_response(error_message=None, **kargs):
     return jsonify(result)
 
 
-def get_tree(path=None):
-    " Get tree nodes "
+def get_root_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    " Get tree root node "
     result = []
     # Mounts
-    mounts = []
-    for path in sorted(k for k, v in mount_points.items() if not v.default):
-        path = path.rstrip('/')
-        mounts.append({'id': '/~' + path, 'label': path, 'icon': 'fa-folder'})
-    result.append(
-        {
-            'id': '/',
-            'label': 'Files',
-            'icon': 'fa-home',
-            'children': mounts,
-            'treeNodeSpec': {
-                'expandable': True,
-                'state': {
-                    'expanded': True,
-                },
-            },
-        }
-    )
+    result.append({
+        'id': 'files',
+        'label': 'Files',
+        'leaf': False,
+        'icon': 'fa-home'
+    })
+    for mount in sorted(k for k, v in mount_points.items() if not v.default):
+        mount = mount.rstrip('/')
+        result.append({
+            'id': 'files/~' + mount,
+            'label': mount,
+            'icon': 'fa-folder',
+            'leaf': False
+        })
     # Git Workspace
     result.append({
         'id': 'workspace',
         'label': 'Git Workspace',
+        'leaf': True,
         'icon': 'fa-briefcase',
     })
     # Tags
-    tags = []
+    result.append({
+        'id': 'tags',
+        'label': 'Tags',
+        'leaf': False,
+        'icon': 'fa-tags'
+    })
+    # Local Branches
+    result.append({
+        'id': 'local-branches',
+        'label': 'Local Branches',
+        'leaf': False,
+        'icon': 'fa-code-fork'
+    })
+    # Remote Branches
+    result.append({
+        'id': 'remote-branches',
+        'label': 'Remote Branches',
+        'leaf': False,
+        'icon': 'fa-globe'
+    })
+    return result
+
+
+def get_tags_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    " Get tree tags node "
+    result = []
     r = execute_git_command(['tag'])
     for line in r.data.decode('utf-8').split('\n'):
         if line:
-            path = line.strip()
-            tags.append({'id': 'tags/' + path, 'label': path, 'icon': 'fa-tags'})
-    if tags:
-        result.append({
-            'id': 'tags',
-            'label': 'Tags',
-            'icon': 'fa-tags',
-            'children': tags
-        })
-    # Local branches
-    branches = []
+            name = line.strip()
+            result.append({
+                'id': name,
+                'leaf': True,
+                'icon': 'fa-tags'
+            })
+    return result
+
+
+def get_local_branches_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    " Get tree local branches node "
+    result = []
     r = execute_git_command(['branch'])
     for line in r.data.decode('utf-8').split('\n'):
         if line:
-            path = line.strip()
-            if path.startswith('*'):
-                path = path[1:].strip()
-            branches.append({'id': 'local-branches/' + path, 'label': path, 'icon': 'fa-code-fork'})
-    if branches:
-        result.append({
-            'id': 'local-branches',
-            'label': 'Local Branches',
-            'icon': 'fa-code-fork',
-            'children': branches})
-    # Remote branches
-    remote = []
+            name = line.strip()
+            if name.startswith('*'):
+                name = name[1:].strip()
+            result.append({
+                'id': name,
+                'leaf': True,
+                'icon': 'fa-code-fork'
+            })
+    return result
+
+
+def get_remote_branches_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    " Get tree remote branches node "
+    result = []
     r = execute_git_command(['branch', '--remotes'])
     for line in r.data.decode('utf-8').split('\n'):
         if line:
-            path = line.split('->')[0].strip()
-            if path.startswith('*'):
-                path = path[1:].strip()
-            remote.append({'id': 'remote-branches/' + path, 'label': path, 'icon': 'fa-globe'})
-    if remote:
+            name = line.split('->')[0].strip()
+            if name.startswith('*'):
+                name = name[1:].strip()
+            result.append({
+                'id': name,
+                'leaf': True,
+                'icon': 'fa-globe'
+            })
+    return result
+
+
+def get_files_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    " Get tree files node "
+    result = []
+    dirpath: str = git_absolute_path(path)
+    for name in sorted(os.listdir(dirpath)):
+        if name.startswith('.') or name == '__pycache__':
+            continue
+        fullname = os.path.join(dirpath, name)
+        leaf = not os.path.isdir(fullname)
         result.append({
-            'id': 'remote-branches',
-            'label': 'Remote Branches',
-            'icon': 'fa-globe',
-            'children': remote
+            'id': name,
+            'leaf': leaf,
+            'icon': 'fa-file' if leaf else 'fa-folder'
         })
-    return {'value': result}
+    return result
+
+
+TREE_NODES = {
+    None: get_root_node,
+    'tags': get_tags_node,
+    'local-branches': get_local_branches_node,
+    'remote-branches': get_remote_branches_node,
+    'files': get_files_node
+}
+
+def get_tree(path: Optional[str] = None) -> List[Dict[str, Any]]:
+    " Get tree nodes "
+    if not path:
+        root = None
+        path_argv = None
+    else:
+        splitted_path = path.split('/', 1)
+        root = splitted_path.pop(0)
+        path_argv = normalize_path(splitted_path.pop(0) if splitted_path else None)
+    if root in TREE_NODES:
+        return TREE_NODES[root](path_argv)
+    else:
+        return []

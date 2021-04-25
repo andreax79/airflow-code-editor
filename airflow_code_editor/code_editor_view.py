@@ -133,4 +133,4 @@ class AbstractCodeEditorView(object):
             )
 
     def _tree(self, path):
-        return get_tree(path)
+        return {'value': get_tree(path)}

@@ -184,3 +184,15 @@
 
 - Support different base URL
 - Fix buttons wrap
+
+## 3.3.2
+
+2021-04-25
+
+### Changed
+
+- CodeMirror upgrade
+
+### Fix
+
+- Fix missing font awesome css for Airflow v1 without RBAC

@@ -690,16 +690,23 @@
         // Init app
         webui.app = new Vue({
             el: '#global-container',
-            data:{
-                current: {
-                    section: null, // current sidebar section (files, werkspace, ...)
-                    object: null, // current sidebar object
-                },
-                stack: new Stack(), // files stack
-                historyStack: new Stack(), // history view files stack
-                editorConfig: new EditorConfig(), // editor config
-                historyView: null,
-                workspaceView: null,
+            components: {
+                splitpanes: window.splitpanes.Splitpanes,
+                pane: window.splitpanes.Pane
+            },
+            data: function() {
+                return {
+                    current: {
+                        section: null, // current sidebar section (files, werkspace, ...)
+                        object: null, // current sidebar object
+                    },
+                    stack: new Stack(), // files stack
+                    historyStack: new Stack(), // history view files stack
+                    editorConfig: new EditorConfig(), // editor config
+                    historyView: null,
+                    workspaceView: null,
+                    sidebarSize: 190 * 100 / jQuery(document).width() // sidebar size (percentage)
+                };
             },
             methods: {
                 initViews: function() {

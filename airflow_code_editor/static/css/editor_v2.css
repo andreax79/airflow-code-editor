@@ -19,6 +19,7 @@ body {
 .cm-footer {
   border-top: 1px solid #eee;
   padding: 0.2em 1em;
+  background-color: #f5f5f5;
 }
 .CodeMirror {
   border: 1px solid #eee;

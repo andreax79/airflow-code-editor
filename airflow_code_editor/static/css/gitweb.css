@@ -47,6 +47,13 @@ body {
   overflow-y: auto;
   background-color: #333333;
 }
+#global-container .splitpanes.default-theme .splitpanes__splitter {
+  background-color: #333333;
+  border-left: 1px solid #333333 !important;
+}
+#global-container .splitpanes.default-theme .splitpanes__splitter::before {
+  background-color: #666666;
+}
 #sidebar .branch-current {
   font-weight: bold;
 }
@@ -112,6 +119,7 @@ body {
   min-width: 0;
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
+  background-color: #eee;
 }
 #log-view {
   flex: 1 1 0;
@@ -119,8 +127,16 @@ body {
   overflow-y: auto;
   cursor: default;
   margin-bottom: 0;
-  border-right: 1px #dddddd solid;
   position: relative;
+  background-color: #fff;
+/*
+  margin: 10px;
+  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  -ms-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  -o-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+*/
 }
 #log-view svg {
   position: absolute;
@@ -139,13 +155,16 @@ body {
   padding: 5px 10px;
   background-color: transparent;
   margin: 0;
-  border-top-width: 0;
+  border-width: 0 0 1px 0;
+  border-radius: 0;
 }
 #log-view .log-entry:hover {
   background-color: rgba(244, 244, 244, 0.9);
 }
 #log-view .log-entry.active {
-  background-color: #005c66;
+  background-color: rgba(244, 244, 244, 0.9);
+  border-color: #ccc;
+  color: #000;
 }
 #log-view .log-entry.active header h6 a {
   color: #ffffff;
@@ -170,11 +189,14 @@ body {
 }
 #log-view .log-entry header .log-entry-date {
   margin-left: auto;
+  font-size: 0.8em;
+  margin-right: 1em;
 }
 #log-view .log-entry .list-group-item-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: inherit;
 }
 #log-view .log-entry-more {
   padding: 10px 16px;
@@ -192,10 +214,22 @@ body {
   -webkit-flex-direction: column;
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
+  background-color: #fff;
+  /*
+  margin: 10px 10px 10px 0;
+  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  -ms-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  -o-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  */
 }
 #commit-view .commit-view-header {
   border: solid #dddddd;
   border-width: 0 0 1px 0;
+}
+#commit-view .commit-view-header .nav-pills li a {
+  border-radius: 0px;
 }
 #commit-view .commit-view-content {
   display: flex;
@@ -321,6 +355,7 @@ body {
   padding: 0 0.3em 0 0.3em;
   background-color: white;
   border: 0;
+  border-radius: 0px;
 }
 .diff-view-container .panel-body .diff-view .diff-view-lines .diff-view-line.active {
   background-color: #579903;
@@ -387,6 +422,7 @@ body {
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
   margin: 0;
+  background-color: #fff;
 }
 .tree-view #tree-view-tree-content a:hover {
   text-decoration: none;

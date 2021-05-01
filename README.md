@@ -77,4 +77,6 @@ Example:
 * Codemirror, In-browser code editor - https://github.com/codemirror/codemirror
 * Git WebUI, A standalone local web based user interface for git repositories - https://github.com/alberthier/git-webui
 * Black, The Uncompromising Code Formatter - https://github.com/psf/black
+* Vuew.js - https://github.com/vuejs/vue
+* Vue-Tree, Vue component that implements a TreeView control - https://github.com/grapoza/vue-tree
 * Splitpanes - https://github.com/antoniandre/splitpanes

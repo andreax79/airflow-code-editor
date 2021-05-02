@@ -197,9 +197,17 @@
 
 - Fix missing font awesome css for Airflow v1 without RBAC
 
-## 3.3.2
+## 3.3.3
 
 2021-05-01
+
+### Changed
+
+- Fix missing font awesome font files
+
+## 3.3.4
+
+2021-05-02
 
 ### Changed
 

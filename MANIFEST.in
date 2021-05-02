@@ -1,0 +1,10 @@
+include README.md requirements.txt requirements-dev.txt
+recursive-include airflow_code_editor/static *
+recursive-include airflow_code_editor/templates *
+recursive-exclude * __pycache__
+recursive-exclude * *.pyc
+recursive-exclude * *.pyo
+recursive-exclude * *.orig
+recursive-exclude tests *
+recursive-exclude test_virtualenv *
+prune test*

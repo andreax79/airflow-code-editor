@@ -2,7 +2,6 @@
 import os
 import os.path
 import re
-import glob
 from setuptools import find_packages, setup
 from itertools import chain
 
@@ -23,19 +22,6 @@ def get_version():
     raise Exception
 
 
-def get_package_data():
-    exts = ["js", "css", "html", "svg", "png", "jpg", "gif"]
-    files = list(
-        chain(
-            *[
-                glob.glob("airflow_code_editor/**/*.%s" % x, recursive=True)
-                for x in exts
-            ]
-        )
-    )
-    return [x.split("/", 1)[1] for x in files]
-
-
 with open("README.md", "r") as f:
     long_description = f.read()
 
@@ -47,7 +33,6 @@ setup(
     version=get_version(),
     packages=find_packages(),
     include_package_data=True,
-    package_data={"airflow_code_editor": get_package_data()},
     entry_points={
         "airflow.plugins": [
             "airflow_code_editor = airflow_code_editor.airflow_code_editor:CodeEditorPlugin"

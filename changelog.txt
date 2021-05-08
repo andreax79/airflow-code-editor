@@ -212,3 +212,12 @@
 ### Changed
 
 - Fix missing font awesome font files
+
+## 4.0.0
+
+2021-05-09
+
+### Changed
+
+- Replace left pane section/subsections with a tree
+- Git support can be disabled (git is optional)

@@ -13,12 +13,14 @@ lint:
 	python3 setup.py flake8
 
 release: build
+	@git tag -a "v$$(cat airflow_code_editor/VERSION)" -m "version v$$(cat airflow_code_editor/VERSION)"
 	twine upload -r pypi dist/*
 
 webserver: build
 	./test_virtualenv/airflow.sh webserver
 
 build: clean
+	@grep -q "## $$(cat airflow_code_editor/VERSION)" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)
 	python3 setup.py bdist_wheel
 	python3 setup.py sdist bdist_wheel
 

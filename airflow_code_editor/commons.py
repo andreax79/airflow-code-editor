@@ -15,6 +15,8 @@
 #   limitations under the Licens
 #
 
+import os
+
 __all__ = [
     'PLUGIN_NAME',
     'MENU_CATEGORY',
@@ -28,6 +30,8 @@ __all__ = [
     'PLUGIN_DEFAULT_CONFIG',
     'ROOT_MOUNTPOUNT',
     'JS_FILES',
+    'VERSION_FILE',
+    'VERSION',
 ]
 
 PLUGIN_NAME = 'code_editor'
@@ -90,3 +94,7 @@ JS_FILES = [
     'gitweb.js',
     'vue_components.js',
 ]
+
+VERSION_FILE = os.path.join(os.path.dirname(__file__), "VERSION")
+with open(VERSION_FILE) as f:
+    VERSION = f.read().strip()

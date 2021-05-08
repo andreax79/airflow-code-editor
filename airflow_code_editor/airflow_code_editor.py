@@ -15,20 +15,14 @@
 #   limitations under the Licens
 #
 
-import os
-
-VERSION_FILE = os.path.join(os.path.dirname(__file__), "VERSION")
-
-with open(VERSION_FILE) as f:
-    __version__ = f.read().strip()
-
-__author__ = 'Andrea Bonomi <andrea.bonomi@gmail.com>'
-
 from flask import Blueprint
 from airflow.plugins_manager import AirflowPlugin
-from airflow_code_editor.commons import STATIC
+from airflow_code_editor.commons import STATIC, VERSION
 from airflow_code_editor.flask_admin_view import admin_view
 from airflow_code_editor.app_builder_view import appbuilder_view
+
+__author__ = 'Andrea Bonomi <andrea.bonomi@gmail.com>'
+__version__ = VERSION
 
 __all__ = ['CodeEditorPlugin']
 

@@ -5,10 +5,13 @@ from setuptools import find_packages, setup
 HERE = os.path.dirname(__file__)
 VERSION_FILE = os.path.join(HERE, 'airflow_code_editor', 'VERSION')
 
-with open(os.path.join(here, "README.md"), "r") as f:
+with open(VERSION_FILE) as f:
+    version = f.read().strip()
+
+with open(os.path.join(HERE, "README.md"), "r") as f:
     long_description = f.read()
 
-with open(os.path.join(here, "requirements.txt"), "r") as f:
+with open(os.path.join(HERE, "requirements.txt"), "r") as f:
     install_requires = f.read().split("\n")
 
 

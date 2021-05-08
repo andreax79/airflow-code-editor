@@ -216,7 +216,7 @@ def git_ls_local(git_args):
             type_ = 'tree'
             try:
                 size_ = len(os.listdir(fullname))
-            except:
+            except Exception:
                 size_ = '-'
         else:
             type_ = 'blob'

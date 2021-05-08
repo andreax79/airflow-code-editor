@@ -22,11 +22,11 @@ import mimetypes
 from flask import abort, request, send_file
 from airflow.version import version
 from airflow_code_editor.commons import HTTP_404_NOT_FOUND
+from airflow_code_editor.tree import get_tree
 from airflow_code_editor.utils import (
     get_plugin_boolean_config,
     get_plugin_int_config,
     git_absolute_path,
-    get_tree,
     execute_git_command,
     error_message,
     normalize_path,

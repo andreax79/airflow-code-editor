@@ -21,11 +21,11 @@ import subprocess
 import threading
 import shlex
 import shutil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 from collections import namedtuple
 from flask import jsonify, make_response
-from flask_login import current_user
+from flask_login import current_user  # type: ignore
 from airflow import configuration
 from airflow_code_editor.commons import (
     HTTP_200_OK,
@@ -42,7 +42,6 @@ __all__ = [
     'get_plugin_boolean_config',
     'get_plugin_int_config',
     'get_root_folder',
-    'get_tree',
     'git_absolute_path',
     'execute_git_command',
     'error_message',
@@ -82,26 +81,10 @@ def get_plugin_int_config(key: str) -> int:
     )
 
 
-def prepare_git_response(git_cmd: str, result=None, stderr=None, returncode=0):
-    if result is None:
-        result = stderr
-    elif stderr:
-        result = result + stderr
-    if git_cmd == 'cat-file':
-        response = make_response(
-            result, HTTP_200_OK if returncode == 0 else HTTP_404_NOT_FOUND
-        )
-        response.headers['Content-Type'] = 'text/plain'
-    else:
-        response = make_response(result)
-        response.headers['X-Git-Return-Code'] = str(returncode)
-        response.headers['X-Git-Stderr-Length'] = str(len(stderr or ''))
-    return response
-
-
 def prepare_git_env() -> Dict[str, str]:
     " Prepare the environ for git "
     env = dict(os.environ)
+    # Author
     git_author_name = get_plugin_config('git_author_name')
     if not git_author_name:
         try:
@@ -114,6 +97,7 @@ def prepare_git_env() -> Dict[str, str]:
     if git_author_name:
         env['GIT_AUTHOR_NAME'] = git_author_name
         env['GIT_COMMITTER_NAME'] = git_author_name
+    # Email
     git_author_email = get_plugin_config('git_author_email')
     if not git_author_email:
         try:
@@ -147,22 +131,40 @@ def git_absolute_path(git_path: Optional[str]) -> str:
     return os.path.join(get_root_folder(), path)
 
 
+def prepare_git_response(
+    git_cmd: str,
+    result: Optional[bytes] = None,
+    stderr: Optional[bytes] = None,
+    returncode: int = 0,
+):
+    if result is None:
+        result = stderr
+    elif stderr:
+        result = result + stderr
+    if git_cmd == 'cat-file':
+        response = make_response(
+            result, HTTP_200_OK if returncode == 0 else HTTP_404_NOT_FOUND
+        )
+        response.headers['Content-Type'] = 'text/plain'
+    else:
+        response = make_response(result)
+        response.headers['X-Git-Return-Code'] = str(returncode)
+        response.headers['X-Git-Stderr-Length'] = str(len(stderr or ''))
+    return response
+
+
 _execute_git_command_lock = threading.Lock()
 
 
-def execute_git_command(git_args):
+def execute_git_command(git_args: List[str]):
     with _execute_git_command_lock:
         logging.info(' '.join(git_args))
         git_cmd = git_args[0] if git_args else None
         stderr = None
         returncode = 0
         try:
-            cwd = get_root_folder()
             # Init git repo
-            if not os.path.exists(
-                os.path.join(cwd, '.git')
-            ) and get_plugin_boolean_config('git_init_repo'):
-                init_git_repo()
+            init_git_repo()
             # Local commands
             if git_cmd in LOCAL_COMMANDS:
                 handler = LOCAL_COMMANDS[git_cmd]
@@ -170,20 +172,14 @@ def execute_git_command(git_args):
             # Git commands
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
                 git_default_args = shlex.split(get_plugin_config('git_default_args'))
-                cmd = [get_plugin_config('git_cmd')] + git_default_args + git_args
-                git = subprocess.Popen(
-                    cmd,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    cwd=cwd,
-                    env=prepare_git_env(),
+                returncode, stdout, stderr = git_call(
+                    git_default_args + git_args, capture_output=True
                 )
-                stdout, stderr = git.communicate()
-                returncode = git.returncode
             else:
                 stdout = None
-                stderr = 'Command not supported: git %s' % ' '.join(git_args)
+                stderr = bytes(
+                    'Command not supported: git %s' % ' '.join(git_args), 'utf-8'
+                )
                 returncode = 1
         except OSError as ex:
             logging.error(ex)
@@ -271,18 +267,46 @@ LOCAL_COMMANDS = {
 }
 
 
+def git_call(argv: List[str], capture_output: bool = False) -> Tuple[int, bytes, bytes]:
+    " Run git command. If capture_output is true, stdout and stderr will be captured. "
+    if not get_plugin_boolean_config('git_enabled'):
+        return 1, '', 'Git is disabled'
+    cmd: List[str] = [get_plugin_config('git_cmd')] + argv
+    cwd: str = get_root_folder()
+    env: Dict[str, str] = prepare_git_env()
+    if capture_output:
+        git = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            env=env,
+        )
+        stdout, stderr = git.communicate()
+        returncode: int = git.returncode
+    else:
+        stdout = b''
+        stderr = b''
+        returncode = subprocess.call(cmd, cwd=cwd, env=env)
+    return returncode, stdout, stderr
+
+
 def init_git_repo() -> None:
     " Initialize the git repository in root folder "
-    cwd = get_root_folder()
-    subprocess.call(['git', 'init', '.'], cwd=cwd)
-    gitignore = os.path.join(cwd, '.gitignore')
-    if not os.path.exists(gitignore):
-        with open(gitignore, 'w') as f:
-            f.write('__pycache__\n')
-        subprocess.call(['git', 'add', '.gitignore'], cwd=cwd)
-    subprocess.call(
-        ['git', 'commit', '-m', 'Initial commit'], cwd=cwd, env=prepare_git_env()
-    )
+    cwd: str = get_root_folder()
+    if (
+        get_plugin_boolean_config('git_enabled')
+        and not os.path.exists(os.path.join(cwd, '.git'))
+        and get_plugin_boolean_config('git_init_repo')
+    ):
+        git_call(['init', '.'])
+        gitignore = os.path.join(cwd, '.gitignore')
+        if not os.path.exists(gitignore):
+            with open(gitignore, 'w') as f:
+                f.write('__pycache__\n')
+            git_call(['add', '.gitignore'])
+        git_call(['commit', '-m', 'Initial commit'], env=prepare_git_env())
 
 
 MountPoint = namedtuple('MountPoint', 'path default')
@@ -332,141 +356,3 @@ def prepare_api_response(error_message=None, **kargs):
     if error_message is not None:
         result['error'] = {'message': error_message}
     return jsonify(result)
-
-
-def get_root_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
-    " Get tree root node "
-    result = []
-    # Mounts
-    result.append({
-        'id': 'files',
-        'label': 'Files',
-        'leaf': False,
-        'icon': 'fa-home'
-    })
-    for mount in sorted(k for k, v in mount_points.items() if not v.default):
-        mount = mount.rstrip('/')
-        result.append({
-            'id': 'files/~' + mount,
-            'label': mount,
-            'icon': 'fa-folder',
-            'leaf': False
-        })
-    # Git Workspace
-    result.append({
-        'id': 'workspace',
-        'label': 'Git Workspace',
-        'leaf': True,
-        'icon': 'fa-briefcase',
-    })
-    # Tags
-    result.append({
-        'id': 'tags',
-        'label': 'Tags',
-        'leaf': False,
-        'icon': 'fa-tags'
-    })
-    # Local Branches
-    result.append({
-        'id': 'local-branches',
-        'label': 'Local Branches',
-        'leaf': False,
-        'icon': 'fa-code-fork'
-    })
-    # Remote Branches
-    result.append({
-        'id': 'remote-branches',
-        'label': 'Remote Branches',
-        'leaf': False,
-        'icon': 'fa-globe'
-    })
-    return result
-
-
-def get_tags_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
-    " Get tree tags node "
-    result = []
-    r = execute_git_command(['tag'])
-    for line in r.data.decode('utf-8').split('\n'):
-        if line:
-            name = line.strip()
-            result.append({
-                'id': name,
-                'leaf': True,
-                'icon': 'fa-tags'
-            })
-    return result
-
-
-def get_local_branches_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
-    " Get tree local branches node "
-    result = []
-    r = execute_git_command(['branch'])
-    for line in r.data.decode('utf-8').split('\n'):
-        if line:
-            name = line.strip()
-            if name.startswith('*'):
-                name = name[1:].strip()
-            result.append({
-                'id': name,
-                'leaf': True,
-                'icon': 'fa-code-fork'
-            })
-    return result
-
-
-def get_remote_branches_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
-    " Get tree remote branches node "
-    result = []
-    r = execute_git_command(['branch', '--remotes'])
-    for line in r.data.decode('utf-8').split('\n'):
-        if line:
-            name = line.split('->')[0].strip()
-            if name.startswith('*'):
-                name = name[1:].strip()
-            result.append({
-                'id': name,
-                'leaf': True,
-                'icon': 'fa-globe'
-            })
-    return result
-
-
-def get_files_node(path: Optional[str] = None) -> List[Dict[str, Any]]:
-    " Get tree files node "
-    result = []
-    dirpath: str = git_absolute_path(path)
-    for name in sorted(os.listdir(dirpath)):
-        if name.startswith('.') or name == '__pycache__':
-            continue
-        fullname = os.path.join(dirpath, name)
-        leaf = not os.path.isdir(fullname)
-        result.append({
-            'id': name,
-            'leaf': leaf,
-            'icon': 'fa-file' if leaf else 'fa-folder'
-        })
-    return result
-
-
-TREE_NODES = {
-    None: get_root_node,
-    'tags': get_tags_node,
-    'local-branches': get_local_branches_node,
-    'remote-branches': get_remote_branches_node,
-    'files': get_files_node
-}
-
-def get_tree(path: Optional[str] = None) -> List[Dict[str, Any]]:
-    " Get tree nodes "
-    if not path:
-        root = None
-        path_argv = None
-    else:
-        splitted_path = path.split('/', 1)
-        root = splitted_path.pop(0)
-        path_argv = normalize_path(splitted_path.pop(0) if splitted_path else None)
-    if root in TREE_NODES:
-        return TREE_NODES[root](path_argv)
-    else:
-        return []

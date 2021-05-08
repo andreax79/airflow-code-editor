@@ -10,7 +10,6 @@ from unittest import TestCase, main
 from airflow_code_editor.commons import PLUGIN_NAME
 from airflow_code_editor.utils import (
     get_root_folder,
-    get_tree,
     mount_points,
     normalize_path,
     execute_git_command,
@@ -21,7 +20,6 @@ app = Flask(__name__)
 
 
 class TestUtils(TestCase):
-
     def setUp(self):
         self.root_dir = os.path.dirname(os.path.realpath(__file__))
         configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
@@ -147,21 +145,6 @@ class TestUtils(TestCase):
                 os.unlink(target)
             except Exception:
                 pass
-
-    def test_tree(self):
-        with app.app_context():
-            t = get_tree()
-            self.assertTrue(len(t) > 0)
-            t = get_tree("tags")
-            self.assertIsNotNone(t)
-            t = get_tree("local-branches")
-            self.assertIsNotNone(t)
-            t = get_tree("remote-branches")
-            self.assertIsNotNone(t)
-            t = get_tree("files")
-            self.assertTrue(len([x.get('id') for x in t if x.get('id') == 'test_utils.py']) == 1)
-            t = get_tree("files/folder")
-            self.assertTrue(len([x.get('id') for x in t if x.get('id') == '1']) == 1)
 
 
 if __name__ == '__main__':

@@ -1,36 +1,20 @@
 #!/usr/bin/env python
 import os
-import os.path
-import re
 from setuptools import find_packages, setup
-from itertools import chain
 
-VERSION_RE = re.compile("__version__\\s*=\\s*['\"](.*)['\"]")
+HERE = os.path.dirname(__file__)
+VERSION_FILE = os.path.join(HERE, 'airflow_code_editor', 'VERSION')
 
-
-def get_version():
-    with open(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "airflow_code_editor/airflow_code_editor.py",
-        )
-    ) as f:
-        for line in f:
-            match = VERSION_RE.match(line)
-            if match:
-                return match.group(1)
-    raise Exception
-
-
-with open("README.md", "r") as f:
+with open(os.path.join(here, "README.md"), "r") as f:
     long_description = f.read()
 
-with open("requirements.txt", "r") as f:
+with open(os.path.join(here, "requirements.txt"), "r") as f:
     install_requires = f.read().split("\n")
+
 
 setup(
     name="airflow_code_editor",
-    version=get_version(),
+    version=version,
     packages=find_packages(),
     include_package_data=True,
     entry_points={

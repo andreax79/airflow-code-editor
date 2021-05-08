@@ -14,8 +14,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the Licens
 #
+
+import os
+
+VERSION_FILE = os.path.join(os.path.dirname(__file__), "VERSION")
+
+with open(VERSION_FILE) as f:
+    __version__ = f.read().strip()
+
 __author__ = 'Andrea Bonomi <andrea.bonomi@gmail.com>'
-__version__ = '3.3.4'
 
 from flask import Blueprint
 from airflow.plugins_manager import AirflowPlugin

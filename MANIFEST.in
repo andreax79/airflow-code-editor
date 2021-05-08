@@ -1,4 +1,4 @@
-include README.md requirements.txt requirements-dev.txt
+include README.md requirements.txt requirements-dev.txt airflow_code_editor/VERSION
 recursive-include airflow_code_editor/static *
 recursive-include airflow_code_editor/templates *
 recursive-exclude * __pycache__

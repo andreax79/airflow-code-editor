@@ -57,10 +57,11 @@ body {
 #sidebar .branch-current {
   font-weight: bold;
 }
-#sidebar #sidebar-content {
+#sidebar-content {
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
-  overflow-x: hidden;
+  height: 100%;
+  overflow-x: auto;
   overflow-y: auto;
   cursor: default;
   color: #eeeeee;

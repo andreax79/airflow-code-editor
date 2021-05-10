@@ -26,15 +26,19 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 ![Git workspace](https://andreax79.github.io/airflow-code-editor/screenshots/4.png)
 
 
-### Deployment Instructions
+### Install Instructions
 
 1. Install the plugin
 
+  ```bash
     pip install airflow-code-editor
+  ```
 
 2. (Optional) Install Black Python code formatter.
 
+  ```bash
     pip install black
+  ```
 
 3. Restart the Airflow Web Server
 
@@ -74,12 +78,52 @@ Example:
    mount1_path = /home/airflow/logs
 ```
 
+
+### Development Instructions
+
+1. Fork the repo
+
+2. Clone it on the local machine
+
+  ```bash
+    git clone https://github.com/andreax79/airflow-code-editor.git
+    cd airflow-code-editor
+  ```
+
+3. Create and activate virtualenv
+
+  ```bash
+    source ./scripts/activate.sh
+  ```
+
+4. Make changes you need. You can start Airflow with this command:
+
+  ```bash
+    ./scripts/airflow.sh
+  ```
+
+5. Run tests
+
+  ```bash
+    ./scripts/tests.sh
+  ```
+
+6. Commit and push changes
+
+  ```bash
+    git add .
+    git commit
+    git push
+  ```
+
+7. Create [pull request](https://github.com/andreax79/airflow-code-editor/compare) to the original repo
+
 ### Links
 
 * Apache Airflow - https://github.com/apache/airflow
 * Codemirror, In-browser code editor - https://github.com/codemirror/codemirror
 * Git WebUI, A standalone local web based user interface for git repositories - https://github.com/alberthier/git-webui
 * Black, The Uncompromising Code Formatter - https://github.com/psf/black
-* Vuew.js - https://github.com/vuejs/vue
+* Vue.js - https://github.com/vuejs/vue
 * Vue-Tree, Vue component that implements a TreeView control - https://github.com/grapoza/vue-tree
 * Splitpanes - https://github.com/antoniandre/splitpanes

@@ -18,7 +18,7 @@ with open(os.path.join(HERE, "requirements.txt"), "r") as f:
 setup(
     name="airflow_code_editor",
     version=version,
-    packages=find_packages(),
+    packages=find_packages(exclude=["scripts", "scripts.*", "tests", "tests.*"]),
     include_package_data=True,
     entry_points={
         "airflow.plugins": [
@@ -34,6 +34,7 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=install_requires,
     license="Apache License, Version 2.0",
+    python_requires=">=3.4",
     classifiers=[
         "Operating System :: OS Independent",
         "Programming Language :: Python",

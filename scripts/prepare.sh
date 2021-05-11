@@ -37,7 +37,7 @@ pip install \
       "apache-airflow[${EXTRAS}]==${AIRFLOW_VERSION}" \
       --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${CONSTRAINTS_VERSION}/constraints-${PYTHON_VERSION}.txt"
 
-if [ !-d "${AIRFLOW_HOME}" ]; then
+if [ ! -d "${AIRFLOW_HOME}" ]; then
   mkdir -p "${AIRFLOW_HOME}"
 fi
 

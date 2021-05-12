@@ -221,3 +221,16 @@
 
 - Replace left pane section/subsections with a tree
 - Git support can be disabled (git is optional)
+
+## 4.0.1
+
+2021-05-12
+
+### Added
+
+- Github Actions CI/CD
+
+### Fix
+
+- Fix init git repository
+- Add missing horizontal scroll to the sidebar

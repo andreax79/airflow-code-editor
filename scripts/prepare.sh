@@ -35,7 +35,9 @@ function WEBSERVER_AUTH() {
 export PYTHON_VERSION=$(python3 -c "import sys; print('%s.%s' % (sys.version_info.major, sys.version_info.minor))")
 pip install \
       "apache-airflow[${EXTRAS}]==${AIRFLOW_VERSION}" \
-      --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${CONSTRAINTS_VERSION}/constraints-${PYTHON_VERSION}.txt"
+      --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-${CONSTRAINTS_VERSION}/constraints-${PYTHON_VERSION}.txt" \
+      -r "${PARENT_DIR}/requirements.txt" \
+      -r "${PARENT_DIR}/requirements-dev.txt"
 
 if [ ! -d "${AIRFLOW_HOME}" ]; then
   mkdir -p "${AIRFLOW_HOME}"
@@ -59,4 +61,3 @@ if [[ "${ENABLE_AIRFLOW_AUTH}" == "1" ]]; then
 fi
 
 ln -sf "${CURRENT_DIR}/dags" "${AIRFLOW_HOME}/dags"
-pip install -r "${PARENT_DIR}/requirements.txt" -r "${PARENT_DIR}/requirements-dev.txt"

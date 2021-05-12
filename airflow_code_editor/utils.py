@@ -21,7 +21,7 @@ import subprocess
 import threading
 import shlex
 import shutil
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from collections import namedtuple
 from flask import jsonify, make_response
@@ -306,7 +306,7 @@ def init_git_repo() -> None:
             with open(gitignore, 'w') as f:
                 f.write('__pycache__\n')
             git_call(['add', '.gitignore'])
-        git_call(['commit', '-m', 'Initial commit'], env=prepare_git_env())
+        git_call(['commit', '-m', 'Initial commit'])
 
 
 MountPoint = namedtuple('MountPoint', 'path default')

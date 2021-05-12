@@ -2,6 +2,8 @@
 
 import os
 import os.path
+import shutil
+import tempfile
 import airflow
 import airflow.plugins_manager
 from airflow import configuration
@@ -145,6 +147,23 @@ class TestUtils(TestCase):
                 os.unlink(target)
             except Exception:
                 pass
+
+
+class TestInitGitRepo(TestCase):
+    def setUp(self):
+        self.root_dir = tempfile.mkdtemp()
+        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'True')
+        configuration.conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.root_dir)
+
+    def test_ls_tree(self):
+        with app.app_context():
+            r = execute_git_command(['ls-tree', 'HEAD', '-l'])
+        t = r.data.decode('utf-8')
+        self.assertEqual(r.status_code, 200)
+        self.assertIsNotNone(t)
 
 
 if __name__ == '__main__':

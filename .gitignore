@@ -115,3 +115,6 @@ venv.bak/
 /test_virtualenv/*.pid
 /test_virtualenv/dags/.gitignore
 /test_virtualenv/pyvenv.cfg
+
+/scripts/dags/.gitignore
+/scripts/dags/dags

@@ -4,6 +4,7 @@ help:
 	@echo - make release
 	@echo - make lint
 	@echo - make clean
+	@echo - make tag
 	@echo - make test
 	@echo - make codemirror
 	@echo - make coverage
@@ -12,12 +13,11 @@ help:
 lint:
 	python3 setup.py flake8
 
-release: build
+tag:
 	@git tag -a "v$$(cat airflow_code_editor/VERSION)" -m "version v$$(cat airflow_code_editor/VERSION)"
-	twine upload -r pypi dist/*
 
-webserver: build
-	./test_virtualenv/airflow.sh webserver
+webserver:
+	@./scripts/airflow.sh webserver
 
 build: clean
 	@grep -q "## $$(cat airflow_code_editor/VERSION)" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)
@@ -29,10 +29,10 @@ clean:
 	-rm -rf *.egg-info
 
 test:
-	@nosetests
+	@./scripts/tests.sh
 
 coverage:
-	python3 -m coverage run --source=airflow_code_editor setup.py test && python3 -m coverage report -m
+	@./scripts/coverage.sh
 
 codemirror:
 	@rm -rf codemirror_src codemirror.zip

@@ -26,19 +26,36 @@ class TestTree(TestCase):
         with app.app_context():
             t = get_tree()
             self.assertTrue(len(t) > 0)
-            self.assertTrue('workspace' in (x['id'] for x in t))
+            self.assertTrue('git' in (x['id'] for x in t))
+
+    def test_tags(self):
+        with app.app_context():
             t = get_tree("tags")
             self.assertIsNotNone(t)
+
+    def test_local_branches(self):
+        with app.app_context():
             t = get_tree("local-branches")
             self.assertIsNotNone(t)
+
+    def test_remote_branches(self):
+        with app.app_context():
             t = get_tree("remote-branches")
             self.assertIsNotNone(t)
+
+    def test_files(self):
+        with app.app_context():
             t = get_tree("files")
             self.assertTrue(
                 len([x.get('id') for x in t if x.get('id') == 'test_utils.py']) == 1
             )
             t = get_tree("files/folder")
             self.assertTrue(len([x.get('id') for x in t if x.get('id') == '1']) == 1)
+
+    def test_git(self):
+        with app.app_context():
+            t = get_tree("git/HEAD")
+            self.assertTrue(t is not None)
 
 
 class TestTreeGitDisabled(TestCase):
@@ -52,7 +69,7 @@ class TestTreeGitDisabled(TestCase):
         with app.app_context():
             t = get_tree()
             self.assertTrue(len(t) > 0)
-            self.assertTrue('workspace' not in (x['id'] for x in t))
+            self.assertTrue('git' not in (x['id'] for x in t))
             t = get_tree("tags")
             self.assertEqual(t, [])
             t = get_tree("local-branches")

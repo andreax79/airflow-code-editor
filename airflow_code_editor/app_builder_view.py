@@ -15,6 +15,7 @@
 #   limitations under the Licens
 #
 
+from flask import request
 from flask_appbuilder import BaseView, expose
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
 from airflow_code_editor.commons import ROUTE, MENU_CATEGORY, MENU_LABEL, JS_FILES
@@ -69,12 +70,12 @@ try:
         @expose("/tree", methods=["GET"])
         @auth.has_access(PERMISSIONS)
         def tree_base(self, path=None):
-            return self._tree(path)
+            return self._tree(path, args=request.args)
 
         @expose("/tree/<path:path>", methods=["GET"])
         @auth.has_access(PERMISSIONS)
         def tree(self, path=None):
-            return self._tree(path)
+            return self._tree(path, args=request.args)
 
         def _render(self, template, *args, **kargs):
             return self.render_template(

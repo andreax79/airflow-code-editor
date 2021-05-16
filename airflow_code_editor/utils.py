@@ -21,10 +21,10 @@ import subprocess
 import threading
 import shlex
 import shutil
-from typing import Dict, List, Optional, Tuple
+from typing import cast, Dict, List, Optional, Tuple
 from datetime import datetime
 from collections import namedtuple
-from flask import jsonify, make_response
+from flask import jsonify, make_response, Response
 from flask_login import current_user  # type: ignore
 from airflow import configuration
 from airflow_code_editor.commons import (
@@ -34,22 +34,27 @@ from airflow_code_editor.commons import (
     PLUGIN_NAME,
     PLUGIN_DEFAULT_CONFIG,
     ROOT_MOUNTPOUNT,
+    Path,
+    GitOutput,
 )
+
 
 __all__ = [
     'normalize_path',
     'get_plugin_config',
     'get_plugin_boolean_config',
     'get_plugin_int_config',
+    'git_enabled',
     'get_root_folder',
     'git_absolute_path',
     'execute_git_command',
     'error_message',
     'prepare_api_response',
+    'always',
 ]
 
 
-def normalize_path(path: Optional[str]) -> str:
+def normalize_path(path: Path) -> str:
     comps = (path or '/').split('/')
     result: List[str] = []
     for comp in comps:
@@ -63,26 +68,37 @@ def normalize_path(path: Optional[str]) -> str:
 
 
 def get_plugin_config(key: str) -> str:
-    " Get a plugin configuration/default for a given key "
-    return configuration.conf.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key])
+    "Get a plugin configuration/default for a given key"
+    return cast(str, configuration.conf.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]))  # type: ignore
 
 
 def get_plugin_boolean_config(key: str) -> bool:
-    " Get a plugin boolean configuration/default for a given key "
-    return configuration.conf.getboolean(
-        PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
-    )
+    "Get a plugin boolean configuration/default for a given key"
+    return cast(
+        bool,
+        configuration.conf.getboolean(
+            PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
+        ),
+    )  # type: ignore
 
 
 def get_plugin_int_config(key: str) -> int:
-    " Get a plugin int configuration/default for a given key "
-    return configuration.conf.getint(
-        PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
-    )
+    "Get a plugin int configuration/default for a given key"
+    return cast(
+        int,
+        configuration.conf.getint(
+            PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
+        ),
+    )  # type: ignore
+
+
+def git_enabled() -> bool:
+    "Return true if git is enabled in the configuration"
+    return get_plugin_boolean_config('git_enabled')
 
 
 def prepare_git_env() -> Dict[str, str]:
-    " Prepare the environ for git "
+    "Prepare the environ for git"
     env = dict(os.environ)
     # Author
     git_author_name = get_plugin_config('git_author_name')
@@ -111,15 +127,15 @@ def prepare_git_env() -> Dict[str, str]:
 
 
 def get_root_folder() -> str:
-    " Return the configured root folder or Airflow DAGs folder "
+    "Return the configured root folder or Airflow DAGs folder"
     return os.path.abspath(
         get_plugin_config('root_directory')
-        or configuration.conf.get('core', 'dags_folder')
+        or cast(str, configuration.conf.get('core', 'dags_folder'))  # type: ignore
     )
 
 
-def git_absolute_path(git_path: Optional[str]) -> str:
-    " Git relative path to absolute path "
+def git_absolute_path(git_path: Path) -> str:
+    "Git relative path to absolute path"
     path: str = normalize_path(git_path)
     if path.startswith('~'):
         # Expand paths beginning with '~'
@@ -132,11 +148,11 @@ def git_absolute_path(git_path: Optional[str]) -> str:
 
 
 def prepare_git_response(
-    git_cmd: str,
-    result: Optional[bytes] = None,
-    stderr: Optional[bytes] = None,
+    git_cmd: Optional[str],
+    result: GitOutput = None,
+    stderr: GitOutput = None,
     returncode: int = 0,
-):
+) -> Response:
     if result is None:
         result = stderr
     elif stderr:
@@ -156,11 +172,12 @@ def prepare_git_response(
 _execute_git_command_lock = threading.Lock()
 
 
-def execute_git_command(git_args: List[str]):
+def execute_git_command(git_args: List[str]) -> Response:
     with _execute_git_command_lock:
         logging.info(' '.join(git_args))
         git_cmd = git_args[0] if git_args else None
-        stderr = None
+        stdout: GitOutput = None
+        stderr: GitOutput = None
         returncode = 0
         try:
             # Init git repo
@@ -195,8 +212,8 @@ def execute_git_command(git_args: List[str]):
             return prepare_git_response(git_cmd, stdout, stderr, returncode)
 
 
-def git_ls_local(git_args):
-    " 'git ls-tree' like output for local folders "
+def git_ls_local(git_args: List[str]) -> str:
+    "'git ls-tree' like output for local folders"
     long_ = False
     if '-l' in git_args or '--long' in git_args:
         git_args = [arg for arg in git_args if arg not in ('-l', '--long')]
@@ -213,9 +230,9 @@ def git_ls_local(git_args):
         if os.path.isdir(fullname):
             type_ = 'tree'
             try:
-                size_ = len(os.listdir(fullname))
+                size_: Optional[int] = len(os.listdir(fullname))
             except Exception:
-                size_ = '-'
+                size_ = None
         else:
             type_ = 'blob'
             size_ = s.st_size
@@ -231,13 +248,13 @@ def git_ls_local(git_args):
     return '\n'.join(result)
 
 
-def git_mounts(git_args):
-    " List mountpoints "
+def git_mounts(git_args: List[str]) -> str:
+    "List mountpoints"
     return '\n'.join(sorted(k for k, v in mount_points.items() if not v.default))
 
 
-def git_rm_local(git_args):
-    " Delete local files/directories "
+def git_rm_local(git_args: List[str]) -> str:
+    "Delete local files/directories"
     for arg in git_args[1:]:
         if arg:
             path = git_absolute_path(arg)
@@ -248,8 +265,8 @@ def git_rm_local(git_args):
     return ''
 
 
-def git_mv_local(git_args):
-    " Rename/Move local files "
+def git_mv_local(git_args: List[str]) -> str:
+    "Rename/Move local files"
     if len(git_args) < 3:
         raise Exception('Missing source/destination args')
     target = git_absolute_path(git_args[-1])
@@ -267,9 +284,11 @@ LOCAL_COMMANDS = {
 }
 
 
-def git_call(argv: List[str], capture_output: bool = False) -> Tuple[int, bytes, bytes]:
-    " Run git command. If capture_output is true, stdout and stderr will be captured. "
-    if not get_plugin_boolean_config('git_enabled'):
+def git_call(
+    argv: List[str], capture_output: bool = False
+) -> Tuple[int, GitOutput, GitOutput]:
+    "Run git command. If capture_output is true, stdout and stderr will be captured."
+    if not git_enabled():
         return 1, '', 'Git is disabled'
     cmd: List[str] = [get_plugin_config('git_cmd')] + argv
     cwd: str = get_root_folder()
@@ -293,10 +312,10 @@ def git_call(argv: List[str], capture_output: bool = False) -> Tuple[int, bytes,
 
 
 def init_git_repo() -> None:
-    " Initialize the git repository in root folder "
+    "Initialize the git repository in root folder"
     cwd: str = get_root_folder()
     if (
-        get_plugin_boolean_config('git_enabled')
+        git_enabled()
         and not os.path.exists(os.path.join(cwd, '.git'))
         and get_plugin_boolean_config('git_init_repo')
     ):
@@ -313,7 +332,7 @@ MountPoint = namedtuple('MountPoint', 'path default')
 
 
 def read_mount_points_config() -> Dict[str, MountPoint]:
-    " Return the plugin configuration "
+    "Return the plugin configuration"
     config = {ROOT_MOUNTPOUNT: MountPoint(path=get_root_folder(), default=True)}
     i = 0
     # Iterate over the configurations
@@ -339,7 +358,7 @@ mount_points = read_mount_points_config()
 
 
 def error_message(ex: Exception) -> str:
-    " Get exception error message "
+    "Get exception error message"
     if ex is None:
         return ''
     elif hasattr(ex, 'strerror'):
@@ -351,8 +370,13 @@ def error_message(ex: Exception) -> str:
 
 
 def prepare_api_response(error_message=None, **kargs):
-    " Prepare API response (JSON) "
+    "Prepare API response (JSON)"
     result = dict(kargs)
     if error_message is not None:
         result['error'] = {'message': error_message}
     return jsonify(result)
+
+
+def always() -> bool:
+    "Always return True"
+    return True

@@ -16,6 +16,7 @@
 #
 
 import os
+from typing import Any, Callable, Dict, List, Optional, Union
 
 __all__ = [
     'PLUGIN_NAME',
@@ -32,6 +33,11 @@ __all__ = [
     'JS_FILES',
     'VERSION_FILE',
     'VERSION',
+    'Args',
+    'Path',
+    'GitOutput',
+    'TreeOutput',
+    'TreeFunc',
 ]
 
 PLUGIN_NAME = 'code_editor'
@@ -101,3 +107,10 @@ JS_FILES = [
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "VERSION")
 with open(VERSION_FILE) as f:
     VERSION = f.read().strip()
+
+
+Args = Dict[str, str]
+Path = Optional[str]
+GitOutput = Union[None, bytes, str]
+TreeOutput = List[Dict[str, Any]]
+TreeFunc = Callable[[Path, Args], TreeOutput]

@@ -15,6 +15,7 @@
 #   limitations under the Licens
 #
 
+from flask import request
 import airflow
 from functools import wraps
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
@@ -72,12 +73,12 @@ try:
         @expose("/tree", methods=["GET"])
         @login_required
         def tree_base(self, path=None):
-            return self._tree(path)
+            return self._tree(path, args=request.args)
 
         @expose("/tree/<path:path>", methods=["GET"])
         @login_required
         def tree(self, path=None):
-            return self._tree(path)
+            return self._tree(path, args=request.args)
 
         def _render(self, template, *args, **kargs):
             return self.render(

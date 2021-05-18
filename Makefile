@@ -1,26 +1,25 @@
 SHELL=/bin/bash -e
 
 help:
-	@echo - make release
-	@echo - make lint
-	@echo - make clean
-	@echo - make tag
-	@echo - make test
-	@echo - make codemirror
-	@echo - make coverage
-	@echo - make webserver
+	@echo "- make clean        Clean"
+	@echo "- make tag          Create version tag"
+	@echo "- make test         Run tests"
+	@echo "- make coverage     Run tests coverage"
+	@echo "- make lint         Run lint"
+	@echo "- make codemirror   Update CodeMirror"
+	@echo "- make webserver    Start Airflow webserver"
 
 lint:
 	python3 setup.py flake8
 
 tag:
+	@grep -q "## $$(cat airflow_code_editor/VERSION)" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)
 	@git tag -a "v$$(cat airflow_code_editor/VERSION)" -m "version v$$(cat airflow_code_editor/VERSION)"
 
 webserver:
 	@./scripts/airflow.sh webserver
 
 build: clean
-	@grep -q "## $$(cat airflow_code_editor/VERSION)" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)
 	python3 setup.py bdist_wheel
 	python3 setup.py sdist bdist_wheel
 

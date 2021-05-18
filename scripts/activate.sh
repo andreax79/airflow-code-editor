@@ -8,3 +8,7 @@ fi
 
 source "${CURRENT_DIR}/venv/bin/activate"
 bash "${CURRENT_DIR}/install.sh"
+
+if ! compgen -G "${PARENT_DIR}/dist/*.whl" > /dev/null; then
+    export PYTHONPATH="${PARENT_DIR}:${PYTHONPATH}"
+fi

@@ -31,36 +31,55 @@
         }
     }
 
-    function TreeEntry(line) {
+    function getIcon(type, path) {
+        if (type == 'tree') {
+            return 'fa-folder';
+        } else {
+            var extension = (path.substring(path.lastIndexOf('.') + 1) || '').toLowerCase();
+            if ([ 'zip', 'tar', 'tgz', 'tbz2', 'txz', 'z', 'gz', 'xz', 'bz', 'bz2', '7z', 'lz' ].indexOf(extension) != -1) {
+                return 'fa-file-archive-o';
+            } else if ([ 'jpg', 'jpeg', 'png', 'svg', 'git', 'bmp', 'ief', 'tif', 'tiff', 'ico' ].indexOf(extension) != -1) {
+                return 'fa-file-image-o';
+            } else if ([ 'py' ].indexOf(extension) != -1) {
+                return 'fa-file-text-o';
+            }
+            return 'fa-file-o';
+        }
+    }
+
+    function TreeEntry(data, isGit, path) {
         var self = this;
-        var match = line.match(/^(\d+) (\w+) ([^ #]+)#?(\S+)?\s+(\S*)\t(\S+)/);
-        if (match !== undefined) {
-            self.mode = parseInt(match[1]);
-            self.type = match[2];
-            self.object = match[3];
-            self.mtime = match[4] ? match[4].replace('T', ' ') : '';
-            self.size = parseInt(match[5]);
-            self.name = match[6];
-            self.local = self.object[0] == '/';
+        if (data) {
+            self.mode = data.mode;
+            self.isGit = isGit;
+            self.type = data.leaf ? 'blob' : 'tree';
+            if (self.isGit) {
+                self.object = data.id;
+            } else {
+                self.object = (path || '') + '/' + data.id;
+            }
+            self.mtime = data.mtime ? data.mtime.replace('T', ' ') : '';
+            self.size = data.size;
+            self.name = data.label || data.id;
             self.isSymbolicLink = (self.mode & 120000) == 120000; // S_IFLNK
-            self.icon = (self.type == 'tree') ? 'fa-folder' : 'fa-file-o';
+            self.icon = getIcon(self.type, self.name);
             // href
-            if (self.local) { // local file/dir
+            if (self.isGit) { // git blob
+                self.href = prepareHref('files/~git/' + self.object + '/' + self.name);
+            } else { // local file/dir
                 if (self.type == 'tree') {
                     self.href = '#files' + encodeURI(self.object);
                 } else {
                     self.href = '#edit' + encodeURI(self.object);
                 }
-            } else { // git blob
-                self.href = prepareHref('files/~git/' + self.object + '/' + self.name);
             }
             // download href
             if (self.type == 'tree') { // tree
                 self.downloadHref = '#';
-            } else if (self.local) {  // local file
-                self.downloadHref = prepareHref('files' + self.object);
-            } else { // git blob
+            } else if (self.isGit) { // git blob
                 self.downloadHref = prepareHref('files/~git/' + self.object + '/' + self.name);
+            } else { // local file
+                self.downloadHref = prepareHref('files/' + self.object);
             }
             // size - https://en.wikipedia.org/wiki/Kilobyte
             if (isNaN(self.size)) {
@@ -173,7 +192,7 @@
 
 
     Vue.component('tree-view', {
-        props: [ 'stack', 'config' ],
+        props: [ 'stack', 'config', 'isGit' ],
         data: function () {
             return {
                 editorPath: null, // path of the file open in editor
@@ -182,12 +201,6 @@
                 isEditorOpen: false, // is editor open
                 isPython: false, // is editor open on a python file
                 readOnly: false
-            }
-        },
-        computed: {
-            isGit: function () {
-                var self = this;
-                return self.stack.isGit();
             }
         },
         methods: {
@@ -315,7 +328,7 @@
             updateLocation: function() {
                 // Update href hash
                 var self = this;
-                if (!self.stack.isGit()) {
+                if (!self.isGit) {
                     document.location.hash = 'files' + (self.stack.last().object || '/');
                 }
             },
@@ -438,9 +451,9 @@
                 // Show file in editor
                 var self = this;
                 self.isEditorOpen = true;
-                self.readOnly = self.stack.isGit();
+                self.readOnly = self.isGit;
                 var last = self.stack.last();
-                if (self.stack.isGit()){ // Git hash
+                if (self.isGit){ // Git hash
                     self.editorPath = '/~git/' + last.object + '/'+ last.name;
                 } else { // File path
                     self.editorPath = last.object;
@@ -475,35 +488,42 @@
                 // Update tree view
                 var self = this;
                 this.isEditorOpen = false;
+                var path = null;
                 var last = this.stack.last();
-                var cmd = self.stack.isGit() ? 'ls-tree' : 'ls-local';
-                // Update url hash
-                if (cmd == 'ls-local') {
-                    document.location.hash = 'files' + (last.object || '/');
+                if (self.isGit) { // git
+                    path = 'tree/git/' + last.object;
+                } else { // local
+                    path = 'tree/files' + (last.object || '');
+                    // Update url hash
+                    document.location.hash = 'files/' + (last.object || '');
                 }
-                webui.git([ cmd, "-l", last.object ], function(data) {
-                    var blobs = []; // files
-                    var trees = []; // directories
-                    webui.splitLines(data).forEach(function(line) {
-                        var item = new TreeEntry(line);
-                        if (item.type == 'tree') {
-                            trees.push(item);
-                        } else {
-                            blobs.push(item);
-                        }
-                    });
-                    // Sort files and directories
-                    var compare = function(a, b) {
-                        return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
-                    }
-                    blobs.sort(compare);
-                    trees.sort(compare);
-                    // Add link to parent directory on top
-                    if (self.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
-                        trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'fa-folder', href: '#' });
-                    }
-                    self.items = trees.concat(blobs);
-                });
+                // Get tree items
+                jQuery.get(prepareHref(path), { long: true })
+                      .done(function(data) {
+                            var blobs = []; // files
+                            var trees = []; // directories
+                            data.value.forEach(function(part) {
+                                var item = new TreeEntry(part, self.isGit, last.object);
+                                if (item.type == 'tree') {
+                                    trees.push(item);
+                                } else {
+                                    blobs.push(item);
+                                }
+                            });
+                            // Sort files and directories
+                            var compare = function(a, b) {
+                                return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                            }
+                            blobs.sort(compare);
+                            trees.sort(compare);
+                            // Add link to parent directory on top
+                            if (self.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
+                                trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'fa-folder', href: '#' });
+                            }
+                            self.items = trees.concat(blobs);
+                      })
+                      .fail(function(jqXHR, textStatus, errorThrown) {
+                      })
             }
         },
         watch: {
@@ -616,9 +636,8 @@
                 var sectionAndName = splitPath(model.id);
                 var section = sectionAndName[0];
                 var name = sectionAndName[1];
-
-                if (section == 'workspace') { // Workspace
-                    self.current.section = section;
+                if (section == 'workspace' || section == 'git') { // Workspace
+                    self.current.section = 'workspace';
                     self.current.object = name;
                     self.workspaceView.update([ 'stage' ]);
 
@@ -634,6 +653,8 @@
                         self.current.section = section;
                         self.current.object = name;
                         self.historyView.update({ id: section, name: name });
+                    } else {
+                        jQuery('#sidebar-tree-' + section + '-exp').click();
                     }
                 }
                 return false;
@@ -645,6 +666,9 @@
                           .done(function(data) {
                                 data.value.forEach(function(part) {
                                     part.label = part.label || part.id;
+                                    if (!part.icon || part.icon == 'fa-file') {
+                                        part.icon = getIcon(part.type, part.label);
+                                    }
                                     part.treeNodeSpec = {
                                         'expandable': !part.leaf,
                                     }

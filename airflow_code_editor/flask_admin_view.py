@@ -65,7 +65,7 @@ try:
         def load(self, path=None):
             return self._load(path)
 
-        @expose("/format", methods=["GET"])
+        @expose("/format", methods=["POST"])
         @login_required
         def format(self, path=None):
             return self._load(path)
@@ -79,6 +79,11 @@ try:
         @login_required
         def tree(self, path=None):
             return self._tree(path, args=request.args)
+
+        @expose("/ping", methods=["GET"])
+        @login_required
+        def ping(self):
+            return self._ping()
 
         def _render(self, template, *args, **kargs):
             return self.render(

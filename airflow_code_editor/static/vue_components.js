@@ -8,6 +8,9 @@
 })(function(webui) {
     "use strict";
 
+    var csrfToken = null;
+    var CSRF_REFRESH = 1000 * 60 * 10;
+
     function prepareHref(path) {
         // Return the full path of the URL
         return document.location.pathname + path;
@@ -45,6 +48,24 @@
             }
             return 'fa-file-o';
         }
+    }
+
+    function beforeSend(xhr, settings) {
+        if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
+            xhr.setRequestHeader("X-CSRFToken", csrfToken);
+        }
+    }
+
+    function refreshCsrfToken() {
+        // Refresh CSRF Token
+        jQuery.get(prepareHref('ping'))
+              .done(function(data) {
+                  csrfToken = data.value;
+                  setTimeout(refreshCsrfToken, CSRF_REFRESH);
+              })
+              .fail(function(jqXHR, textStatus, errorThrown) {
+                  setTimeout(refreshCsrfToken, CSRF_REFRESH);
+              });
     }
 
     function TreeEntry(data, isGit, path) {
@@ -696,19 +717,17 @@
     });
 
 
-    webui.init = function(csrfToken) {
+    webui.init = function(csrfTokenParam) {
         // Init
         CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';
         // Disable animation
         BootstrapDialog.configDefaultOptions({ animate: false });
         // CSRF Token setup
+        csrfToken = csrfTokenParam;
         jQuery.ajaxSetup({
-            beforeSend: function(xhr, settings) {
-                if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
-                    xhr.setRequestHeader("X-CSRFToken", csrfToken);
-                }
-            }
+            beforeSend: beforeSend
         });
+        setTimeout(refreshCsrfToken, CSRF_REFRESH);
         // Append global container to body
         jQuery('#global-container').appendTo(jQuery("body"));
         // Init app

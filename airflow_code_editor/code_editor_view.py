@@ -20,6 +20,7 @@ import os.path
 import logging
 import mimetypes
 from flask import abort, request, send_file
+from flask_wtf.csrf import generate_csrf
 from airflow.version import version
 from airflow_code_editor.commons import HTTP_404_NOT_FOUND
 from airflow_code_editor.tree import get_tree
@@ -134,3 +135,6 @@ class AbstractCodeEditorView(object):
 
     def _tree(self, path, args = {}):
         return {'value': get_tree(path, args)}
+
+    def _ping(self):
+        return {'value': generate_csrf()}

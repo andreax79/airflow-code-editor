@@ -77,6 +77,11 @@ try:
         def tree(self, path=None):
             return self._tree(path, args=request.args)
 
+        @expose("/ping", methods=["GET"])
+        @auth.has_access(PERMISSIONS)
+        def ping(self):
+            return self._ping()
+
         def _render(self, template, *args, **kargs):
             return self.render_template(
                 template + "_appbuilder.html",

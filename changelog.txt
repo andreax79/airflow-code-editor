@@ -234,3 +234,16 @@
 
 - Fix init git repository
 - Add missing horizontal scroll to the sidebar
+
+## 4.1.0
+
+2021-05-21
+
+### Added
+
+- Files icons
+- CSTR token refresh
+
+### Changed
+
+- Unify file view and tree api

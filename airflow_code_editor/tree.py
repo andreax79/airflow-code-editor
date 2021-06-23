@@ -19,11 +19,10 @@ import os.path
 import re
 import stat
 from datetime import datetime
-from typing import Any, Callable, Dict, List, NamedTuple, Optional
+from typing import Any, Callable, Dict, List, Optional
 from airflow_code_editor.commons import (
     Args,
     Path,
-    TreeFunc,
     TreeOutput,
 )
 from airflow_code_editor.utils import (
@@ -38,173 +37,180 @@ from airflow_code_editor.utils import (
 __all__ = ['get_tree']
 
 
-class NodeDef(NamedTuple):
-    get_children: TreeFunc  # Get node children
+class NodeMeta(type):
+    def __new__(cls, clsname, superclasses, attrs):
+        cls = type.__new__(cls, clsname, superclasses, attrs)
+        # Register node type
+        TREE_NODES[attrs['id']] = cls
+        return cls
+
+
+class NodeDef(object):
+    id: Optional[str] = None
     label: Optional[str] = None  # Optional node label
     leaf: bool = True  # is leaf?
-    icon: str = ''  # Optiona icon
+    icon: str = ''  # Optional icon
     condition: Callable[[], bool] = always  # Node enabled
+
+    @classmethod
+    def get_children(cls, path: Path, args: Args) -> TreeOutput:
+        "Get node children"
+        raise NotImplementedError
 
 
 TREE_NODES: Dict[Optional[str], NodeDef] = {}
 
 
-def node(
-    id: Optional[str] = None,
-    label: Optional[str] = None,
-    leaf: bool = True,
-    icon: str = '',
-    condition: Callable[[], bool] = always,
-) -> Callable[[TreeFunc], TreeFunc]:
-    "Tree node decorator - register the node into the tree"
+class RootNode(NodeDef, metaclass=NodeMeta):
+    id = None
+    label = 'Root'
+    leaf = False
 
-    def f(func: TreeFunc) -> TreeFunc:
-        TREE_NODES[id] = NodeDef(func, label, leaf, icon, condition)
-        return func
+    @classmethod
+    def get_children(cls, path: Path, args: Args) -> TreeOutput:
+        "Get tree root node"
+        result = []
+        for id_, node in TREE_NODES.items():
+            # Check condition
+            if id_ is None or not node.condition():
+                continue
+            # Add the node
+            result.append(
+                {'id': id_, 'label': node.label, 'leaf': node.leaf, 'icon': node.icon}
+            )
+            # If the node is files, add the mount points
+            if id_ == 'files':
+                for mount in sorted(
+                    k for k, v in mount_points.items() if not v.default
+                ):
+                    mount = mount.rstrip('/')
+                    result.append(
+                        {
+                            'id': 'files/~' + mount,
+                            'label': mount,
+                            'icon': 'fa-folder',
+                            'leaf': False,
+                        }
+                    )
+        return result
 
-    return f
 
+class FilesNode(NodeDef, metaclass=NodeMeta):
+    id = 'files'
+    label = 'Files'
+    leaf = False
+    icon = 'fa-home'
 
-@node(id=None, label='Root', leaf=False)
-def get_root_node(path: Path, args: Args) -> TreeOutput:
-    "Get tree root node"
-    result = []
-    for id_, node in TREE_NODES.items():
-        # Check condition
-        if id_ is None or not node.condition():
-            continue
-        # Add the node
-        result.append(
-            {'id': id_, 'label': node.label, 'leaf': node.leaf, 'icon': node.icon}
-        )
-        # If the node is files, add the mount points
-        if id_ == 'files':
-            for mount in sorted(k for k, v in mount_points.items() if not v.default):
-                mount = mount.rstrip('/')
+    @classmethod
+    def get_children(cls, path: Path, args: Args) -> TreeOutput:
+        "Get tree files node"
+
+        def try_listdir(path: str) -> List[str]:
+            try:
+                return os.listdir(dirpath)
+            except IOError:
+                return []
+
+        result = []
+        dirpath: str = git_absolute_path(path)
+        long_ = 'long' in args
+        for name in sorted(try_listdir(dirpath)):
+            if name.startswith('.') or name == '__pycache__':
+                continue
+            fullname = os.path.join(dirpath, name)
+            s = os.stat(fullname)
+            leaf = not stat.S_ISDIR(s.st_mode)
+            if long_:  # Long format
+                size = s.st_size if leaf else len(try_listdir(fullname))
                 result.append(
                     {
-                        'id': 'files/~' + mount,
-                        'label': mount,
-                        'icon': 'fa-folder',
-                        'leaf': False,
+                        'id': name,
+                        'leaf': leaf,
+                        'size': size,
+                        'mode': s.st_mode,
+                        'mtime': datetime.fromtimestamp(int(s.st_mtime)).isoformat(),
                     }
                 )
-    return result
+            else:  # Short format
+                result.append({'id': name, 'leaf': leaf})
+        return result
 
 
-@node(id='files', label='Files', leaf=False, icon='fa-home')
-def get_files_node(path: Path, args: Args) -> TreeOutput:
-    "Get tree files node"
+class GitNode(NodeDef, metaclass=NodeMeta):
+    id = 'git'
+    label = 'Git Workspace'
+    leaf = True
+    icon = 'fa-briefcase'
+    condition = git_enabled
+    git_cmd = None
 
-    def try_listdir(path: str) -> List[str]:
-        try:
-            return os.listdir(dirpath)
-        except IOError:
+    @classmethod
+    def get_children(cls, path: Path, args: Args) -> TreeOutput:
+        "List the contents of a git tree object"
+        if path or cls.git_cmd is None:
+            output = cls.git_command_output('ls-tree', '-l', path or 'HEAD')
+            return [cls.prepare_ls_tree_output(line) for line in output if line]
+        else:
+            output = cls.git_command_output(*cls.git_cmd)
+            return [cls.prepare_git_output(line) for line in output if line]
+
+    @classmethod
+    def git_command_output(cls, *args: str) -> List[str]:
+        "Execute a git command and return the output as a list of string"
+        r = execute_git_command(list(args))
+        # Check exit code
+        if r.headers.get('X-Git-Return-Code') != '0':
             return []
+        # Return stdout lines
+        return r.data.decode('utf-8').split('\n')
 
-    result = []
-    dirpath: str = git_absolute_path(path)
-    long_ = 'long' in args
-    for name in sorted(try_listdir(dirpath)):
-        if name.startswith('.') or name == '__pycache__':
-            continue
-        fullname = os.path.join(dirpath, name)
-        s = os.stat(fullname)
-        leaf = not stat.S_ISDIR(s.st_mode)
-        if long_:  # Long format
-            size = s.st_size if leaf else len(try_listdir(fullname))
-            result.append(
-                {
-                    'id': name,
-                    'leaf': leaf,
-                    'size': size,
-                    'mode': s.st_mode,
-                    'mtime': datetime.fromtimestamp(int(s.st_mtime)).isoformat()
-                }
-            )
-        else:  # Short format
-            result.append(
-                {
-                    'id': name,
-                    'leaf': leaf
-                }
-            )
-    return result
+    @classmethod
+    def prepare_git_output(
+        cls, line: str, icon: Optional[str] = None
+    ) -> Dict[str, Any]:
+        "Prepate a result item for tag/local branches/remote branches"
+        name = line.lstrip('* ').split('->')[0]
+        return {'id': name, 'leaf': True, 'icon': icon or cls.icon}
+
+    @classmethod
+    def prepare_ls_tree_output(cls, line: str) -> Dict[str, Any]:
+        "Prepate a result item for ls-tree"
+        mode, type_, hash_, size, name = re.split('[\t ]+', line, 4)
+        leaf = type_ != 'tree'
+        return {
+            'id': hash_,
+            'label': name,
+            'leaf': leaf,
+            'size': int(size) if leaf else None,
+            'mode': int(mode, 8),
+        }
 
 
-def git_command_output(*args: str) -> List[str]:
-    "Execute a git command and return the output as a list of string"
-    r = execute_git_command(list(args))
-    # Check exit code
-    if r.headers.get('X-Git-Return-Code') != '0':
-        return []
-    # Return stdout lines
-    return r.data.decode('utf-8').split('\n')
+class GitTagsNode(GitNode, metaclass=NodeMeta):
+    id = 'tags'
+    label = 'Tags'
+    leaf = False
+    icon = 'fa-tags'
+    condition = git_enabled
+    git_cmd = ['tag']
 
 
-def prepare_git_output(line: str, icon: str) -> Dict[str, Any]:
-    "Prepate a result item for tag/local branches/remote branches"
-    name = line.lstrip('* ').split('->')[0]
-    return {'id': name, 'leaf': True, 'icon': icon}
+class GitLocalBranchesNode(GitNode, metaclass=NodeMeta):
+    id = 'local-branches'
+    label = 'Local Branches'
+    leaf = False
+    icon = 'fa-code-fork'
+    condition = git_enabled
+    git_cmd = ['branch']
 
 
-def prepare_ls_tree_output(line: str) -> Dict[str, Any]:
-    "Prepate a result item for ls-tre"
-    mode, type_, hash_, size, name = re.split('[\t ]+', line, 4)
-    leaf = type_ != 'tree'
-    return {
-        'id': hash_,
-        'label': name,
-        'leaf': leaf,
-        'size': int(size) if leaf else None,
-        'mode': int(mode, 8)
-    }
-
-
-@node(id='git', label='Git Workspace', icon='fa-briefcase', condition=git_enabled)
-def get_git_node(path: Path, args: Args) -> TreeOutput:
-    "List the contents of a git tree object"
-    output = git_command_output('ls-tree', '-l', path or 'HEAD')
-    return [prepare_ls_tree_output(line) for line in output if line]
-
-
-@node(id='tags', label='Tags', leaf=False, icon='fa-tags', condition=git_enabled)
-def get_tags_node(path: Path, args: Args) -> TreeOutput:
-    "Get tree tags node"
-    if path:
-        return get_git_node(path, args)
-    output = git_command_output('tag')
-    return [prepare_git_output(line, 'fa-tags') for line in output if line]
-
-
-@node(
-    id='local-branches',
-    label='Local Branches',
-    leaf=False,
-    icon='fa-code-fork',
-    condition=git_enabled,
-)
-def get_local_branches_node(path: Path, args: Args) -> TreeOutput:
-    "Get tree local branches node"
-    if path:
-        return get_git_node(path, args)
-    output = git_command_output('branch')
-    return [prepare_git_output(line, 'fa-code-fork') for line in output if line]
-
-
-@node(
-    id='remote-branches',
-    label='Remote Branches',
-    leaf=False,
-    icon='fa-globe',
-    condition=git_enabled,
-)
-def get_remote_branches_node(path: Path, args: Args) -> TreeOutput:
-    "Get tree remote branches node"
-    if path:
-        return get_git_node(path, args)
-    output = git_command_output('branch', '--remotes')
-    return [prepare_git_output(line, 'fa-globe') for line in output if line]
+class GitRemoteBranchesNode(GitNode, metaclass=NodeMeta):
+    id = 'remote-branches'
+    label = 'Remote Branches'
+    leaf = False
+    icon = 'fa-globe'
+    condition = git_enabled
+    git_cmd = ['branch', '--remotes']
 
 
 def get_tree(path: Path = None, args: Args = {}) -> TreeOutput:

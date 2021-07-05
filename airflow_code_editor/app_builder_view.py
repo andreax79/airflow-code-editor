@@ -51,19 +51,14 @@ try:
         @expose("/repo", methods=["POST"])
         @auth.has_access(PERMISSIONS)
         def repo_base(self, path=None):
-            return self._git_repo(path)
+            return self._git_repo_post(path)
 
-        @expose("/repo/<path:path>", methods=["GET", "HEAD", "POST"])
-        @auth.has_access(PERMISSIONS)
-        def repo(self, path=None):
-            return self._git_repo(path)
-
-        @expose("/files/<path:path>", methods=["POST"])
+        @expose("/data/<path:path>", methods=["POST"])
         @auth.has_access(PERMISSIONS)
         def save(self, path=None):
             return self._save(path)
 
-        @expose("/files/<path:path>", methods=["GET"])
+        @expose("/data/<path:path>", methods=["GET"])
         @auth.has_access(PERMISSIONS)
         def load(self, path=None):
             return self._load(path)
@@ -119,19 +114,14 @@ except (ImportError, ModuleNotFoundError):
         @expose("/repo", methods=["POST"])
         @has_dag_access(can_dag_edit=True)
         def repo_base(self, path=None):
-            return self._git_repo(path)
+            return self._git_repo_post(path)
 
-        @expose("/repo/<path:path>", methods=["GET", "HEAD", "POST"])
-        @has_dag_access(can_dag_edit=True)
-        def repo(self, path=None):
-            return self._git_repo(path)
-
-        @expose("/files/<path:path>", methods=["POST"])
+        @expose("/data/<path:path>", methods=["POST"])
         @has_dag_access(can_dag_edit=True)
         def save(self, path=None):
             return self._save(path)
 
-        @expose("/files/<path:path>", methods=["GET"])
+        @expose("/data/<path:path>", methods=["GET"])
         @has_dag_access(can_dag_edit=True)
         def load(self, path=None):
             return self._load(path)

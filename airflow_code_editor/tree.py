@@ -16,25 +16,31 @@
 
 import os
 import os.path
+import logging
+import mimetypes
 import re
 import stat
 from datetime import datetime
+from flask import abort, request, send_file
 from typing import Any, Callable, Dict, List, Optional
 from airflow_code_editor.commons import (
     Args,
     Path,
     TreeOutput,
 )
+from airflow_code_editor.commons import HTTP_404_NOT_FOUND
 from airflow_code_editor.utils import (
     always,
-    git_absolute_path,
+    get_absolute_path,
     git_enabled,
     execute_git_command,
+    error_message,
     mount_points,
     normalize_path,
+    prepare_api_response,
 )
 
-__all__ = ['get_tree']
+__all__ = ['get_tree', 'get', 'post']
 
 
 class NodeMeta(type):
@@ -94,6 +100,15 @@ class RootNode(NodeDef, metaclass=NodeMeta):
                     )
         return result
 
+    @classmethod
+    def get(cls, path: Path, as_attachment: bool = False):
+        " Send the contents of a file to the client "
+        abort(HTTP_404_NOT_FOUND)
+
+    @classmethod
+    def post(self, path: Path):
+        abort(HTTP_404_NOT_FOUND)
+
 
 class FilesNode(NodeDef, metaclass=NodeMeta):
     id = 'files'
@@ -112,7 +127,7 @@ class FilesNode(NodeDef, metaclass=NodeMeta):
                 return []
 
         result = []
-        dirpath: str = git_absolute_path(path)
+        dirpath: str = get_absolute_path(path)
         long_ = 'long' in args
         for name in sorted(try_listdir(dirpath)):
             if name.startswith('.') or name == '__pycache__':
@@ -134,6 +149,46 @@ class FilesNode(NodeDef, metaclass=NodeMeta):
             else:  # Short format
                 result.append({'id': name, 'leaf': leaf})
         return result
+
+    @classmethod
+    def get(cls, path: Path, as_attachment: bool = False):
+        " Send the contents of a file to the client "
+        try:
+            path = normalize_path(path)
+            fullpath = get_absolute_path(path)
+            return send_file(fullpath, as_attachment=as_attachment)
+        except Exception as ex:
+            logging.error(ex)
+            abort(HTTP_404_NOT_FOUND)
+
+    @classmethod
+    def post(self, path: Path, mime_type: str = "text/plain"):
+        try:
+            path = normalize_path(path)
+            fullpath = get_absolute_path(path)
+            is_text = mime_type.startswith("text/")
+            if is_text:
+                data = request.get_data(as_text=True)
+                # Newline fix (remove cr)
+                data = data.replace("\r", "").rstrip()
+                os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+                with open(fullpath, "w") as f:
+                    f.write(data)
+                    f.write("\n")
+            else:  # Binary file
+                data = request.get_data()
+                os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+                with open(fullpath, "wb") as f:
+                    f.write(data)
+            return prepare_api_response(path=normalize_path(path))
+        except Exception as ex:
+            logging.error(ex)
+            return prepare_api_response(
+                path=path,
+                error_message="Error saving {path}: {message}".format(
+                    path=path, message=error_message(ex)
+                ),
+            )
 
 
 class GitNode(NodeDef, metaclass=NodeMeta):
@@ -185,6 +240,32 @@ class GitNode(NodeDef, metaclass=NodeMeta):
             'mode': int(mode, 8),
         }
 
+    @classmethod
+    def get(cls, path: Path, as_attachment: bool = False):
+        " Send the contents of a git blob to the client "
+        try:
+            # Download git blob - path = '<hash>/<name>'
+            path = normalize_path(path)
+            if "/" in path:
+                path, filename = path.split("/", 2)
+            else:
+                filename = None
+            response = execute_git_command(["cat-file", "-p", path])
+            if as_attachment and filename:
+                response.headers["Content-Disposition"] = (
+                    'attachment; filename="%s"' % filename
+                )
+                try:
+                    content_type = mimetypes.guess_type(filename)[0]
+                    if content_type:
+                        response.headers["Content-Type"] = content_type
+                except Exception:
+                    pass
+            return response
+        except Exception as ex:
+            logging.error(ex)
+            abort(HTTP_404_NOT_FOUND)
+
 
 class GitTagsNode(GitNode, metaclass=NodeMeta):
     id = 'tags'
@@ -213,8 +294,8 @@ class GitRemoteBranchesNode(GitNode, metaclass=NodeMeta):
     git_cmd = ['branch', '--remotes']
 
 
-def get_tree(path: Path = None, args: Args = {}) -> TreeOutput:
-    "Get tree nodes at the given path"
+def get_node(path: Path = None) -> Optional[NodeDef]:
+    " Get tree nodes at the given path "
     if not path:
         root = None
         path_argv = None
@@ -223,9 +304,35 @@ def get_tree(path: Path = None, args: Args = {}) -> TreeOutput:
         root = splitted_path.pop(0)
         path_argv = normalize_path(splitted_path.pop(0) if splitted_path else None)
     if root not in TREE_NODES:
-        return []
+        raise KeyError
     # Check condition
     if not TREE_NODES[root].condition():
+        raise KeyError
+    # Return the tree node
+    return TREE_NODES[root], path_argv
+
+
+def get_tree(path: Path = None, args: Args = {}) -> TreeOutput:
+    " Get tree nodes at the given path "
+    try:
+        node, path_argv = get_node(path)
+    except KeyError:
         return []
-    # Execute node function
-    return TREE_NODES[root].get_children(path_argv, args)
+    return node.get_children(path_argv, args)
+
+
+def get(path: Path = None, as_attachment: bool = False):
+    " Send the contents of a file/git blob to the client "
+    try:
+        node, path_argv = get_node(path)
+    except KeyError:
+        abort(HTTP_404_NOT_FOUND)
+    return node.get(path_argv, as_attachment)
+
+
+def post(path: Path = None):
+    try:
+        node, path_argv = get_node(path)
+    except KeyError:
+        abort(HTTP_404_NOT_FOUND)
+    return node.post(path_argv)

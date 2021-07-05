@@ -54,27 +54,22 @@ try:
         @expose("/repo", methods=["POST"])
         @login_required
         def repo_base(self, path=None):
-            return self._git_repo(path)
+            return self._git_repo_post(path)
 
-        @expose("/repo/<path:path>", methods=["GET", "HEAD", "POST"])
-        @login_required
-        def repo(self, path=None):
-            return self._git_repo(path)
-
-        @expose("/files/<path:path>", methods=["POST"])
+        @expose("/data/<path:path>", methods=["POST"])
         @login_required
         def save(self, path=None):
             return self._save(path)
 
-        @expose("/files/<path:path>", methods=["GET"])
+        @expose("/data/<path:path>", methods=["GET"])
         @login_required
         def load(self, path=None):
             return self._load(path)
 
         @expose("/format", methods=["POST"])
         @login_required
-        def format(self, path=None):
-            return self._load(path)
+        def format(self):
+            return self._format()
 
         @expose("/tree", methods=["GET"])
         @login_required

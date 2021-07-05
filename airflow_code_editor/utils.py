@@ -46,7 +46,7 @@ __all__ = [
     'get_plugin_int_config',
     'git_enabled',
     'get_root_folder',
-    'git_absolute_path',
+    'get_absolute_path',
     'execute_git_command',
     'error_message',
     'prepare_api_response',
@@ -134,7 +134,7 @@ def get_root_folder() -> str:
     )
 
 
-def git_absolute_path(git_path: Path) -> str:
+def get_absolute_path(git_path: Path) -> str:
     "Git relative path to absolute path"
     path: str = normalize_path(git_path)
     if path.startswith('~'):
@@ -221,7 +221,7 @@ def git_ls_local(git_args: List[str]) -> str:
         long_ = True
     path = git_args[1] if len(git_args) > 1 else ''
     path = normalize_path(path.split('#', 1)[0])
-    dirpath = git_absolute_path(path)
+    dirpath = get_absolute_path(path)
     result = []
     for name in sorted(os.listdir(dirpath)):
         if name.startswith('.') or name == '__pycache__':
@@ -258,7 +258,7 @@ def git_rm_local(git_args: List[str]) -> str:
     "Delete local files/directories"
     for arg in git_args[1:]:
         if arg:
-            path = git_absolute_path(arg)
+            path = get_absolute_path(arg)
             if os.path.isdir(path):
                 os.rmdir(path)
             else:
@@ -270,9 +270,9 @@ def git_mv_local(git_args: List[str]) -> str:
     "Rename/Move local files"
     if len(git_args) < 3:
         raise Exception('Missing source/destination args')
-    target = git_absolute_path(git_args[-1])
+    target = get_absolute_path(git_args[-1])
     for arg in git_args[1:-1]:
-        source = git_absolute_path(arg)
+        source = get_absolute_path(arg)
         shutil.move(source, target)
     return ''
 

@@ -15,22 +15,16 @@
 #   limitations under the Licens
 #
 
-import os
-import os.path
 import logging
-import mimetypes
-from flask import abort, request, send_file
+from flask import request
 from flask_wtf.csrf import generate_csrf
 from airflow.version import version
-from airflow_code_editor.commons import HTTP_404_NOT_FOUND
-from airflow_code_editor.tree import get_tree
+from airflow_code_editor import tree
 from airflow_code_editor.utils import (
     get_plugin_boolean_config,
     get_plugin_int_config,
-    git_absolute_path,
     execute_git_command,
     error_message,
-    normalize_path,
     prepare_api_response,
 )
 
@@ -47,42 +41,8 @@ class AbstractCodeEditorView(object):
         return self._render("index")
 
     def _save(self, path=None):
-        try:
-            fullpath = git_absolute_path(path)
-            mime_type = request.headers.get("Content-Type", "text/plain")
-            is_text = mime_type.startswith("text/")
-            if is_text:
-                data = request.get_data(as_text=True)
-                # Newline fix (remove cr)
-                data = data.replace("\r", "").rstrip()
-                os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-                with open(fullpath, "w") as f:
-                    f.write(data)
-                    f.write("\n")
-            else:  # Binary file
-                data = request.get_data()
-                os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-                with open(fullpath, "wb") as f:
-                    f.write(data)
-            return prepare_api_response(path=normalize_path(path))
-        except Exception as ex:
-            logging.error(ex)
-            return prepare_api_response(
-                path=normalize_path(path),
-                error_message="Error saving {path}: {message}".format(
-                    path=path, message=error_message(ex)
-                ),
-            )
-
-    def _git_repo(self, path):
-        if request.method == "POST":
-            return self._git_repo_post(path)
-        else:
-            return self._git_repo_get(path)
-
-    def _git_repo_get(self, path):
-        " Get a file from GIT (invoked by the HTTP GET method) "
-        return execute_git_command(["cat-file", "-p", path])
+        mime_type = request.headers.get("Content-Type", "text/plain")
+        return tree.post(path, mime_type=mime_type)
 
     def _git_repo_post(self, path):
         " Execute a GIT command (invoked by the HTTP POST method) "
@@ -91,29 +51,7 @@ class AbstractCodeEditorView(object):
 
     def _load(self, path):
         " Send the contents of a file to the client "
-        try:
-            path = normalize_path(path)
-            if path.startswith("~git/"):
-                # Download git blob - path = '~git/<hash>/<name>'
-                _, path, filename = path.split("/", 3)
-                response = execute_git_command(["cat-file", "-p", path])
-                response.headers["Content-Disposition"] = (
-                    'attachment; filename="%s"' % filename
-                )
-                try:
-                    content_type = mimetypes.guess_type(filename)[0]
-                    if content_type:
-                        response.headers["Content-Type"] = content_type
-                except Exception:
-                    pass
-                return response
-            else:
-                # Download file
-                fullpath = git_absolute_path(path)
-                return send_file(fullpath, as_attachment=True)
-        except Exception as ex:
-            logging.error(ex)
-            abort(HTTP_404_NOT_FOUND)
+        return tree.get(path, as_attachment=True)
 
     def _format(self):
         " Format code "
@@ -141,8 +79,8 @@ class AbstractCodeEditorView(object):
                 )
             )
 
-    def _tree(self, path, args = {}):
-        return {'value': get_tree(path, args)}
+    def _tree(self, path, args={}):
+        return {'value': tree.get_tree(path, args)}
 
     def _ping(self):
         return {'value': generate_csrf()}

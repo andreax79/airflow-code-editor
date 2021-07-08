@@ -105,7 +105,7 @@ export default {
         editorLoad(path) {
             // Load a file into the editor
             const self = this;
-            axios.get(prepareHref('files' + path))
+            axios.get(prepareHref('data' + path))
                  .then(function (response) {
                       let data = response.data;
                       // Replace tabs with spaces
@@ -116,8 +116,8 @@ export default {
                       self.editor.refresh();
                       self.editorPath = path;
                       // Update url hash
-                      if (! path.startsWith('/~git/')) {
-                          document.location.hash = self.normalize('edit' + path);
+                      if (path.startsWith('/files/')) {
+                          document.location.hash = self.normalize('edit' + path.substring(6));
                       }
                   })
                   .catch(function (error) {
@@ -138,7 +138,7 @@ export default {
                 }
             };
 
-            axios.post(prepareHref('files' + path), payload, options)
+            axios.post(prepareHref('data' + path), payload, options)
                  .then((response) => {
                     if (response.data.error) {
                         showError(response.data.error.message || 'Error saving file');
@@ -356,9 +356,9 @@ export default {
             self.readOnly = self.isGit;
             let last = self.stack.last();
             if (self.isGit){ // Git hash
-                self.editorPath = self.normalize('/~git/' + last.object + '/'+ last.name);
+                self.editorPath = self.normalize('/git/' + last.object + '/' + last.name);
             } else { // File path
-                self.editorPath = last.object;
+                self.editorPath = '/files' + last.object;
             }
             // Create CodeMirror instance and set the mode
             let info;
@@ -451,7 +451,7 @@ export default {
                         }
                     };
                     // Upload file
-                    axios.post(prepareHref('files' + filename), payload, options)
+                    axios.post(prepareHref('data' + filename), payload, options)
                          .then((response) => self.refresh())
                          .catch((error) => console.log(error));
                 });

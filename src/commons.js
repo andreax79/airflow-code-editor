@@ -91,7 +91,7 @@ export function TreeEntry(data, isGit, path) {
         self.icon = getIcon(self.type, self.name);
         // href
         if (self.isGit) { // git blob
-            self.href = prepareHref('files/~git/' + self.object + '/' + self.name);
+            self.href = prepareHref('data/git/' + self.object + '/' + self.name);
         } else { // local file/dir
             if (self.type == 'tree') {
                 self.href = '#files' + encodeURI(self.object);
@@ -103,9 +103,9 @@ export function TreeEntry(data, isGit, path) {
         if (self.type == 'tree') { // tree
             self.downloadHref = '#';
         } else if (self.isGit) { // git blob
-            self.downloadHref = prepareHref('files/~git/' + self.object + '/' + self.name);
+            self.downloadHref = prepareHref('data/git/' + self.object + '/' + self.name);
         } else { // local file
-            self.downloadHref = prepareHref('files/' + self.object);
+            self.downloadHref = prepareHref('data/' + self.object);
         }
         // size - https://en.wikipedia.org/wiki/Kilobyte
         if (isNaN(self.size)) {

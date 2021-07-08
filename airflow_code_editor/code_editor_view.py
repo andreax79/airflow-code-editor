@@ -20,10 +20,10 @@ from flask import request
 from flask_wtf.csrf import generate_csrf
 from airflow.version import version
 from airflow_code_editor import tree
+from airflow_code_editor.cmds import execute_git_command
 from airflow_code_editor.utils import (
     get_plugin_boolean_config,
     get_plugin_int_config,
-    execute_git_command,
     error_message,
     prepare_api_response,
 )

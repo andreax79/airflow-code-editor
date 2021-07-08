@@ -21,21 +21,20 @@ import mimetypes
 import re
 import stat
 from datetime import datetime
-from flask import abort, request, send_file
+from flask import abort
 from typing import Any, Callable, Dict, List, Optional
 from airflow_code_editor.commons import (
     Args,
     Path,
     TreeOutput,
 )
+from airflow_code_editor import fs
 from airflow_code_editor.commons import HTTP_404_NOT_FOUND
+from airflow_code_editor.cmds import execute_git_command
 from airflow_code_editor.utils import (
     always,
-    get_absolute_path,
     git_enabled,
-    execute_git_command,
     error_message,
-    mount_points,
     normalize_path,
     prepare_api_response,
 )
@@ -60,7 +59,7 @@ class NodeDef(object):
 
     @classmethod
     def get_children(cls, path: Path, args: Args) -> TreeOutput:
-        "Get node children"
+        "Get child nodes"
         raise NotImplementedError
 
 
@@ -86,9 +85,7 @@ class RootNode(NodeDef, metaclass=NodeMeta):
             )
             # If the node is files, add the mount points
             if id_ == 'files':
-                for mount in sorted(
-                    k for k, v in mount_points.items() if not v.default
-                ):
+                for mount in sorted(fs.get_mount_points().keys()):
                     mount = mount.rstrip('/')
                     result.append(
                         {
@@ -106,7 +103,7 @@ class RootNode(NodeDef, metaclass=NodeMeta):
         abort(HTTP_404_NOT_FOUND)
 
     @classmethod
-    def post(self, path: Path):
+    def post(self, path: Path, mime_type: str = "text/plain"):
         abort(HTTP_404_NOT_FOUND)
 
 
@@ -120,23 +117,16 @@ class FilesNode(NodeDef, metaclass=NodeMeta):
     def get_children(cls, path: Path, args: Args) -> TreeOutput:
         "Get tree files node"
 
-        def try_listdir(path: str) -> List[str]:
-            try:
-                return os.listdir(dirpath)
-            except IOError:
-                return []
-
         result = []
-        dirpath: str = get_absolute_path(path)
         long_ = 'long' in args
-        for name in sorted(try_listdir(dirpath)):
+        for name in sorted(fs.listdir(path)):
             if name.startswith('.') or name == '__pycache__':
                 continue
-            fullname = os.path.join(dirpath, name)
-            s = os.stat(fullname)
+            fullname = os.path.join(path, name)
+            s = fs.stat(fullname)
             leaf = not stat.S_ISDIR(s.st_mode)
             if long_:  # Long format
-                size = s.st_size if leaf else len(try_listdir(fullname))
+                size = s.st_size if leaf else len(fs.listdir(fullname))
                 result.append(
                     {
                         'id': name,
@@ -154,9 +144,7 @@ class FilesNode(NodeDef, metaclass=NodeMeta):
     def get(cls, path: Path, as_attachment: bool = False):
         " Send the contents of a file to the client "
         try:
-            path = normalize_path(path)
-            fullpath = get_absolute_path(path)
-            return send_file(fullpath, as_attachment=as_attachment)
+            return fs.send_file(path, as_attachment=as_attachment)
         except Exception as ex:
             logging.error(ex)
             abort(HTTP_404_NOT_FOUND)
@@ -164,22 +152,7 @@ class FilesNode(NodeDef, metaclass=NodeMeta):
     @classmethod
     def post(self, path: Path, mime_type: str = "text/plain"):
         try:
-            path = normalize_path(path)
-            fullpath = get_absolute_path(path)
-            is_text = mime_type.startswith("text/")
-            if is_text:
-                data = request.get_data(as_text=True)
-                # Newline fix (remove cr)
-                data = data.replace("\r", "").rstrip()
-                os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-                with open(fullpath, "w") as f:
-                    f.write(data)
-                    f.write("\n")
-            else:  # Binary file
-                data = request.get_data()
-                os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-                with open(fullpath, "wb") as f:
-                    f.write(data)
+            fs.write_file(path, mime_type=mime_type)
             return prepare_api_response(path=normalize_path(path))
         except Exception as ex:
             logging.error(ex)
@@ -330,9 +303,9 @@ def get(path: Path = None, as_attachment: bool = False):
     return node.get(path_argv, as_attachment)
 
 
-def post(path: Path = None):
+def post(path: Path = None, mime_type: str = "text/plain"):
     try:
         node, path_argv = get_node(path)
     except KeyError:
         abort(HTTP_404_NOT_FOUND)
-    return node.post(path_argv)
+    return node.post(path_argv, mime_type=mime_type)

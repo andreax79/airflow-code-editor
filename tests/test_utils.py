@@ -10,18 +10,30 @@ import airflow.plugins_manager
 from airflow import configuration
 from flask import Flask
 from unittest import TestCase, main
+from airflow_code_editor import fs
 from airflow_code_editor.commons import PLUGIN_NAME, PLUGIN_DEFAULT_CONFIG
+from airflow_code_editor.cmds import execute_git_command
 from airflow_code_editor.utils import (
     get_plugin_config,
     get_root_folder,
-    mount_points,
-    read_mount_points_config,
     normalize_path,
-    execute_git_command,
 )
+from airflow_code_editor.fs import read_mount_points_config
 
 assert airflow.plugins_manager
 app = Flask(__name__)
+
+
+class TestFs(TestCase):
+    def setUp(self):
+        self.root_dir = os.path.dirname(os.path.realpath(__file__))
+        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
+        configuration.conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
+
+    def test_mount_points_config(self):
+        self.assertTrue('root' in fs.mount_points)
+        self.assertTrue('airflow_home' in fs.mount_points)
+        self.assertTrue('logs' in fs.mount_points)
 
 
 class TestUtils(TestCase):
@@ -32,11 +44,6 @@ class TestUtils(TestCase):
 
     def test_get_root_folder(self):
         self.assertIsNotNone(get_root_folder())
-
-    def test_mount_points_config(self):
-        self.assertTrue('root' in mount_points)
-        self.assertTrue('airflow_home' in mount_points)
-        self.assertTrue('logs' in mount_points)
 
     def test_normalize_path(self):
         self.assertEqual(normalize_path(None), '')

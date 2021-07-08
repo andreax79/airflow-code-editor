@@ -18,7 +18,13 @@
 from flask import request
 from flask_appbuilder import BaseView, expose
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
-from airflow_code_editor.commons import ROUTE, MENU_CATEGORY, MENU_LABEL, JS_FILES
+from airflow_code_editor.commons import (
+    ROUTE,
+    MENU_CATEGORY,
+    MENU_LABEL,
+    JS_FILES,
+    VERSION,
+)
 
 __all__ = ["appbuilder_view"]
 
@@ -87,6 +93,7 @@ try:
                 template + "_appbuilder.html",
                 airflow_major_version=self.airflow_major_version,
                 js_files=JS_FILES,
+                version=VERSION,
                 *args,
                 **kargs
             )
@@ -149,6 +156,7 @@ except (ImportError, ModuleNotFoundError):
                 template + "_appbuilder.html",
                 airflow_major_version=self.airflow_major_version,
                 js_files=JS_FILES,
+                version=VERSION,
                 *args,
                 **kargs
             )

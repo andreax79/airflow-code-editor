@@ -19,7 +19,13 @@ from flask import request
 import airflow
 from functools import wraps
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
-from airflow_code_editor.commons import ROUTE, MENU_CATEGORY, MENU_LABEL, JS_FILES
+from airflow_code_editor.commons import (
+    ROUTE,
+    MENU_CATEGORY,
+    MENU_LABEL,
+    JS_FILES,
+    VERSION,
+)
 
 __all__ = ["admin_view"]
 
@@ -90,6 +96,7 @@ try:
                 template + "_admin.html",
                 airflow_major_version=self.airflow_major_version,
                 js_files=JS_FILES,
+                version=VERSION,
                 *args,
                 **kargs
             )

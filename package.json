@@ -1,0 +1,60 @@
+{
+  "name": "airflow-code-editor",
+  "version": "4.1.0",
+  "description": "A plugin for [Apache Airflow](https://github.com/apache/airflow) that allows you to edit DAGs in browser. It provides a file managing interface within specified directories and it can be used to edit and download your files. If git support is enabled, the DAGs are stored in a Git repository. You may use it to view Git history, review local changes and commit.",
+  "private": true,
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "watch": "npm-watch build"
+  },
+  "watch": {
+    "build": {
+      "patterns": [
+        "src"
+      ],
+      "extensions": "js,vue",
+      "quiet": false
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andreax79/airflow-code-editor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andreax79/airflow-code-editor/issues"
+  },
+  "homepage": "https://github.com/andreax79/airflow-code-editor#readme",
+  "devDependencies": {
+    "@babel/core": "^7.11.6",
+    "@babel/preset-env": "^7.11.5",
+    "autoprefixer": "^10.2.6",
+    "babel-loader": "^8.1.0",
+    "core-js": "^3.15.2",
+    "html-loader": "^2.1.2",
+    "mini-css-extract-plugin": "^1.6.2",
+    "npm-watch": "^0.10.0",
+    "null-loader": "^4.0.1",
+    "style-loader": "^2.0.0",
+    "vue-loader": "^15.9.3",
+    "vue-template-compiler": "^2.6.14",
+    "webpack": "^5.44.0",
+    "webpack-cli": "^4.7.2"
+  },
+  "dependencies": {
+    "@grapoza/vue-tree": "^3.0.3",
+    "splitpanes": "^2.3.6",
+    "vue": "~2.6"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

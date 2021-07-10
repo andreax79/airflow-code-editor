@@ -92,16 +92,10 @@ JS_FILES = [
     'addon/search/search.js',
     'addon/search/jump-to-line.js',
     'mode/meta.js',
-    'bootstrap-dialog.js',
-    'splitpanes.js',
     'vim.js',
     'emacs.js',
     'sublime.js',
-    'vue.js',
-    'vue-tree.js',
-    'themes.js',
-    'gitweb.js',
-    'vue_components.js',
+    'airflow_code_editor.js',
 ]
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "VERSION")

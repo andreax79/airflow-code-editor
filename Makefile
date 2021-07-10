@@ -8,6 +8,8 @@ help:
 	@echo "- make lint         Run lint"
 	@echo "- make codemirror   Update CodeMirror"
 	@echo "- make webserver    Start Airflow webserver"
+	@echo "- make npm-build    Run npm build"
+	@echo "- make npm-watch    Run npm build when files change"
 
 lint:
 	python3 setup.py flake8
@@ -47,3 +49,9 @@ codemirror:
 	@cp -a codemirror_src/mode airflow_code_editor/static/
 	@rm -rf codemirror_src
 	@python3 update_themes_js.py
+
+npm-build:
+	@npm run build
+
+npm-watch:
+	@npm run watch

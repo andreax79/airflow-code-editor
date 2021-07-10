@@ -3,11 +3,10 @@ import os
 import json
 
 THEME_PATH = "airflow_code_editor/static/css/theme"
-THEME_JS_PATH = "airflow_code_editor/static/themes.js"
+THEME_JS_PATH = "src/themes.js"
 
 with open(THEME_JS_PATH, "w") as f:
-    f.write('"use strict"\n')
-    f.write("var themes=")
+    f.write("export default ")
     f.write(
         json.dumps(
             sorted(

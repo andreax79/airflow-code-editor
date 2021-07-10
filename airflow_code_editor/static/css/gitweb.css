@@ -418,17 +418,17 @@ body {
 .tree-view .breadcrumb-buttons {
   float: right;
 }
-.tree-view #tree-view-tree-content {
+.tree-view-tree-content {
   overflow: auto;
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
   margin: 0;
   background-color: #fff;
 }
-.tree-view #tree-view-tree-content a:hover {
+.tree-view-tree-content a:hover {
   text-decoration: none;
 }
-.tree-view #tree-view-blob-content {
+.tree-view-blob-content {
   display: flex;
   display: -webkit-flex;
   min-height: 0;
@@ -438,11 +438,6 @@ body {
   flex: 1 1 0;
   -webkit-flex: 1 1 0;
   width: 100%;
-}
-.tree-view #tree-view-blob-content iframe {
-  flex: 1 1 0;
-  -webkit-flex: 1 1 0;
-  border: 0;
 }
 .tree-view .list-group-item {
   display: flex;

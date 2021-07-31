@@ -33,7 +33,7 @@ import themes from "../themes";
 
 export default {
     props: [ 'config' ],
-    data: function () {
+    data() {
         return {
             themes: themes, // themes list from "themes.js"
             codeMirrorOptions: { // code mirror options

@@ -26,7 +26,7 @@ export default {
     components: {
         tree: TreeView
     },
-    data: function () {
+    data() {
         return {
             model: [],
             modelDefaults: {
@@ -35,13 +35,13 @@ export default {
         }
     },
     methods: {
-        parseURIFragment: function() {
+        parseURIFragment() {
             // Change the active section according to the uri fragment (hash)
-            let self = this;
-            return new Promise(function(resolve, reject) {
-                let match = /#?([a-z-]+)(\/(.*))?/.exec(document.location.hash);
-                let section = match !== null ? match[1] : 'files';
-                let object = match !== null ? match[3] : null;
+            const self = this;
+            return new Promise((resolve, reject) => {
+                const match = /#?([a-z-]+)(\/(.*))?/.exec(document.location.hash);
+                const section = match !== null ? match[1] : 'files';
+                const object = match !== null ? match[3] : null;
 
                 if (section == 'tags' || section == 'local-branches' || section == 'remote-branches') {
                     self.current.section = section;
@@ -71,20 +71,20 @@ export default {
                 resolve(true);
             });
         },
-        showContainer: function() {
+        showContainer() {
             // Show global container
-            let self = this;
+            const self = this;
             jQuery('#global-container').show();
             return(Promise.resolve(true));
         },
-        fetchTree: function() {
+        fetchTree() {
             // Load tree nodes
-            let self = this;
-            return new Promise(function(resolve, reject) {
+            const self = this;
+            return new Promise((resolve, reject) => {
                 jQuery.get(prepareHref('tree'))
-                      .done(function(data) {
+                      .done((data) => {
                             self.model.length = 0; // flush model
-                            data.value.forEach(function(part) {
+                            data.value.forEach((part) => {
                                 part.label = part.label || part.id;
                                 part.treeNodeSpec = {
                                     'expandable': !part.leaf,
@@ -96,16 +96,14 @@ export default {
                             });
                             resolve(true);
                       })
-                      .fail(function(jqXHR, textStatus, errorThrown) {
-                            reject();
-                      })
+                      .fail((jqXHR, textStatus, errorThrown) => reject());
                 });
         },
-        click: function(model) {
-            let self = this;
-            let sectionAndName = splitPath(model.id);
-            let section = sectionAndName[0];
-            let name = sectionAndName[1];
+        click(model) {
+            const self = this;
+            const sectionAndName = splitPath(model.id);
+            const section = sectionAndName[0];
+            const name = sectionAndName[1];
             if (section == 'workspace' || section == 'git') { // Workspace
                 self.current.section = 'workspace';
                 self.current.object = name;
@@ -129,12 +127,12 @@ export default {
             }
             return false;
         },
-        loadChildrenAsync: function(parent) {
-            let self = this;
-            return new Promise(function(resolve, reject) {
+        loadChildrenAsync(parent) {
+            const self = this;
+            return new Promise((resolve, reject) => {
                 jQuery.get(prepareHref('tree/' + parent.id))
-                      .done(function(data) {
-                            data.value.forEach(function(part) {
+                      .done((data) => {
+                            data.value.forEach((part) => {
                                 part.label = part.label || part.id;
                                 if (!part.icon || part.icon == 'fa-file') {
                                     part.icon = getIcon(part.type, part.label);
@@ -149,15 +147,15 @@ export default {
                             });
                             resolve(data.value);
                       })
-                      .fail(function(jqXHR, textStatus, errorThrown) {
+                      .fail((jqXHR, textStatus, errorThrown) => {
                             reject();
                       })
                 });
         },
     },
-    mounted: function() {
+    mounted() {
         // Init
-        let self = this;
+        const self = this;
         self.fetchTree()
             .then(self.parseURIFragment)
             .then(self.showContainer);

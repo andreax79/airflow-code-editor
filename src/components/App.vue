@@ -76,7 +76,7 @@ export default {
         sidebar: Sidebar,
         files: FilesView
     },
-    data: function() {
+    data() {
         return {
             current: {
                 section: null, // current sidebar section (files, werkspace, ...)
@@ -94,19 +94,19 @@ export default {
         };
     },
     methods: {
-        initViews: function() {
+        initViews() {
             // Init views
-            let self = this;
-            return new Promise(function(resolve, reject) {
+            const self = this;
+            return new Promise((resolve, reject) => {
                 self.historyView = new HistoryView(self.historyStack);
                 self.workspaceView = new WorkspaceView();
                 resolve(true);
             });
         },
     },
-    mounted: function() {
+    mounted() {
         // Init
-        let self = this;
+        const self = this;
         self.initViews();
     }
 }

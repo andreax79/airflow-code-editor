@@ -54,6 +54,7 @@
     </div>
 </template>
 <script>
+import axios from 'axios';
 import { BootstrapDialog } from '../bootstrap-dialog';
 import { TreeEntry, prepareHref, showError, git } from "../commons";
 import EditorSettings from './EditorSettings.vue';
@@ -102,8 +103,9 @@ export default {
         editorLoad(path) {
             // Load a file into the editor
             const self = this;
-            jQuery.get(prepareHref('files' + path))
-                  .done((data) => {
+            axios.get(prepareHref('files' + path))
+                 .then(function (response) {
+                      let data = response.data;
                       // Replace tabs with spaces
                       if (self.editor.getMode().name == 'python') {
                           data = data.replace(/\t/g, '    ');
@@ -116,7 +118,8 @@ export default {
                           document.location.hash = self.normalize('edit' + path);
                       }
                   })
-                  .fail((jqXHR, textStatus, errorThrown) => {
+                  .catch(function (error) {
+                      console.log(error);
                       self.editor.setValue('');
                       self.editor.refresh();
                       self.editorPath = path;
@@ -126,24 +129,29 @@ export default {
         editorSave(path) {
             // Save editor content
             const self = this;
-            let data = {
-                data: self.editor.getValue()
+            const payload = self.editor.getValue();
+            const options = {
+                headers: {
+                    'Content-Type': 'text/plain'
+                }
             };
 
-            jQuery.post(prepareHref('files' + path), data, (res) => {
-                if (res.error) {
-                    showError(res.error.message || 'Error saving file');
-                } else {
-                    // Update editor path and the breadcrumb
-                    if (path != self.editorPath) {
-                        self.editorPath = path;
-                        self.stack.updateStack(path, 'blob');
+            axios.post(prepareHref('files' + path), payload, options)
+                 .then((response) => {
+                    if (response.data.error) {
+                        showError(response.data.error.message || 'Error saving file');
+                    } else {
+                        // Update editor path and the breadcrumb
+                        if (path != self.editorPath) {
+                            self.editorPath = path;
+                            self.stack.updateStack(path, 'blob');
+                        }
+                        self.editor.openNotification('file saved', { duration: 5000 })
+                        // Update url hash
+                        document.location.hash = self.normalize('edit' + path);
                     }
-                    self.editor.openNotification('file saved', { duration: 5000 })
-                    // Update url hash
-                    document.location.hash = self.normalize('edit' + path);
-                }
-            });
+                 })
+                 .catch((error) => showError(error.response ? error.response.data.message : error));
         },
         editorSaveAs(path) {
             // Show 'Save as...' dialog
@@ -172,17 +180,18 @@ export default {
         editorFormat() {
             // Format code
             const self = this;
-            let data = {
-                data: self.editor.getValue()
-            };
-            jQuery.post(prepareHref('format'), data, (res) => {
-                if (res.error) {
-                    showError(res.error.message);
-                } else {
-                    self.editor.setValue(res.data);
-                    self.editor.refresh();
+            const payload = self.editor.getValue();
+            const options = {
+                headers: {
+                    'Content-Type': 'text/plain'
                 }
-            });
+            };
+            axios.post(prepareHref('format'), payload, options)
+                 .then((response) => {
+                    self.editor.setValue(response.data.data);
+                    self.editor.refresh();
+                 })
+                 .catch((error) => showError(error.response ? error.response.data.message : error));
         },
         setOption(option, value) {
             // Set editor option
@@ -204,7 +213,7 @@ export default {
             } else {
                 let link = document.createElement('link');
                 link.onload = () => self.setOption('theme', theme);
-                let baseUrl = jQuery('link[rel=stylesheet]').filter((i, e) => e.href.match(/gitweb.css/) !== null)[0].href.split('/gitweb.css')[0];
+                let baseUrl = jQuery('link[rel=stylesheet]').filter((i, e) => e.href.match(/gitweb.css/) !== null)[0].href.split('/gitweb.css')[0];;
                 link.rel = 'stylesheet';
                 link.type = 'text/css';
                 link.href = baseUrl + '/theme/' + theme + '.css';
@@ -384,11 +393,11 @@ export default {
                 document.location.hash = self.normalize('files' + (last.object || ''));
             }
             // Get tree items
-            jQuery.get(prepareHref(path), { long: true })
-                  .done((data) => {
+            axios.get(prepareHref(path), { params: { long: true }})
+                  .then((response) => {
                         let blobs = []; // files
                         let trees = []; // directories
-                        data.value.forEach((part) => {
+                        response.data.value.forEach((part) => {
                             let item = new TreeEntry(part, self.isGit, last.object);
                             if (item.type == 'tree') {
                                 trees.push(item);
@@ -406,7 +415,8 @@ export default {
                         }
                         self.items = trees.concat(blobs);
                   })
-                  .fail(function(jqXHR, textStatus, errorThrown) {
+                  .catch(error => {
+                        console.log(error);
                   })
         },
         handleDrop($event) {
@@ -418,20 +428,17 @@ export default {
             const self = this;
             if (!self.isGit) {
                 files.forEach((file) => {
-                    file.text().then((text) => {
-                        // Prepare filename
-                        const filename = self.normalize((self.stack.last().object || '') + '/' + self.basename(file.name));
-                        // Prepare payload
-                        const payload = {
-                            data: text,
-                            type: file.type
-                        };
-                        // Upload file
-                        jQuery.post(prepareHref('files' + filename), payload, (res) => {
-                            console.log(res);
-                            self.refresh();
-                        });
-                    });
+                    const filename = self.normalize((self.stack.last().object || '') + '/' + self.basename(file.name));
+                    const payload = file;
+                    const options = {
+                        headers: {
+                            'Content-Type': file.type
+                        }
+                    };
+                    // Upload file
+                    axios.post(prepareHref('files' + filename), payload, options)
+                         .then((response) => self.refresh())
+                         .catch((error) => console.log(error));
                 });
             }
         },

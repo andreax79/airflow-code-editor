@@ -48,14 +48,22 @@ class AbstractCodeEditorView(object):
 
     def _save(self, path=None):
         try:
-            data = request.form["data"]
-            # Newline fix (remove cr)
-            data = data.replace("\r", "").rstrip()
             fullpath = git_absolute_path(path)
-            os.makedirs(os.path.dirname(fullpath), exist_ok=True)
-            with open(fullpath, "w") as f:
-                f.write(data)
-                f.write("\n")
+            mime_type = request.headers.get("Content-Type", "text/plain")
+            is_text = mime_type.startswith("text/")
+            if is_text:
+                data = request.get_data(as_text=True)
+                # Newline fix (remove cr)
+                data = data.replace("\r", "").rstrip()
+                os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+                with open(fullpath, "w") as f:
+                    f.write(data)
+                    f.write("\n")
+            else:  # Binary file
+                data = request.get_data()
+                os.makedirs(os.path.dirname(fullpath), exist_ok=True)
+                with open(fullpath, "wb") as f:
+                    f.write(data)
             return prepare_api_response(path=normalize_path(path))
         except Exception as ex:
             logging.error(ex)
@@ -78,7 +86,7 @@ class AbstractCodeEditorView(object):
 
     def _git_repo_post(self, path):
         " Execute a GIT command (invoked by the HTTP POST method) "
-        git_args = request.form.getlist("args[]")
+        git_args = request.json.get('args', [])
         return execute_git_command(git_args)
 
     def _load(self, path):
@@ -112,7 +120,7 @@ class AbstractCodeEditorView(object):
         try:
             import black
 
-            data = request.form["data"]
+            data = request.get_data(as_text=True)
             # Newline fix (remove cr)
             data = data.replace("\r", "").rstrip()
             mode = black.Mode(

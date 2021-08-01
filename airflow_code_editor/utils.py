@@ -166,6 +166,7 @@ def prepare_git_response(
         response = make_response(result)
         response.headers['X-Git-Return-Code'] = str(returncode)
         response.headers['X-Git-Stderr-Length'] = str(len(stderr or ''))
+        response.headers['Content-Type'] = 'text/plain'
     return response
 
 

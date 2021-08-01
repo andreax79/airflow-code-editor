@@ -1,4 +1,5 @@
 import { BootstrapDialog } from './bootstrap-dialog';
+import axios from 'axios';
 
 export const CSRF_REFRESH = 1000 * 60 * 10;
 export const COLORS = [
@@ -194,42 +195,32 @@ export function Stack() {
 
 };
 
-function beforeSend(xhr, settings) {
-    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
-        xhr.setRequestHeader("X-CSRFToken", csrfToken);
-    }
-}
-
 function refreshCsrfToken() {
     // Refresh CSRF Token
-    jQuery.get(prepareHref('ping'))
-          .done(function(data) {
-              csrfToken = data.value;
+    axios.get(prepareHref('ping'))
+         .then((response) => {
+              csrfToken = response.data.value;
+              axios.defaults.headers.common["X-CSRFToken"] = csrfToken;
               setTimeout(refreshCsrfToken, CSRF_REFRESH);
-          })
-          .fail(function(jqXHR, textStatus, errorThrown) {
-              setTimeout(refreshCsrfToken, CSRF_REFRESH);
-          });
+         })
+         .catch((error) => setTimeout(refreshCsrfToken, CSRF_REFRESH));
 }
 
 export function initCsrfToken(csrfTokenParam) {
     csrfToken = csrfTokenParam;
-    jQuery.ajaxSetup({
-        beforeSend: beforeSend
-    });
+    axios.defaults.headers.common["X-CSRFToken"] = csrfToken;
     setTimeout(refreshCsrfToken, CSRF_REFRESH);
 }
 
 export function git(args, callback) {
-    jQuery.ajax({
-        type: 'POST',
-        url: 'repo',
-        data: { args: args },
-        success: function(data, textStatus, request) {
-            let messageStartIndex = data.length - parseInt(request.getResponseHeader('X-Git-Stderr-Length'));
-            let rcode = parseInt(request.getResponseHeader('X-Git-Return-Code'));
-            let output = data.substring(0, messageStartIndex);
-            let message = data.substring(messageStartIndex);
+    const payload = { args: [].concat.apply([], args) };  // flat the array
+    axios.post(prepareHref('repo'), payload)
+         .then((response) => {
+            window.rrr = response;
+            const messageStartIndex = response.data.length - parseInt(response.headers['x-git-stderr-length']);
+            const rcode = parseInt(response.headers['x-git-return-code']);
+            const output = response.data.substring(0, messageStartIndex);
+            const message = response.data.substring(messageStartIndex);
             if (rcode === 0) {
                 if (callback) {
                     callback(output);
@@ -241,9 +232,9 @@ export function git(args, callback) {
             } else {
                 showError(message);
             }
-        },
-        error: function (request, textStatus, errorThrown) {
-            showError(errorThrown);
-        }
-    });
-};
+         })
+         .catch((error) => {
+            console.log(error);
+            showError(error.response ? error.response.data.message : error);
+         });
+}

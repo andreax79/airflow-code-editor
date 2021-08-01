@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@grapoza/vue-tree": "^3.0.3",
+    "axios": "^0.21.1",
     "splitpanes": "^2.3.6",
     "vue": "~2.6"
   },

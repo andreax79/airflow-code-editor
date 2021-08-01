@@ -18,6 +18,7 @@
     </div>
 </template>
 <script>
+import axios from 'axios';
 import TreeView from '@grapoza/vue-tree';
 import { prepareHref, splitPath, getIcon } from '../commons';
 
@@ -81,10 +82,10 @@ export default {
             // Load tree nodes
             const self = this;
             return new Promise((resolve, reject) => {
-                jQuery.get(prepareHref('tree'))
-                      .done((data) => {
+                axios.get(prepareHref('tree'))
+                      .then((response) => {
                             self.model.length = 0; // flush model
-                            data.value.forEach((part) => {
+                            response.data.value.forEach((part) => {
                                 part.label = part.label || part.id;
                                 part.treeNodeSpec = {
                                     'expandable': !part.leaf,
@@ -96,7 +97,7 @@ export default {
                             });
                             resolve(true);
                       })
-                      .fail((jqXHR, textStatus, errorThrown) => reject());
+                      .catch(error => reject());
                 });
         },
         click(model) {
@@ -130,9 +131,9 @@ export default {
         loadChildrenAsync(parent) {
             const self = this;
             return new Promise((resolve, reject) => {
-                jQuery.get(prepareHref('tree/' + parent.id))
-                      .done((data) => {
-                            data.value.forEach((part) => {
+                axios.get(prepareHref('tree/' + parent.id))
+                      .then((response) => {
+                            response.data.value.forEach((part) => {
                                 part.label = part.label || part.id;
                                 if (!part.icon || part.icon == 'fa-file') {
                                     part.icon = getIcon(part.type, part.label);
@@ -145,11 +146,9 @@ export default {
                                 }
                                 part.id = parent.id + '/' + part.id;
                             });
-                            resolve(data.value);
+                            resolve(response.data.value);
                       })
-                      .fail((jqXHR, textStatus, errorThrown) => {
-                            reject();
-                      })
+                      .catch(error => reject());
                 });
         },
     },

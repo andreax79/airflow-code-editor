@@ -7,6 +7,8 @@
           </li>
           <div class="breadcrumb-buttons">
               <button v-on:click="newAction()" v-if="!isEditorOpen && !isGit" type="button" class="btn btn-default btn-sm">New <i class="fa fa-plus-square" aria-hidden="true"></i></button>
+              <button v-on:click="uploadAction()" v-if="!isEditorOpen && !isGit" type="button" class="btn btn-default btn-sm">Upload <i class="fa fa-cloud-upload" aria-hidden="true"></i></button>
+              <input type="file" multiple="multiple" style="display: none" ref="file" @change="handleUploadButton"></input>
           </div>
         </ol>
         <div class="tree-view-tree-content list-group"
@@ -342,6 +344,11 @@ export default {
             let item = { name: '✧', type: 'blob', object: (self.stack.last().object || '') + '/✧' };
             self.stack.push(item);
         },
+        uploadAction() {
+            // Upload button action
+            const self = this;
+            this.$refs.file.click();
+        },
         showBlob() {
             // Show file in editor
             const self = this;
@@ -420,10 +427,18 @@ export default {
                   })
         },
         handleDrop($event) {
+            // Upload files (drag and drop)
             this.isDragEnter = false;
-            this.preprocessFiles($event.dataTransfer.files);
+            this.uploadFiles($event.dataTransfer.files);
         },
-        preprocessFiles(files) {
+        handleUploadButton($event) {
+            // Upload files (upload button)
+            const self = this;
+            const files = Array.from($event.target.files);
+            self.uploadFiles(files);
+            $event.target.value = '';
+        },
+        uploadFiles(files) {
             // Upload files
             const self = this;
             if (!self.isGit) {

@@ -1,6 +1,6 @@
 # Airflow Code Editor Plugin
 A plugin for [Apache Airflow](https://github.com/apache/airflow) that allows you to edit DAGs in browser.
-It provides a file managing interface within specified directories and it can be used to edit and download your files.
+It provides a file managing interface within specified directories and it can be used to edit, upload, and download your files.
 If git support is enabled, the DAGs are stored in a Git repository. You may use it to view Git history, review local changes and commit.
 
 [![Build Status](https://github.com/andreax79/airflow-code-editor/workflows/Tests/badge.svg)](https://github.com/andreax79/airflow-code-editor/actions)
@@ -128,3 +128,4 @@ Example:
 * Vue.js - https://github.com/vuejs/vue
 * Vue-Tree, Vue component that implements a TreeView control - https://github.com/grapoza/vue-tree
 * Splitpanes - https://github.com/antoniandre/splitpanes
+* Axios, Promise based HTTP client for the browser and node.js - https://github.com/axios/axios

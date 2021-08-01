@@ -247,3 +247,16 @@
 ### Changed
 
 - Unify file view and tree api
+
+## 5.0.0
+
+2021-08-01
+
+### Added
+
+- File upload (upload button/drag&drop)
+
+### Changed
+
+- Webpack module bundler
+- Replace jQuery get/post with Axios

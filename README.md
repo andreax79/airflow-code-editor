@@ -48,6 +48,7 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 
 ### Config Options
 
+You can set options editing the Airflow's configuration file or setting environment variables.
 You can edit your *airflow.cfg* adding any of the following settings in the \[code_editor\] section.
 All the settings are optional.
 
@@ -58,8 +59,8 @@ All the settings are optional.
 * **git_author_email** email for the author/committer (default: logged user email)
 * **git_init_repo**  initialize a git repo in DAGs folder (default: True)
 * **root_directory**  root folder (default: Airflow DAGs folder)
-* **mount_name**  configure additional file folder name (mount point)
-* **mount_path**  configure additional file path
+* **mount_name**, **mount1_name**, ...  configure additional file folder name (mount point)
+* **mount_path**, **mount1_path**, ...  configure additional file path
 * **line_length**  Python code formatter - max line length (default: 88)
 * **string_normalization**  Python code formatter - if true normalize string quotes and prefixes (default: False)
 
@@ -79,6 +80,32 @@ Example:
    mount1_path = /home/airflow/logs
 ```
 
+You can also set options with the following environment variables:
+
+* AIRFLOW__CODE_EDITOR__GIT_ENABLED
+* AIRFLOW__CODE_EDITOR__GIT_CMD
+* AIRFLOW__CODE_EDITOR__GIT_DEFAULT_ARGS
+* AIRFLOW__CODE_EDITOR__GIT_AUTHOR_NAME
+* AIRFLOW__CODE_EDITOR__GIT_AUTHOR_EMAIL
+* AIRFLOW__CODE_EDITOR__GIT_INIT_REPO
+* AIRFLOW__CODE_EDITOR__ROOT_DIRECTORY
+* AIRFLOW__CODE_EDITOR__LINE_LENGTH
+* AIRFLOW__CODE_EDITOR__STRING_NORMALIZATION
+* AIRFLOW__CODE_EDITOR__MOUNT_NAME
+* AIRFLOW__CODE_EDITOR__MOUNT_PATH
+* AIRFLOW__CODE_EDITOR__MOUNT1_NAME, AIRFLOW__CODE_EDITOR__MOUNT2_NAME, ...
+* AIRFLOW__CODE_EDITOR__MOUNT1_PATH, AIRFLOW__CODE_EDITOR__MOUNT2_PATH, ...
+
+Example:
+```
+   export AIRFLOW__CODE_EDITOR__STRING_NORMALIZATION=True
+   export AIRFLOW__CODE_EDITOR__MOUNT_NAME='data'
+   export AIRFLOW__CODE_EDITOR__MOUNT_PATH=/home/airflow/data
+   export AIRFLOW__CODE_EDITOR__MOUNT1_NAME='logs'
+   export AIRFLOW__CODE_EDITOR__MOUNT1_PATH=/home/airflow/logs
+   export AIRFLOW__CODE_EDITOR__MOUNT2_NAME='tmp'
+   export AIRFLOW__CODE_EDITOR__MOUNT2_PATH='/tmp
+```
 
 ### Development Instructions
 

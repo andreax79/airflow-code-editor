@@ -4,15 +4,18 @@ import os
 import os.path
 import shutil
 import tempfile
+import contextlib
 import airflow
 import airflow.plugins_manager
 from airflow import configuration
 from flask import Flask
 from unittest import TestCase, main
-from airflow_code_editor.commons import PLUGIN_NAME
+from airflow_code_editor.commons import PLUGIN_NAME, PLUGIN_DEFAULT_CONFIG
 from airflow_code_editor.utils import (
+    get_plugin_config,
     get_root_folder,
     mount_points,
+    read_mount_points_config,
     normalize_path,
     execute_git_command,
 )
@@ -164,6 +167,57 @@ class TestInitGitRepo(TestCase):
         t = r.data.decode('utf-8')
         self.assertEqual(r.status_code, 200)
         self.assertIsNotNone(t)
+
+
+class TestConfig(TestCase):
+    def setUp(self):
+        self.root_dir = tempfile.mkdtemp()
+        configuration.conf.set(
+            PLUGIN_NAME, 'git_init_repo', str(PLUGIN_DEFAULT_CONFIG['git_init_repo'])
+        )
+
+    @contextlib.contextmanager
+    def env_vars(self, overrides):
+        orig_vars = {}
+        new_vars = []
+        for key, value in overrides.items():
+            env = configuration.conf._env_var_name(PLUGIN_NAME, key)
+            if env in os.environ:
+                orig_vars[env] = os.environ.pop(env, '')
+            else:
+                new_vars.append(env)
+            os.environ[env] = value
+        try:
+            yield
+        finally:
+            for env, value in orig_vars.items():
+                os.environ[env] = value
+            for env in new_vars:
+                os.environ.pop(env)
+
+    def test_env_config(self):
+        self.assertEqual(get_plugin_config('git_cmd'), PLUGIN_DEFAULT_CONFIG['git_cmd'])
+        with self.env_vars({'git_cmd': '--test--'}):
+            self.assertEqual(get_plugin_config('git_cmd'), '--test--')
+        self.assertEqual(get_plugin_config('git_cmd'), PLUGIN_DEFAULT_CONFIG['git_cmd'])
+        # for key in PLUGIN_DEFAULT_CONFIG:
+        #     print(configuration.conf._env_var_name(PLUGIN_NAME, key))
+
+    def test_mount_points(self):
+        with self.env_vars(
+            {
+                'mount_name': 'test',
+                'mount_path': '/tmp/test',
+                'mount1_name': 'test1',
+                'mount1_path': '/tmp/test1',
+                'mount2_name': 'test2',
+                'mount2_path': '/tmp/test2',
+            }
+        ):
+            m = read_mount_points_config()
+            self.assertEqual(m['test'].path, '/tmp/test')
+            self.assertEqual(m['test1'].path, '/tmp/test1')
+            self.assertEqual(m['test2'].path, '/tmp/test2')
 
 
 if __name__ == '__main__':

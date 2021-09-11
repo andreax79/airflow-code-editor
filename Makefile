@@ -8,6 +8,7 @@ help:
 	@echo "- make lint         Run lint"
 	@echo "- make codemirror   Update CodeMirror"
 	@echo "- make webserver    Start Airflow webserver"
+	@echo "- make scheduler    Start Airflow scheduler"
 	@echo "- make npm-build    Run npm build"
 	@echo "- make npm-watch    Run npm build when files change"
 
@@ -20,6 +21,9 @@ tag:
 
 webserver:
 	@./scripts/airflow.sh webserver
+
+scheduler:
+	@./scripts/airflow.sh scheduler
 
 build: clean
 	python3 setup.py bdist_wheel

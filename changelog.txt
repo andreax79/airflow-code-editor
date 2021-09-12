@@ -260,3 +260,12 @@
 
 - Webpack module bundler
 - Replace jQuery get/post with Axios
+
+## 5.0.1
+
+2021-09-11
+
+### Changed
+
+- Axios upgrade
+- CodeMirror upgrade

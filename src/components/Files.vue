@@ -11,27 +11,43 @@
               <input type="file" multiple="multiple" style="display: none" ref="file" @change="handleUploadButton"></input>
           </div>
         </ol>
+
         <div class="tree-view-tree-content list-group"
              @dragenter.stop.prevent="isDragEnter = true"
              @dragover.stop.prevent="() => {}"
              @dragleave.stop.prevent="isDragEnter = false"
              @drop.stop.prevent="handleDrop"
              v-show="!isEditorOpen">
-            <div v-for="item in items" class="list-group-item">
-                <a class="name" v-on:click.prevent="click(item)" :href="item.href" :class="'tree-item-' + item.type + ' ' + (item.isSymbolicLink ? 'tree-item-symlink' : '')" >
-                    <i :class="'fa ' + item.icon" aria-hidden="true"></i>
-                    {{ item.name }}
-                </a>
-                <span class="mtime">{{ item.mtime }}</span>
-                <span class="size">{{ item.formatedSize }}</span>&nbsp;
-                <span class="buttons">
-                    <a v-if="item.type == 'blob'" class="download" title="Download" :href="item.downloadHref"><i class="fa fa-download" aria-hidden="true"></i></a>
-                    <a v-if="(!item.isGit) && (item.type == 'blob' || item.size == 0)" class="trash-o" title="Delete" target="_blank" v-on:click.prevent="deleteAction(item)" :href="item.href"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                    <a v-if="!item.isGit" class="i-cursor" title="Move/Rename" target="_blank" v-on:click.prevent="moveAction(item)" :href="item.href"><i class="fa fa-i-cursor" aria-hidden="true"></i></a>
-                    <a v-if="!item.isGit" class="external-link" title="Open in a new window" target="_blank" :href="item.href"><i class="fa fa-external-link" aria-hidden="true"></i></a>
+            <vue-good-table
+              :columns="columns"
+              :rows="items">
+              <template slot="table-row" slot-scope="props">
+                <span v-if="props.column.field == 'name'" :class="props.column.field">
+                  <a v-on:click.prevent="click(props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')" >
+                    {{ props.row.name }}
+                  </a>
                 </span>
-            </div>
+                <span v-else-if="props.column.field == 'icon'" :class="props.column.field">
+                  <a v-on:click.prevent="click(props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')" >
+                    <i :class="'fa ' + props.row.icon" aria-hidden="true"></i>
+                  </a>
+                </span>
+                <span v-else-if="props.column.field == 'action'" :class="props.column.field">
+                  <a v-if="props.row.type == 'blob'" class="download" title="Download" :href="props.row.downloadHref"><i class="fa fa-download" aria-hidden="true"></i></a>
+                  <a v-if="(!props.row.isGit) && (props.row.type == 'blob' || props.row.size == 0)" class="trash-o" title="Delete" target="_blank" v-on:click.prevent="deleteAction(props.row)" :href="props.row.href"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                  <a v-if="!props.row.isGit && (props.row.name != '..')" class="i-cursor" title="Move/Rename" target="_blank" v-on:click.prevent="moveAction(props.row)" :href="props.row.href"><i class="fa fa-i-cursor" aria-hidden="true"></i></a>
+                  <a v-if="!props.row.isGit && (props.row.name != '..')" class="external-link" title="Open in a new window" target="_blank" :href="props.row.href"><i class="fa fa-external-link" aria-hidden="true"></i></a>
+                </span>
+                <span v-else-if="props.column.field == 'size'" :class="props.column.field">
+                  {{ props.row.formattedSize }}
+                </span>
+                <span v-else :class="props.column.field">
+                  {{ props.formattedRow[props.column.field] }}
+                </span>
+              </template>
+            </vue-good-table>
         </div>
+
         <div class="tree-view-blob-content" v-show="isEditorOpen">
             <div class="cm-fullscreen-container cm-flex-container">
                 <div class="cm-toolbar cm-flex-child-fixed">
@@ -57,13 +73,15 @@
 </template>
 <script>
 import axios from 'axios';
+import { VueGoodTable } from 'vue-good-table';
 import { BootstrapDialog } from '../bootstrap-dialog';
 import { TreeEntry, prepareHref, showError, git } from "../commons";
 import EditorSettings from './EditorSettings.vue';
 
 export default {
     components: {
-        settings: EditorSettings
+        'settings': EditorSettings,
+        'vue-good-table': VueGoodTable
     },
     props: [ 'stack', 'config', 'isGit' ],
     data() {
@@ -86,7 +104,45 @@ export default {
                     "Alt-F": "findPersistent",
                     "Tab": "indentMore"
                 }
-            }
+            },
+            columns: [
+                {
+                  label: '',
+                  field: 'icon',
+                  width: '20px',
+                  sortable: true
+                },
+                {
+                  label: 'Name',
+                  field: 'name',
+                  thClass: 'vgt-right-align',
+                  filterOptions: {
+                      enabled: true
+                  }
+                },
+                {
+                  label: 'Modified',
+                  field: 'mtime',
+                  thClass: 'vgt-right-align',
+                  tdClass: 'vgt-right-align',
+                  filterOptions: {
+                      enabled: true
+                  }
+                },
+                {
+                  label: 'Size',
+                  field: 'size',
+                  thClass: 'vgt-right-align',
+                  type: 'number'
+                },
+                {
+                  label: 'Action',
+                  field: 'action',
+                  thClass: 'vgt-right-align',
+                  tdClass: 'vgt-right-align',
+                  sortable: false
+                }
+            ]
         }
     },
     methods: {

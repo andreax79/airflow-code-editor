@@ -51,7 +51,8 @@
     "@grapoza/vue-tree": "^3.0.3",
     "axios": "^0.21.4",
     "splitpanes": "^2.3.6",
-    "vue": "~2.6"
+    "vue": "~2.6",
+    "vue-good-table": "^2.21.10"
   },
   "browserslist": [
     "> 1%",

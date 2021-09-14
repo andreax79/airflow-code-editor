@@ -404,7 +404,7 @@ body {
 .tree-view .breadcrumb {
   padding: 0.5rem 1rem 0.5rem 1rem;
   margin-bottom: 0;
-  border-bottom: 1px #dddddd solid;
+  /* border-bottom: 1px #dddddd solid; */
   border-radius: 0px;
 }
 .tree-view .breadcrumb li {
@@ -427,6 +427,11 @@ body {
 }
 .tree-view-tree-content a:hover {
   text-decoration: none;
+}
+.tree-view-tree-content .icon a,
+.tree-view-tree-content .name a,
+.tree-view-tree-content .action a {
+    color: inherit;
 }
 .tree-view-blob-content {
   display: flex;

@@ -109,17 +109,21 @@ export function TreeEntry(data, isGit, path) {
         }
         // size - https://en.wikipedia.org/wiki/Kilobyte
         if (isNaN(self.size)) {
-            self.formatedSize = "";
+            self.formattedSize = "";
         } else if (self.type == 'tree') { // tree - number of files in the folder
-            self.formatedSize = self.size;
+            if (self.size == 1) {
+                self.formattedSize = self.size + ' item';
+            } else {
+                self.formattedSize = self.size + ' items';
+            }
         } else if (self.size < 10**3) {
-            self.formatedSize = self.size.toString() + " B";
+            self.formattedSize = self.size.toString() + " B";
         } else if (self.size < 10**6) {
-            self.formatedSize = (self.size / 10**3).toFixed(2) + " kB";
+            self.formattedSize = (self.size / 10**3).toFixed(2) + " kB";
         } else if (self.size < 10**9) {
-            self.formatedSize = (self.size / 10**6).toFixed(2) + " MB";
+            self.formattedSize = (self.size / 10**6).toFixed(2) + " MB";
         } else {
-            self.formatedSize = (self.size / 10**9).toFixed(2) + " GB";
+            self.formattedSize = (self.size / 10**9).toFixed(2) + " GB";
         }
     }
 }

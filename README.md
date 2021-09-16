@@ -18,9 +18,9 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 
 ### Screenshots
 
-![File manager](https://andreax79.github.io/airflow-code-editor/screenshots/1.png)
+![File manager](https://user-images.githubusercontent.com/1288154/133688225-1a5e2298-bfb2-402f-999c-1126b4e4ceb5.png)
 
-![Code editor](https://andreax79.github.io/airflow-code-editor/screenshots/2.png)
+![Code editor](https://user-images.githubusercontent.com/1288154/133688469-96a0ae00-a1dd-4923-b09a-59cd41a5b4e7.png)
 
 ![Git tags](https://andreax79.github.io/airflow-code-editor/screenshots/3.png)
 
@@ -124,19 +124,26 @@ Example:
     source ./scripts/activate.sh
   ```
 
-4. Make changes you need. You can start Airflow with this command:
+4. Make changes you need. Build npm package with:
 
   ```bash
-    ./scripts/airflow.sh
+    make npm-build
   ```
 
-5. Run tests
+5. You can start Airflow webserver or scheduler with these commands:
 
   ```bash
-    ./scripts/tests.sh
+    make webserver
+    make scheduler
   ```
 
-6. Commit and push changes
+6. Run tests
+
+  ```bash
+    make test
+  ```
+
+7. Commit and push changes
 
   ```bash
     git add .
@@ -153,6 +160,7 @@ Example:
 * Git WebUI, A standalone local web based user interface for git repositories - https://github.com/alberthier/git-webui
 * Black, The Uncompromising Code Formatter - https://github.com/psf/black
 * Vue.js - https://github.com/vuejs/vue
-* Vue-Tree, Vue component that implements a TreeView control - https://github.com/grapoza/vue-tree
+* Vue-good-table, data table for VueJS - https://github.com/xaksis/vue-good-table
+* Vue-tree, TreeView control for VueJS - https://github.com/grapoza/vue-tree
 * Splitpanes - https://github.com/antoniandre/splitpanes
 * Axios, Promise based HTTP client for the browser and node.js - https://github.com/axios/axios

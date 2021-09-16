@@ -269,3 +269,11 @@
 
 - Axios upgrade
 - CodeMirror upgrade
+
+## 5.1.0
+
+2021-09-16
+
+### Changed
+
+- Vue-Good-Table file list (sortable&searchable)

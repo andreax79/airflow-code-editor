@@ -12,13 +12,15 @@
           </div>
         </ol>
 
-        <div class="tree-view-tree-content list-group"
+        <div class="tree-view-tree-content"
              @dragenter.stop.prevent="isDragEnter = true"
              @dragover.stop.prevent="() => {}"
              @dragleave.stop.prevent="isDragEnter = false"
              @drop.stop.prevent="handleDrop"
              v-show="!isEditorOpen">
             <vue-good-table
+              :fixed-header="true"
+              max-height="100%"
               :columns="columns"
               :rows="items">
               <template slot="table-row" slot-scope="props">
@@ -32,11 +34,11 @@
                     <i :class="'fa ' + props.row.icon" aria-hidden="true"></i>
                   </a>
                 </span>
-                <span v-else-if="props.column.field == 'action'" :class="props.column.field">
-                  <a v-if="props.row.type == 'blob'" class="download" title="Download" :href="props.row.downloadHref"><i class="fa fa-download" aria-hidden="true"></i></a>
-                  <a v-if="(!props.row.isGit) && (props.row.type == 'blob' || props.row.size == 0)" class="trash-o" title="Delete" target="_blank" v-on:click.prevent="deleteAction(props.row)" :href="props.row.href"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
-                  <a v-if="!props.row.isGit && (props.row.name != '..')" class="i-cursor" title="Move/Rename" target="_blank" v-on:click.prevent="moveAction(props.row)" :href="props.row.href"><i class="fa fa-i-cursor" aria-hidden="true"></i></a>
-                  <a v-if="!props.row.isGit && (props.row.name != '..')" class="external-link" title="Open in a new window" target="_blank" :href="props.row.href"><i class="fa fa-external-link" aria-hidden="true"></i></a>
+                <span v-else-if="props.column.field == 'action'" class="btn-group">
+                  <a v-if="props.row.type == 'blob'" class="download btn btn-default btn-sm" title="Download" :href="props.row.downloadHref"><i class="fa fa-download" aria-hidden="true"></i></a>
+                  <a v-if="(!props.row.isGit) && (props.row.type == 'blob' || props.row.size == 0)" class="trash-o btn btn-default btn-sm" title="Delete" target="_blank" v-on:click.prevent="deleteAction(props.row)" :href="props.row.href"><i class="fa fa-trash-o" aria-hidden="true"></i></a>
+                  <a v-if="!props.row.isGit && (props.row.name != '..')" class="i-cursor btn btn-default btn-sm" title="Move/Rename" target="_blank" v-on:click.prevent="moveAction(props.row)" :href="props.row.href"><i class="fa fa-i-cursor" aria-hidden="true"></i></a>
+                  <a v-if="!props.row.isGit && (props.row.name != '..')" class="external-link btn btn-default btn-sm" title="Open in a new window" target="_blank" :href="props.row.href"><i class="fa fa-external-link" aria-hidden="true"></i></a>
                 </span>
                 <span v-else-if="props.column.field == 'size'" :class="props.column.field">
                   {{ props.row.formattedSize }}
@@ -136,7 +138,7 @@ export default {
                   type: 'number'
                 },
                 {
-                  label: 'Action',
+                  label: 'Actions',
                   field: 'action',
                   thClass: 'vgt-right-align',
                   tdClass: 'vgt-right-align',

@@ -277,3 +277,10 @@
 ### Changed
 
 - Vue-Good-Table file list (sortable&searchable)
+
+## 5.1.1
+
+2020-10-17
+
+### Changed
+- CodeMirror upgrade

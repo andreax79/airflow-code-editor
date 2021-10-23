@@ -1,6 +1,6 @@
 {
   "name": "airflow-code-editor",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "description": "A plugin for [Apache Airflow](https://github.com/apache/airflow) that allows you to edit DAGs in browser. It provides a file managing interface within specified directories and it can be used to edit and download your files. If git support is enabled, the DAGs are stored in a Git repository. You may use it to view Git history, review local changes and commit.",
   "private": true,
   "directories": {
@@ -45,7 +45,8 @@
     "vue-loader": "^15.9.3",
     "vue-template-compiler": "^2.6.14",
     "webpack": "^5.44.0",
-    "webpack-cli": "^4.7.2"
+    "webpack-cli": "^4.7.2",
+    "ansi-regex": ">=5.0.1"
   },
   "dependencies": {
     "@grapoza/vue-tree": "^3.0.3",

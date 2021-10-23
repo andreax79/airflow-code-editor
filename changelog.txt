@@ -289,5 +289,10 @@
 
 2020-10-23
 
+### Changed
+
+- ansi-regex upgrade
+
 ### Fix
-Fix directories items number
+
+- Fix directories items number

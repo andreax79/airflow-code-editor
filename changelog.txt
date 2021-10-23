@@ -284,3 +284,10 @@
 
 ### Changed
 - CodeMirror upgrade
+
+## 5.1.2
+
+2020-10-23
+
+### Fix
+Fix directories items number

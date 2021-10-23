@@ -98,7 +98,7 @@ def get_files_node(path: Path, args: Args) -> TreeOutput:
 
     def try_listdir(path: str) -> List[str]:
         try:
-            return os.listdir(dirpath)
+            return os.listdir(path)
         except IOError:
             return []
 

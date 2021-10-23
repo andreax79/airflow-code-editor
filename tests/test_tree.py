@@ -2,6 +2,7 @@
 
 import os
 import os.path
+import stat
 import airflow
 import airflow.plugins_manager
 from airflow import configuration
@@ -51,6 +52,29 @@ class TestTree(TestCase):
             )
             t = get_tree("files/folder")
             self.assertTrue(len([x.get('id') for x in t if x.get('id') == '1']) == 1)
+
+    def test_files_long(self):
+        with app.app_context():
+            t = get_tree("files", ["long"])
+            self.assertEqual(
+                len([x.get('id') for x in t if x.get('id') == 'folder']), 1
+            )
+            folder = [x for x in t if x.get('id') == 'folder'][0]
+            self.assertFalse(folder['leaf'])
+            self.assertEqual(folder['size'], 3)
+            self.assertTrue(stat.S_ISDIR(folder['mode']))
+
+            self.assertEqual(
+                len([x.get('id') for x in t if x.get('id') == 'test_utils.py']), 1
+            )
+            test_utils = [x for x in t if x.get('id') == 'test_utils.py'][0]
+            self.assertTrue(test_utils['leaf'])
+            self.assertFalse(stat.S_ISDIR(test_utils['mode']))
+
+            t = get_tree("files/folder", ["long"])
+            self.assertEqual(len([x.get('id') for x in t if x.get('id') == '1']), 1)
+            one = [x for x in t if x.get('id') == '1'][0]
+            self.assertTrue(one['leaf'])
 
     def test_git(self):
         with app.app_context():

@@ -451,9 +451,9 @@ export default {
             let path = null;
             let last = this.stack.last();
             if (self.isGit) { // git
-                path = self.normalize('tree/git/' + last.object);
+                path = 'tree' + self.normalize('git/' + last.object);
             } else { // local
-                path = self.normalize('tree/files' + (last.object || ''));
+                path = 'tree' + self.normalize('files' + (last.object || ''));
                 // Update url hash
                 document.location.hash = self.normalize('files' + (last.object || ''));
             }

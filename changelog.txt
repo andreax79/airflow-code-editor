@@ -296,3 +296,13 @@
 ### Fix
 
 - Fix directories items number
+
+2020-12-04
+
+### Changed
+
+- CodeMirror upgrade
+
+### Fix
+
+- Fix empty files list

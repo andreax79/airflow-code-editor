@@ -280,14 +280,14 @@
 
 ## 5.1.1
 
-2020-10-17
+2021-10-17
 
 ### Changed
 - CodeMirror upgrade
 
 ## 5.1.2
 
-2020-10-23
+2021-10-23
 
 ### Changed
 
@@ -299,7 +299,7 @@
 
 ## 5.1.3
 
-2020-12-04
+2021-12-04
 
 ### Changed
 
@@ -308,3 +308,10 @@
 ### Fix
 
 - Fix empty files list
+
+## 5.1.4
+
+2022-01-08
+
+### Changed
+- CodeMirror upgrade

@@ -9840,7 +9840,7 @@
 
   addLegacyProps(CodeMirror);
 
-  CodeMirror.version = "5.64.0";
+  CodeMirror.version = "5.65.0";
 
   return CodeMirror;
 

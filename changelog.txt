@@ -315,3 +315,14 @@
 
 ### Changed
 - CodeMirror upgrade
+
+## 5.1.5
+
+2022-02-09
+
+### Changed
+
+- axios upgrade
+
+### Changed
+- CodeMirror upgrade

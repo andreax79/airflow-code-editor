@@ -326,3 +326,14 @@
 
 ### Changed
 - CodeMirror upgrade
+
+## 5.1.6
+
+2022-03-07
+
+### Changed
+
+- axios upgrade
+
+### Changed
+- CodeMirror upgrade

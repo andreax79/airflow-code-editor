@@ -52,6 +52,7 @@ You can set options editing the Airflow's configuration file or setting environm
 You can edit your *airflow.cfg* adding any of the following settings in the \[code_editor\] section.
 All the settings are optional.
 
+* **enabled**  enable this plugin (default: True).
 * **git_enabled**  enable git support (default: True). If git is not installed, disable this option.
 * **git_cmd**  git command (path)
 * **git_default_args**  git arguments added to each call (default: -c color.ui=true)
@@ -67,6 +68,7 @@ All the settings are optional.
 Example:
 ```
    [code_editor]
+   enabled = True
    git_enabled = True
    git_cmd = /usr/bin/git
    git_default_args = -c color.ui=true
@@ -82,6 +84,7 @@ Example:
 
 You can also set options with the following environment variables:
 
+* AIRFLOW__CODE_EDITOR__ENABLED
 * AIRFLOW__CODE_EDITOR__GIT_ENABLED
 * AIRFLOW__CODE_EDITOR__GIT_CMD
 * AIRFLOW__CODE_EDITOR__GIT_DEFAULT_ARGS

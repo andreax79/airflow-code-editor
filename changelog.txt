@@ -314,6 +314,7 @@
 2022-01-08
 
 ### Changed
+
 - CodeMirror upgrade
 
 ## 5.1.5
@@ -325,6 +326,7 @@
 - axios upgrade
 
 ### Changed
+
 - CodeMirror upgrade
 
 ## 5.1.6
@@ -337,3 +339,15 @@
 
 ### Changed
 - CodeMirror upgrade
+
+## 5.2.0
+
+2022-03-23
+
+### Added
+
+- enabled configuration option added
+
+### Changed
+
+- splitpanes upgrade

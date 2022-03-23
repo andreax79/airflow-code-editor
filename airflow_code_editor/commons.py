@@ -66,6 +66,7 @@ SUPPORTED_GIT_COMMANDS = [
     'unstage',
 ]
 PLUGIN_DEFAULT_CONFIG = {
+    'enabled': True,
     'git_enabled': True,
     'git_cmd': 'git',
     'git_default_args': '-c color.ui=true',

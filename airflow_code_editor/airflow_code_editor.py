@@ -18,6 +18,7 @@
 from flask import Blueprint
 from airflow.plugins_manager import AirflowPlugin
 from airflow_code_editor.commons import STATIC, VERSION
+from airflow_code_editor.utils import is_enabled
 from airflow_code_editor.flask_admin_view import admin_view
 from airflow_code_editor.app_builder_view import appbuilder_view
 
@@ -44,6 +45,6 @@ class CodeEditorPlugin(AirflowPlugin):
     flask_blueprints = [code_editor_plugin_blueprint]
     hooks = []
     executors = []
-    admin_views = [admin_view] if admin_view is not None else []
+    admin_views = [admin_view] if (is_enabled() and admin_view is not None) else []
     menu_links = []
-    appbuilder_views = [appbuilder_view]
+    appbuilder_views = [appbuilder_view] if is_enabled() else []

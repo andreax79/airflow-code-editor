@@ -44,6 +44,7 @@ __all__ = [
     'get_plugin_config',
     'get_plugin_boolean_config',
     'get_plugin_int_config',
+    'is_enabled',
     'git_enabled',
     'get_root_folder',
     'git_absolute_path',
@@ -90,6 +91,11 @@ def get_plugin_int_config(key: str) -> int:
             PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
         ),
     )  # type: ignore
+
+
+def is_enabled() -> bool:
+    "Return true if the plugin is enabled in the configuration"
+    return get_plugin_boolean_config('enabled')
 
 
 def git_enabled() -> bool:

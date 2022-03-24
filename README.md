@@ -103,11 +103,11 @@ Example:
 ```
    export AIRFLOW__CODE_EDITOR__STRING_NORMALIZATION=True
    export AIRFLOW__CODE_EDITOR__MOUNT_NAME='data'
-   export AIRFLOW__CODE_EDITOR__MOUNT_PATH=/home/airflow/data
+   export AIRFLOW__CODE_EDITOR__MOUNT_PATH='/home/airflow/data'
    export AIRFLOW__CODE_EDITOR__MOUNT1_NAME='logs'
-   export AIRFLOW__CODE_EDITOR__MOUNT1_PATH=/home/airflow/logs
+   export AIRFLOW__CODE_EDITOR__MOUNT1_PATH='/home/airflow/logs'
    export AIRFLOW__CODE_EDITOR__MOUNT2_NAME='tmp'
-   export AIRFLOW__CODE_EDITOR__MOUNT2_PATH='/tmp
+   export AIRFLOW__CODE_EDITOR__MOUNT2_PATH='/tmp'
 ```
 
 ### Development Instructions

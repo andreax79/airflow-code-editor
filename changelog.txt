@@ -351,3 +351,12 @@
 ### Changed
 
 - splitpanes upgrade
+
+## 5.2.1
+
+2022-04-16
+
+### Changed
+
+- upgrade axios from 0.26.0 to 0.26.1
+- upgrade minimist from 1.2.5 to 1.2.6

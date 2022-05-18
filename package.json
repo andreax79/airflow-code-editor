@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@grapoza/vue-tree": "^3.0.5",
-    "axios": "^0.26.1",
+    "axios": "^0.27.2",
     "splitpanes": "^2.4.1",
     "vue": "~2.6",
     "vue-good-table": "^2.21.11"

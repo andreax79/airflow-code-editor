@@ -7,7 +7,7 @@ import airflow
 import airflow.plugins_manager
 from airflow import configuration
 from flask import Flask
-from unittest import TestCase, main
+from unittest import TestCase
 from airflow_code_editor.commons import PLUGIN_NAME
 from airflow_code_editor.tree import (
     get_tree,
@@ -106,7 +106,3 @@ class TestTreeGitDisabled(TestCase):
             )
             t = get_tree("files/folder")
             self.assertTrue(len([x.get('id') for x in t if x.get('id') == '1']) == 1)
-
-
-if __name__ == '__main__':
-    main()

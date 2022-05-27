@@ -1,7 +1,6 @@
 coverage
 flake8
 mypy
-sphinx
-nose
 black
-twine<3.4
+twine
+pytest

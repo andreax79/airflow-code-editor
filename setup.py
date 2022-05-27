@@ -48,6 +48,6 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
     ],
-    test_suite='nose.collector',
-    tests_require=['nose'],
+    test_suite='tests',
+    tests_require=['pytest'],
 )

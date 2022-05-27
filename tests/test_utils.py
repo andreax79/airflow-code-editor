@@ -9,7 +9,7 @@ import airflow
 import airflow.plugins_manager
 from airflow import configuration
 from flask import Flask
-from unittest import TestCase, main
+from unittest import TestCase
 from airflow_code_editor.commons import PLUGIN_NAME, PLUGIN_DEFAULT_CONFIG
 from airflow_code_editor.utils import (
     get_plugin_config,
@@ -218,7 +218,3 @@ class TestConfig(TestCase):
             self.assertEqual(m['test'].path, '/tmp/test')
             self.assertEqual(m['test1'].path, '/tmp/test1')
             self.assertEqual(m['test2'].path, '/tmp/test2')
-
-
-if __name__ == '__main__':
-    main()

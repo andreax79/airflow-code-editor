@@ -1324,7 +1324,7 @@
   // Add a span to a line.
   function addMarkedSpan(line, span, op) {
     var inThisOp = op && window.WeakSet && (op.markedSpans || (op.markedSpans = new WeakSet));
-    if (inThisOp && inThisOp.has(line.markedSpans)) {
+    if (inThisOp && line.markedSpans && inThisOp.has(line.markedSpans)) {
       line.markedSpans.push(span);
     } else {
       line.markedSpans = line.markedSpans ? line.markedSpans.concat([span]) : [span];
@@ -8197,7 +8197,7 @@
     var pasted = e.clipboardData && e.clipboardData.getData("Text");
     if (pasted) {
       e.preventDefault();
-      if (!cm.isReadOnly() && !cm.options.disableInput)
+      if (!cm.isReadOnly() && !cm.options.disableInput && cm.hasFocus())
         { runInOp(cm, function () { return applyTextInput(cm, pasted, 0, null, "paste"); }); }
       return true
     }
@@ -9842,7 +9842,7 @@
 
   addLegacyProps(CodeMirror);
 
-  CodeMirror.version = "5.65.2";
+  CodeMirror.version = "5.65.4";
 
   return CodeMirror;
 

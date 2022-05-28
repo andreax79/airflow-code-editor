@@ -57,7 +57,9 @@ jobs:
         pip freeze
 
     - name: Run tests
-      run: bash ./scripts/tests.sh
+      run: |
+        source ./scripts/config.sh
+        pytest tests
 
   all_done:
     name: Tests done

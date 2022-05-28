@@ -44,12 +44,14 @@ if [ ! -d "${AIRFLOW_HOME}" ]; then
 fi
 
 if [[ "${AIRFLOW_MAJOR_VERSION}" == "1" ]]; then
-    mo -u < "${CURRENT_DIR}/airflow1.cfg.tmpl" > "${AIRFLOW_HOME}/airflow.cfg"
+    # mo -u < "${CURRENT_DIR}/airflow1.cfg.tmpl" > "${AIRFLOW_HOME}/airflow.cfg"
     airflow initdb
 else
-    mo -u < "${CURRENT_DIR}/airflow2.cfg.tmpl" > "${AIRFLOW_HOME}/airflow.cfg"
+    # mo -u < "${CURRENT_DIR}/airflow2.cfg.tmpl" > "${AIRFLOW_HOME}/airflow.cfg"
     airflow db init
 fi
+
+source "${CURRENT_DIR}/config.sh"
 
 if [[ "${ENABLE_AIRFLOW_AUTH}" == "1" ]]; then
     # Create user 'admin' with password 'admin'

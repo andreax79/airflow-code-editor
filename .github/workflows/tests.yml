@@ -57,7 +57,7 @@ jobs:
         pip freeze
 
     - name: Run tests
-      run: nosetests
+      run: bash ./scripts/tests.sh
 
   all_done:
     name: Tests done

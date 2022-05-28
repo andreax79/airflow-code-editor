@@ -55,7 +55,7 @@ codemirror:
 	@python3 update_themes_js.py
 
 npm-build:
-	@npm run build
+	@NODE_OPTIONS=--openssl-legacy-provider npm run build
 
 npm-watch:
-	@npm run watch
+	@NODE_OPTIONS=--openssl-legacy-provider npm run watch

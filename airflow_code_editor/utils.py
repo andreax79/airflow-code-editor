@@ -55,6 +55,13 @@ __all__ = [
 ]
 
 
+# Create a new section in the configuration.
+try:
+    configuration.conf.add_section(PLUGIN_NAME)
+except:
+    pass
+
+
 def normalize_path(path: Path) -> str:
     comps = (path or '/').split('/')
     result: List[str] = []

@@ -35,10 +35,15 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
     pip install airflow-code-editor
   ```
 
-2. (Optional) Install Black Python code formatter.
+2. Install optional dependencies
+
+* black - Black Python code formatter
+* fs-s3fs - S3FS Amazon S3 Filesystem
+* fs-gcsfs - Google Cloud Storage Filesystem
+* ... other filesystems supported by PyFilesystem - see https://www.pyfilesystem.org/page/index-of-filesystems/
 
   ```bash
-    pip install black
+    pip install black fs-gcsfs
   ```
 
 3. Restart the Airflow Web Server
@@ -60,12 +65,10 @@ All the settings are optional.
 * **git_author_email** email for the author/committer (default: logged user email)
 * **git_init_repo**  initialize a git repo in DAGs folder (default: True)
 * **root_directory**  root folder (default: Airflow DAGs folder)
-* **mount_name**, **mount1_name**, ...  configure additional file folder name (mount point)
-* **mount_path**, **mount1_path**, ...  configure additional file path
 * **line_length**  Python code formatter - max line length (default: 88)
 * **string_normalization**  Python code formatter - if true normalize string quotes and prefixes (default: False)
+* **mount**, **mount1**, ...  configure additional folder (mount point) - format: name=xxx,path=yyy
 
-Example:
 ```
    [code_editor]
    enabled = True
@@ -76,11 +79,20 @@ Example:
    root_directory = /home/airflow/dags
    line_length = 88
    string_normalization = False
-   mount_name = data
-   mount_path = /home/airflow/data
-   mount1_name = logs
-   mount1_path = /home/airflow/logs
+   mount = name=data,path=/home/airflow/data
+   mount1 = name=logs,path=/home/airflow/logs
+   mount2 = name=data,path=s3://example
 ```
+
+Mount Options:
+
+* **name**: mount name (destination)
+* **path**: local path or PyFilesystem FS URLs - see https://docs.pyfilesystem.org/en/latest/openers.html
+
+Example:
+* name=ftp_server,path=ftp://user:pass@ftp.example.org/private
+* name=data,path=s3://example
+* name=tmp,path=/tmp
 
 You can also set options with the following environment variables:
 
@@ -94,20 +106,14 @@ You can also set options with the following environment variables:
 * AIRFLOW__CODE_EDITOR__ROOT_DIRECTORY
 * AIRFLOW__CODE_EDITOR__LINE_LENGTH
 * AIRFLOW__CODE_EDITOR__STRING_NORMALIZATION
-* AIRFLOW__CODE_EDITOR__MOUNT_NAME
-* AIRFLOW__CODE_EDITOR__MOUNT_PATH
-* AIRFLOW__CODE_EDITOR__MOUNT1_NAME, AIRFLOW__CODE_EDITOR__MOUNT2_NAME, ...
-* AIRFLOW__CODE_EDITOR__MOUNT1_PATH, AIRFLOW__CODE_EDITOR__MOUNT2_PATH, ...
+* AIRFLOW__CODE_EDITOR__MOUNT, AIRFLOW__CODE_EDITOR__MOUNT1, AIRFLOW__CODE_EDITOR__MOUNT2, ...
 
 Example:
 ```
    export AIRFLOW__CODE_EDITOR__STRING_NORMALIZATION=True
-   export AIRFLOW__CODE_EDITOR__MOUNT_NAME='data'
-   export AIRFLOW__CODE_EDITOR__MOUNT_PATH='/home/airflow/data'
-   export AIRFLOW__CODE_EDITOR__MOUNT1_NAME='logs'
-   export AIRFLOW__CODE_EDITOR__MOUNT1_PATH='/home/airflow/logs'
-   export AIRFLOW__CODE_EDITOR__MOUNT2_NAME='tmp'
-   export AIRFLOW__CODE_EDITOR__MOUNT2_PATH='/tmp'
+   export AIRFLOW__CODE_EDITOR__MOUNT='name=data,path=/home/airflow/data'
+   export AIRFLOW__CODE_EDITOR__MOUNT1='name=logs,path=/home/airflow/logs'
+   export AIRFLOW__CODE_EDITOR__MOUNT2='name=tmp,path=/tmp'
 ```
 
 ### Development Instructions
@@ -167,3 +173,6 @@ Example:
 * Vue-tree, TreeView control for VueJS - https://github.com/grapoza/vue-tree
 * Splitpanes - https://github.com/antoniandre/splitpanes
 * Axios, Promise based HTTP client for the browser and node.js - https://github.com/axios/axios
+* PyFilesystem2, Python's Filesystem abstraction layer - https://github.com/PyFilesystem/pyfilesystem2
+* Amazon S3 PyFilesystem - https://github.com/PyFilesystem/s3fs
+* Google Cloud Storage PyFilesystem - https://github.com/Othoz/gcsfs

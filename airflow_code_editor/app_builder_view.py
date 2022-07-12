@@ -98,7 +98,6 @@ try:
                 **kargs
             )
 
-
 except (ImportError, ModuleNotFoundError):
     from airflow_code_editor.auth import has_access
     from airflow.www_rbac.decorators import has_dag_access

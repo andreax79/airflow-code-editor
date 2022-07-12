@@ -14,26 +14,24 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the Licens
 
-import os
-import os.path
 import re
-import stat
 from datetime import datetime
 from typing import Any, Callable, Dict, List, NamedTuple, Optional
 from airflow_code_editor.commons import (
     Args,
-    Path,
     TreeFunc,
     TreeOutput,
 )
 from airflow_code_editor.utils import (
     always,
-    git_absolute_path,
+    normalize_path,
+    read_mount_points_config,
+)
+from airflow_code_editor.git import (
     git_enabled,
     execute_git_command,
-    mount_points,
-    normalize_path,
 )
+from airflow_code_editor.fs import RootFS
 
 __all__ = ['get_tree']
 
@@ -66,7 +64,7 @@ def node(
 
 
 @node(id=None, label='Root', leaf=False)
-def get_root_node(path: Path, args: Args) -> TreeOutput:
+def get_root_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree root node"
     result = []
     for id_, node in TREE_NODES.items():
@@ -79,6 +77,7 @@ def get_root_node(path: Path, args: Args) -> TreeOutput:
         )
         # If the node is files, add the mount points
         if id_ == 'files':
+            mount_points = read_mount_points_config()
             for mount in sorted(k for k, v in mount_points.items() if not v.default):
                 mount = mount.rstrip('/')
                 result.append(
@@ -93,42 +92,28 @@ def get_root_node(path: Path, args: Args) -> TreeOutput:
 
 
 @node(id='files', label='Files', leaf=False, icon='fa-home')
-def get_files_node(path: Path, args: Args) -> TreeOutput:
+def get_files_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree files node"
-
-    def try_listdir(path: str) -> List[str]:
-        try:
-            return os.listdir(path)
-        except IOError:
-            return []
-
     result = []
-    dirpath: str = git_absolute_path(path)
     long_ = 'long' in args
-    for name in sorted(try_listdir(dirpath)):
-        if name.startswith('.') or name == '__pycache__':
-            continue
-        fullname = os.path.join(dirpath, name)
-        s = os.stat(fullname)
-        leaf = not stat.S_ISDIR(s.st_mode)
+    for item in RootFS().path(path).iterdir():
+        s = item.stat()
+        leaf = not item.is_dir()
         if long_:  # Long format
-            size = s.st_size if leaf else len(try_listdir(fullname))
+            size = item.size()
             result.append(
                 {
-                    'id': name,
+                    'id': item.name,
                     'leaf': leaf,
                     'size': size,
                     'mode': s.st_mode,
                     'mtime': datetime.fromtimestamp(int(s.st_mtime)).isoformat()
+                    if s.st_mtime
+                    else None,
                 }
             )
         else:  # Short format
-            result.append(
-                {
-                    'id': name,
-                    'leaf': leaf
-                }
-            )
+            result.append({'id': item.name, 'leaf': leaf})
     return result
 
 
@@ -157,19 +142,19 @@ def prepare_ls_tree_output(line: str) -> Dict[str, Any]:
         'label': name,
         'leaf': leaf,
         'size': int(size) if leaf else None,
-        'mode': int(mode, 8)
+        'mode': int(mode, 8),
     }
 
 
 @node(id='git', label='Git Workspace', icon='fa-briefcase', condition=git_enabled)
-def get_git_node(path: Path, args: Args) -> TreeOutput:
+def get_git_node(path: Optional[str], args: Args) -> TreeOutput:
     "List the contents of a git tree object"
     output = git_command_output('ls-tree', '-l', path or 'HEAD')
     return [prepare_ls_tree_output(line) for line in output if line]
 
 
 @node(id='tags', label='Tags', leaf=False, icon='fa-tags', condition=git_enabled)
-def get_tags_node(path: Path, args: Args) -> TreeOutput:
+def get_tags_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree tags node"
     if path:
         return get_git_node(path, args)
@@ -184,7 +169,7 @@ def get_tags_node(path: Path, args: Args) -> TreeOutput:
     icon='fa-code-fork',
     condition=git_enabled,
 )
-def get_local_branches_node(path: Path, args: Args) -> TreeOutput:
+def get_local_branches_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree local branches node"
     if path:
         return get_git_node(path, args)
@@ -199,7 +184,7 @@ def get_local_branches_node(path: Path, args: Args) -> TreeOutput:
     icon='fa-globe',
     condition=git_enabled,
 )
-def get_remote_branches_node(path: Path, args: Args) -> TreeOutput:
+def get_remote_branches_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree remote branches node"
     if path:
         return get_git_node(path, args)
@@ -207,7 +192,7 @@ def get_remote_branches_node(path: Path, args: Args) -> TreeOutput:
     return [prepare_git_output(line, 'fa-globe') for line in output if line]
 
 
-def get_tree(path: Path = None, args: Args = {}) -> TreeOutput:
+def get_tree(path: Optional[str] = None, args: Args = {}) -> TreeOutput:
     "Get tree nodes at the given path"
     if not path:
         root = None

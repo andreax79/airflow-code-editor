@@ -14,9 +14,10 @@ from airflow_code_editor.commons import PLUGIN_NAME, PLUGIN_DEFAULT_CONFIG
 from airflow_code_editor.utils import (
     get_plugin_config,
     get_root_folder,
-    mount_points,
     read_mount_points_config,
     normalize_path,
+)
+from airflow_code_editor.git import (
     execute_git_command,
 )
 
@@ -29,102 +30,118 @@ class TestUtils(TestCase):
         self.root_dir = os.path.dirname(os.path.realpath(__file__))
         configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
         configuration.conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
+        configuration.conf.set(PLUGIN_NAME, 'git_enabled', 'True')
 
     def test_get_root_folder(self):
-        self.assertIsNotNone(get_root_folder())
+        assert get_root_folder() is not None
 
     def test_mount_points_config(self):
-        self.assertTrue('root' in mount_points)
-        self.assertTrue('airflow_home' in mount_points)
-        self.assertTrue('logs' in mount_points)
+        mount_points = read_mount_points_config()
+        assert 'root' in mount_points
+        assert 'airflow_home' in mount_points
+        assert 'logs' in mount_points
 
     def test_normalize_path(self):
-        self.assertEqual(normalize_path(None), '')
-        self.assertEqual(normalize_path('/'), '')
-        self.assertEqual(normalize_path('/../'), '')
-        self.assertEqual(normalize_path('../'), '')
-        self.assertEqual(normalize_path('../../'), '')
-        self.assertEqual(normalize_path('../..'), '')
-        self.assertEqual(normalize_path('/..'), '')
+        assert normalize_path(None) == ''
+        assert normalize_path('/') == ''
+        assert normalize_path('/../') == ''
+        assert normalize_path('../') == ''
+        assert normalize_path('../../') == ''
+        assert normalize_path('../..') == ''
+        assert normalize_path('/..') == ''
 
-        self.assertEqual(normalize_path('//'), '')
-        self.assertEqual(normalize_path('////../'), '')
-        self.assertEqual(normalize_path('..///'), '')
-        self.assertEqual(normalize_path('..///../'), '')
-        self.assertEqual(normalize_path('..///..'), '')
-        self.assertEqual(normalize_path('//..'), '')
+        assert normalize_path('//') == ''
+        assert normalize_path('////../') == ''
+        assert normalize_path('..///') == ''
+        assert normalize_path('..///../') == ''
+        assert normalize_path('..///..') == ''
+        assert normalize_path('//..') == ''
 
-        self.assertEqual(normalize_path('/aaa'), 'aaa')
-        self.assertEqual(normalize_path('/../aaa'), 'aaa')
-        self.assertEqual(normalize_path('../aaa'), 'aaa')
-        self.assertEqual(normalize_path('../../aaa'), 'aaa')
-        self.assertEqual(normalize_path('../../aaa'), 'aaa')
-        self.assertEqual(normalize_path('/../aaa'), 'aaa')
+        assert normalize_path('/aaa') == 'aaa'
+        assert normalize_path('/../aaa') == 'aaa'
+        assert normalize_path('../aaa') == 'aaa'
+        assert normalize_path('../../aaa') == 'aaa'
+        assert normalize_path('../../aaa') == 'aaa'
+        assert normalize_path('/../aaa') == 'aaa'
 
-        self.assertEqual(normalize_path('/aaa'), 'aaa')
-        self.assertEqual(normalize_path('aaa'), 'aaa')
+        assert normalize_path('/aaa') == 'aaa'
+        assert normalize_path('aaa') == 'aaa'
 
     def test_invalid_command(self):
         with app.app_context():
             r = execute_git_command(['invalid-command'])
         t = r.data.decode('utf-8')
-        self.assertEqual(r.status_code, 200)
-        self.assertTrue('Command not supported' in t)
+        assert r.status_code == 200
+        assert 'Command not supported' in t
 
     def test_ls_tree(self):
         with app.app_context():
             r = execute_git_command(['ls-tree', 'HEAD', '-l'])
+        if r.headers.get('X-Git-Return-Code') != '0':
+            raise Exception(r.data.decode('utf-8').split('\n'))
         t = r.data.decode('utf-8')
-        self.assertEqual(r.status_code, 200)
-        self.assertIsNotNone(t)
+        assert r.status_code == 200
+        assert t is not None
 
     def test_mounts(self):
         with app.app_context():
             r = execute_git_command(['mounts'])
+        if r.headers.get('X-Git-Return-Code') != '0':
+            raise Exception(r.data.decode('utf-8').split('\n'))
         t = r.data.decode('utf-8')
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(t, 'airflow_home\nlogs')
+        assert r.status_code == 200
+        assert t == 'airflow_home\nlogs'
 
     def test_ls_local_logs(self):
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', '~logs'])
+        if r.headers.get('X-Git-Return-Code') != '0':
+            raise Exception(r.data.decode('utf-8').split('\n'))
         t = r.data.decode('utf-8')
-        self.assertEqual(r.status_code, 200)
-        self.assertIsNotNone(t)
+        assert r.status_code == 200
+        assert t is not None
 
-    def test_ls_local_airflow_hone(self):
+    def test_ls_local_airflow_home(self):
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', '~airflow_home'])
+        if r.headers.get('X-Git-Return-Code') != '0':
+            raise Exception(r.data.decode('utf-8').split('\n'))
         t = r.data.decode('utf-8')
-        self.assertEqual(r.status_code, 200)
-        self.assertIsNotNone(t)
+        assert r.status_code == 200
+        assert t is not None
+        print(t)
         for line in t.split('\n'):
+            print('>>>>', line)
             i = line.split()
-            self.assertTrue(i[1] in ['tree', 'blob'])
-            self.assertTrue(i[2].startswith('/~airflow_home/'))
+            assert i[1] in ['tree', 'blob']
+            assert i[2].startswith('/~airflow_home/')
 
     def test_ls_local_folder(self):
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', 'folder'])
+        if r.headers.get('X-Git-Return-Code') != '0':
+            raise Exception(r.data.decode('utf-8').split('\n'))
         t = r.data.decode('utf-8')
-        self.assertEqual(r.status_code, 200)
-        self.assertIsNotNone(t)
+        assert r.status_code == 200
+        assert t is not None
         for line in t.split('\n'):
             i = line.split()
-            self.assertEqual(i[1], 'blob')
-            self.assertTrue(i[2].startswith('/folder/'))
-            self.assertEqual(i[3], '2')
-            self.assertTrue(i[4] in ['1', '2', '3'])
+            assert i[1] == 'blob'
+            assert i[2].startswith('/folder/')
+            assert i[3] == '2'
+            assert i[4] in ['1', '2', '3']
 
     def test_rm_local(self):
         try:
             source = os.path.join(self.root_dir, 'new.file')
             with open(source, 'w') as f:
                 f.write('test')
-            self.assertTrue(os.path.exists(source))
+            assert os.path.exists(source)
             with app.app_context():
-                execute_git_command(['rm-local', 'new.file'])
-            self.assertFalse(os.path.exists(source))
+                r = execute_git_command(['rm-local', 'new.file'])
+            if r.headers.get('X-Git-Return-Code') != '0':
+                raise Exception(r.data.decode('utf-8').split('\n'))
+            assert not os.path.exists(source)
         finally:
             try:
                 os.unlink(source)
@@ -135,12 +152,14 @@ class TestUtils(TestCase):
         try:
             source = os.path.join(self.root_dir, 'new.file')
             target = os.path.join(self.root_dir, 'folder', 'new.file')
-            self.assertFalse(os.path.exists(target))
+            assert not os.path.exists(target)
             with open(source, 'w') as f:
                 f.write('test')
             with app.app_context():
-                execute_git_command(['mv-local', 'new.file', 'folder'])
-            self.assertTrue(os.path.exists(target))
+                r = execute_git_command(['mv-local', 'new.file', 'folder'])
+            if r.headers.get('X-Git-Return-Code') != '0':
+                raise Exception(r.data.decode('utf-8').split('\n'))
+            assert os.path.exists(target)
         finally:
             try:
                 os.unlink(source)
@@ -164,9 +183,11 @@ class TestInitGitRepo(TestCase):
     def test_ls_tree(self):
         with app.app_context():
             r = execute_git_command(['ls-tree', 'HEAD', '-l'])
+        if r.headers.get('X-Git-Return-Code') != '0':
+            raise Exception(r.data.decode('utf-8').split('\n'))
         t = r.data.decode('utf-8')
-        self.assertEqual(r.status_code, 200)
-        self.assertIsNotNone(t)
+        assert r.status_code == 200
+        assert t is not None
 
 
 class TestConfig(TestCase):
@@ -196,10 +217,10 @@ class TestConfig(TestCase):
                 os.environ.pop(env)
 
     def test_env_config(self):
-        self.assertEqual(get_plugin_config('git_cmd'), PLUGIN_DEFAULT_CONFIG['git_cmd'])
+        assert get_plugin_config('git_cmd') == PLUGIN_DEFAULT_CONFIG['git_cmd']
         with self.env_vars({'git_cmd': '--test--'}):
-            self.assertEqual(get_plugin_config('git_cmd'), '--test--')
-        self.assertEqual(get_plugin_config('git_cmd'), PLUGIN_DEFAULT_CONFIG['git_cmd'])
+            assert get_plugin_config('git_cmd') == '--test--'
+        assert get_plugin_config('git_cmd') == PLUGIN_DEFAULT_CONFIG['git_cmd']
         # for key in PLUGIN_DEFAULT_CONFIG:
         #     print(configuration.conf._env_var_name(PLUGIN_NAME, key))
 
@@ -215,6 +236,6 @@ class TestConfig(TestCase):
             }
         ):
             m = read_mount_points_config()
-            self.assertEqual(m['test'].path, '/tmp/test')
-            self.assertEqual(m['test1'].path, '/tmp/test1')
-            self.assertEqual(m['test2'].path, '/tmp/test2')
+            assert str(m['test'].path) == '/tmp/test'
+            assert str(m['test1'].path) == '/tmp/test1'
+            assert str(m['test2'].path) == '/tmp/test2'

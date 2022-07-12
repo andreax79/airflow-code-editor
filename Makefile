@@ -13,7 +13,10 @@ help:
 	@echo "- make npm-watch    Run npm build when files change"
 
 lint:
-	python3 setup.py flake8
+	flake8 airflow_code_editor tests
+
+black:
+	black -S airflow_code_editor tests
 
 tag:
 	@grep -q "## $$(cat airflow_code_editor/VERSION)" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)

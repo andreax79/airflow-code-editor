@@ -15,7 +15,7 @@
 #   limitations under the Licens
 #
 
-import os
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 __all__ = [
@@ -34,7 +34,6 @@ __all__ = [
     'VERSION_FILE',
     'VERSION',
     'Args',
-    'Path',
     'GitOutput',
     'TreeOutput',
     'TreeFunc',
@@ -99,13 +98,11 @@ JS_FILES = [
     'airflow_code_editor.js',
 ]
 
-VERSION_FILE = os.path.join(os.path.dirname(__file__), "VERSION")
-with open(VERSION_FILE) as f:
-    VERSION = f.read().strip()
+VERSION_FILE = Path(__file__).parent / "VERSION"
+VERSION = VERSION_FILE.read_text().strip()
 
 
 Args = Dict[str, str]
-Path = Optional[str]
 GitOutput = Union[None, bytes, str]
 TreeOutput = List[Dict[str, Any]]
-TreeFunc = Callable[[Path, Args], TreeOutput]
+TreeFunc = Callable[[Optional[str], Args], TreeOutput]

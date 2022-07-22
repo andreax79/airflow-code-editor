@@ -25,6 +25,7 @@ from datetime import datetime
 from flask import make_response, Response
 from flask_login import current_user  # type: ignore
 from airflow_code_editor.commons import (
+    DEFAULT_GIT_BRANCH,
     HTTP_200_OK,
     HTTP_404_NOT_FOUND,
     SUPPORTED_GIT_COMMANDS,
@@ -205,6 +206,12 @@ def git_call(
     return returncode, stdout, stderr
 
 
+def get_default_branch() -> str:
+    stdout = git_call(['config', '--global', 'init.defaultBranch'], capture_output=True)[1]
+    default_branch = stdout.decode('utf8').strip('\n')
+    return default_branch or DEFAULT_GIT_BRANCH
+
+
 def init_git_repo() -> None:
     "Initialize the git repository in root folder"
     cwd: Path = get_root_folder()
@@ -213,7 +220,7 @@ def init_git_repo() -> None:
         and not (cwd / '.git').exists()
         and get_plugin_boolean_config('git_init_repo')
     ):
-        git_call(['init', '.'])
+        git_call(['init', '-b', get_default_branch(), '.'])
         gitignore = cwd / '.gitignore'
         if not gitignore.exists():
             with gitignore.open('w') as f:

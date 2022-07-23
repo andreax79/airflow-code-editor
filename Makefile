@@ -44,7 +44,7 @@ coverage:
 
 codemirror:
 	@rm -rf codemirror_src codemirror.zip
-	@curl -O https://codemirror.net/codemirror.zip
+	@curl -O https://codemirror.net/5/codemirror.zip
 	@unzip codemirror.zip -d codemirror_src
 	@mv codemirror_src/codemirror-*/* codemirror_src
 	@rm codemirror.zip

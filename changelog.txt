@@ -385,3 +385,4 @@
 - mountpoint configuration changed
 - download git objects from /repo/<object> instead of /files/~git/<object>
 - node packages upgrade
+- CodeMirror upgrade

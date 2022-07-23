@@ -13,7 +13,10 @@ help:
 	@echo "- make npm-watch    Run npm build when files change"
 
 lint:
-	python3 setup.py flake8
+	flake8 airflow_code_editor tests
+
+black:
+	black -S airflow_code_editor tests
 
 tag:
 	@grep -q "## $$(cat airflow_code_editor/VERSION)" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)
@@ -41,7 +44,7 @@ coverage:
 
 codemirror:
 	@rm -rf codemirror_src codemirror.zip
-	@curl -O https://codemirror.net/codemirror.zip
+	@curl -O https://codemirror.net/5/codemirror.zip
 	@unzip codemirror.zip -d codemirror_src
 	@mv codemirror_src/codemirror-*/* codemirror_src
 	@rm codemirror.zip
@@ -55,7 +58,7 @@ codemirror:
 	@python3 update_themes_js.py
 
 npm-build:
-	@NODE_OPTIONS=--openssl-legacy-provider npm run build
+	@npm run build
 
 npm-watch:
 	@NODE_OPTIONS=--openssl-legacy-provider npm run watch

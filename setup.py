@@ -1,19 +1,12 @@
 #!/usr/bin/env python
-import os
+from pathlib import Path
 from setuptools import find_packages, setup
 
-HERE = os.path.dirname(__file__)
-VERSION_FILE = os.path.join(HERE, 'airflow_code_editor', 'VERSION')
+HERE = Path(__file__).parent
 
-with open(VERSION_FILE) as f:
-    version = f.read().strip()
-
-with open(os.path.join(HERE, "README.md"), "r") as f:
-    long_description = f.read()
-
-with open(os.path.join(HERE, "requirements.txt"), "r") as f:
-    install_requires = f.read().split("\n")
-
+version = (HERE / "airflow_code_editor" / "VERSION").read_text().strip()
+long_description = (HERE / "README.md").read_text()
+install_requires = (HERE / "requirements.txt").read_text().split("\n")
 
 setup(
     name="airflow_code_editor",
@@ -34,13 +27,12 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=install_requires,
     license="Apache License, Version 2.0",
-    python_requires=">=3.4",
+    python_requires=">=3.5",
     classifiers=[
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

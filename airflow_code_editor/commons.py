@@ -15,7 +15,7 @@
 #   limitations under the Licens
 #
 
-import os
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 __all__ = [
@@ -25,6 +25,7 @@ __all__ = [
     'ROUTE',
     'STATIC',
     'CONFIG_SECTION',
+    'DEFAULT_GIT_BRANCH',
     'SUPPORTED_GIT_COMMANDS',
     'HTTP_200_OK',
     'HTTP_404_NOT_FOUND',
@@ -34,7 +35,6 @@ __all__ = [
     'VERSION_FILE',
     'VERSION',
     'Args',
-    'Path',
     'GitOutput',
     'TreeOutput',
     'TreeFunc',
@@ -46,6 +46,7 @@ MENU_LABEL = 'DAGs Code Editor'
 ROUTE = '/' + PLUGIN_NAME
 STATIC = '/static/' + PLUGIN_NAME
 CONFIG_SECTION = PLUGIN_NAME + '_plugin'
+DEFAULT_GIT_BRANCH = 'main'
 HTTP_200_OK = 200
 HTTP_404_NOT_FOUND = 404
 SUPPORTED_GIT_COMMANDS = [
@@ -99,13 +100,11 @@ JS_FILES = [
     'airflow_code_editor.js',
 ]
 
-VERSION_FILE = os.path.join(os.path.dirname(__file__), "VERSION")
-with open(VERSION_FILE) as f:
-    VERSION = f.read().strip()
+VERSION_FILE = Path(__file__).parent / "VERSION"
+VERSION = VERSION_FILE.read_text().strip()
 
 
 Args = Dict[str, str]
-Path = Optional[str]
 GitOutput = Union[None, bytes, str]
 TreeOutput = List[Dict[str, Any]]
-TreeFunc = Callable[[Path, Args], TreeOutput]
+TreeFunc = Callable[[Optional[str], Args], TreeOutput]

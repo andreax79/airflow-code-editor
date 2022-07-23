@@ -371,3 +371,18 @@
 - upgrade axios from 0.26.1 to 0.27.2
 - replace nose with pytest
 - Replace test configuration with environment variables
+
+## 6.0.0
+
+2022-07-23
+
+### Added
+
+- add support for remote filesystem (S3, GCP, etc...) in editor/file browser
+
+### Changed
+
+- mountpoint configuration changed
+- download git objects from /repo/<object> instead of /files/~git/<object>
+- node packages upgrade
+- CodeMirror upgrade

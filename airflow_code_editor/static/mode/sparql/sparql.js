@@ -1,5 +1,5 @@
 // CodeMirror, copyright (c) by Marijn Haverbeke and others
-// Distributed under an MIT license: https://codemirror.net/LICENSE
+// Distributed under an MIT license: https://codemirror.net/5/LICENSE
 
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
@@ -31,7 +31,7 @@ CodeMirror.defineMode("sparql", function(config) {
                              "graph", "by", "asc", "desc", "as", "having", "undef", "values", "group",
                              "minus", "in", "not", "service", "silent", "using", "insert", "delete", "union",
                              "true", "false", "with",
-                             "data", "copy", "to", "move", "add", "create", "drop", "clear", "load"]);
+                             "data", "copy", "to", "move", "add", "create", "drop", "clear", "load", "into"]);
   var operatorChars = /[*+\-<>=&|\^\/!\?]/;
 
   function tokenBase(stream, state) {

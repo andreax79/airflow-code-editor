@@ -76,7 +76,24 @@ class AbstractCodeEditorView(object):
 
     def _git_repo_get(self, path):
         "Get a file from GIT (invoked by the HTTP GET method)"
-        return execute_git_command(["cat-file", "-p", path])
+        try:
+            # Download git blob - path = '<hash>/<name>'
+            path, attachment_filename = path.split('/', 1)
+        except:
+            # No attachment filename
+            attachment_filename = None
+        response = execute_git_command(["cat-file", "-p", path])
+        if attachment_filename:
+            response.headers["Content-Disposition"] = (
+                'attachment; filename="{0}"'.format(attachment_filename)
+            )
+            try:
+                content_type = mimetypes.guess_type(attachment_filename)[0]
+                if content_type:
+                    response.headers["Content-Type"] = content_type
+            except Exception:
+                pass
+        return response
 
     def _git_repo_post(self, path):
         "Execute a GIT command (invoked by the HTTP POST method)"
@@ -87,23 +104,13 @@ class AbstractCodeEditorView(object):
         "Send the contents of a file to the client"
         try:
             path = normalize_path(path)
-            root_fs = RootFS()
             if path.startswith("~git/"):
                 # Download git blob - path = '~git/<hash>/<name>'
-                _, path, filename = path.split("/", 3)
-                response = execute_git_command(["cat-file", "-p", path])
-                response.headers["Content-Disposition"] = (
-                    'attachment; filename="%s"' % filename
-                )
-                try:
-                    content_type = mimetypes.guess_type(filename)[0]
-                    if content_type:
-                        response.headers["Content-Type"] = content_type
-                except Exception:
-                    pass
-                return response
+                _, path = path.split("/", 1)
+                return self._git_repo_get(path)
             else:
                 # Download file
+                root_fs = RootFS()
                 return root_fs.path(path).send_file(as_attachment=True)
         except Exception as ex:
             logging.error(ex)

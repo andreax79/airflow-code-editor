@@ -43,7 +43,7 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 * ... other filesystems supported by PyFilesystem - see https://www.pyfilesystem.org/page/index-of-filesystems/
 
   ```bash
-    pip install black fs-gcsfs
+    pip install black fs-s3fs fs-gcsfs
   ```
 
 3. Restart the Airflow Web Server

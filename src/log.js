@@ -145,7 +145,7 @@ export function LogView(id, historyView) {
                     streams.splice(index + j, 0, obj);
                 }
             }
-            for (let j = index + j; j < streams.length; ++j) {
+            for (let j = index + entry.parents.length; j < streams.length; ++j) {
                 let stream = streams[j];
                 let x = (j + 1) * xOffset;
                 stream.path.cmds += (currentY - self.lineHeight / 2) + " L " + x + " " + currentY + " L " + x + " ";

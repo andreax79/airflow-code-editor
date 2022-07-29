@@ -1,3 +1,4 @@
+import { ref } from "vue";
 import { BootstrapDialog } from './bootstrap-dialog';
 import axios from 'axios';
 
@@ -132,19 +133,20 @@ export function TreeEntry(data, isGit, path) {
 export function Stack() {
     let self = this;
 
-    self.stack = [ { name: 'root', object: undefined } ],
+    self.stack = ref([ { name: 'root', object: undefined } ]);
 
     self.updateStack = function(path, type) {
+        console.log('Stack.updateStack path:' + path + ' type:' + type);
         // path: absolute path (local file) or ref/path (git)
         // type: last item type (tree or blob)
-        let stack = [];
+        self.stack.value.length = 0;
         let fullPath = null;
         if (path == '/' || !path) {
             path = '';
         }
-        path.split('/').forEach(function(part, index) {
+        path.split('/').forEach((part, index) => {
             if (index === 0 && !part) {
-                stack.push({ name: 'root', object: undefined });
+                self.stack.value.push({ name: 'root', object: undefined });
                 fullPath = '';
             } else {
                 if (fullPath === null) {
@@ -156,7 +158,7 @@ export function Stack() {
                 if (part[0] == '~') {
                     part = part.substring(1);
                 }
-                stack.push({
+                self.stack.value.push({
                     name: part,
                     object: fullPath,
                     uri: encodeURI((fullPath !== undefined && fullPath.startsWith('/')) ? ('#files' + fullPath) : null),
@@ -165,19 +167,18 @@ export function Stack() {
             }
         });
         if (type == 'blob') {
-            stack[stack.length - 1].type = 'blob';
+            self.stack.value[self.stack.value.length - 1].type = 'blob';
         }
-        self.stack = stack;
     }
 
     self.last = function() {
         // Return last stack element
-        return self.stack[self.stack.length - 1];
+        return self.stack.value[self.stack.value.length - 1];
     }
 
     self.parent = function() {
         // Return stack - 2 element
-        return self.stack.length > 1 ? self.stack[self.stack.length - 2] : undefined;
+        return self.stack.value.length > 1 ? self.stack.value[self.stack.value.length - 2] : undefined;
     }
 
     self.isGit = function() {
@@ -186,15 +187,15 @@ export function Stack() {
     }
 
     self.pop = function() {
-        return self.stack.pop();
+        return self.stack.value.pop();
     }
 
     self.push = function(item) {
-        return self.stack.push(item);
+        return self.stack.value.push(item);
     }
 
     self.slice = function(index) {
-        self.stack = self.stack.slice(0, index);
+        self.stack.value = self.stack.value.slice(0, index);
     }
 
 };

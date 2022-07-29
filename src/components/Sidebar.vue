@@ -18,11 +18,12 @@
     </div>
 </template>
 <script>
+import { defineComponent } from 'vue';
 import axios from 'axios';
 import TreeView from '@grapoza/vue-tree';
 import { prepareHref, splitPath, getIcon } from '../commons';
 
-export default {
+export default defineComponent({
     props: [ 'stack', 'current', 'historyView', 'workspaceView' ],
     components: {
         tree: TreeView
@@ -105,6 +106,7 @@ export default {
             const sectionAndName = splitPath(model.id);
             const section = sectionAndName[0];
             const name = sectionAndName[1];
+            console.log('Sidebar.click section:' + section + ' name:' + name);
             if (section == 'workspace' || section == 'git') { // Workspace
                 self.current.section = 'workspace';
                 self.current.object = name;
@@ -159,5 +161,5 @@ export default {
             .then(self.parseURIFragment)
             .then(self.showContainer);
     }
-}
+})
 </script>

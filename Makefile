@@ -61,4 +61,4 @@ npm-build:
 	@npm run build
 
 npm-watch:
-	@NODE_OPTIONS=--openssl-legacy-provider npm run watch
+	@npm run watch

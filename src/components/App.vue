@@ -1,4 +1,5 @@
 <template>
+
   <splitpanes class="default-theme">
     <pane key="1" :size="sidebarSize">
       <sidebar id="sidebar" :stack="stack" :current="current" :history-view="historyView" :workspace-view="workspaceView"></sidebar>
@@ -62,6 +63,7 @@
   </splitpanes>
 </template>
 <script>
+import { defineComponent } from 'vue';
 import { Splitpanes, Pane } from 'splitpanes';
 import { Stack } from '../commons';
 import { HistoryView } from '../history';
@@ -69,7 +71,7 @@ import { WorkspaceView } from '../workspace';
 import Sidebar from './Sidebar.vue';
 import FilesView from './Files.vue';
 
-export default {
+export default defineComponent({
     components: {
         splitpanes: Splitpanes,
         pane: Pane,
@@ -109,5 +111,6 @@ export default {
         const self = this;
         self.initViews();
     }
-}
+})
 </script>
+

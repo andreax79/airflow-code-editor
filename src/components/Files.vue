@@ -8,7 +8,7 @@
           <div class="breadcrumb-buttons">
               <button v-on:click="newAction()" v-if="!isEditorOpen && !isGit" type="button" class="btn btn-default btn-sm">New <i class="fa fa-plus-square" aria-hidden="true"></i></button>
               <button v-on:click="uploadAction()" v-if="!isEditorOpen && !isGit" type="button" class="btn btn-default btn-sm">Upload <i class="fa fa-cloud-upload" aria-hidden="true"></i></button>
-              <input type="file" multiple="multiple" style="display: none" ref="file" @change="handleUploadButton"></input>
+              <input type="file" multiple="multiple" style="display: none" ref="file" @change="handleUploadButton" />
           </div>
         </ol>
 
@@ -23,7 +23,7 @@
               max-height="100%"
               :columns="columns"
               :rows="items">
-              <template slot="table-row" slot-scope="props">
+              <template #table-row="props">
                 <span v-if="props.column.field == 'name'" :class="props.column.field">
                   <a v-on:click.prevent="click(props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')" >
                     {{ props.row.name }}
@@ -59,7 +59,7 @@
                 </div>
                 <div class="cm-footer cm-flex-child-fixed">
                 <button v-on:click="saveAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Save <i class="fa fa-save" aria-hidden="true"></i></button>
-                <button v-on:click="saveAsAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Save as...</i></button>
+                <button v-on:click="saveAsAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Save as...</button>
                 <button v-on:click="revertAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Revert <i class="fa fa-undo" aria-hidden="true"></i></button>
                 <button v-on:click="findAction()" type="button" class="btn btn-default btn-sm">Find <i class="fa fa-search" aria-hidden="true"></i></button>
                 <button v-on:click="replaceAction()" v-if="!readOnly" type="button" class="btn btn-default btn-sm">Replace <i class="fa fa-random" aria-hidden="true"></i></button>
@@ -75,12 +75,13 @@
 </template>
 <script>
 import axios from 'axios';
-import { VueGoodTable } from 'vue-good-table';
+import { defineComponent, markRaw } from 'vue';
+import { VueGoodTable } from 'vue-good-table-next';
 import { BootstrapDialog } from '../bootstrap-dialog';
-import { TreeEntry, prepareHref, showError, git } from "../commons";
+import { TreeEntry, prepareHref, showError, git } from '../commons';
 import EditorSettings from './EditorSettings.vue';
 
-export default {
+export default defineComponent({
     components: {
         'settings': EditorSettings,
         'vue-good-table': VueGoodTable
@@ -445,6 +446,7 @@ export default {
             }
         },
         refresh() {
+            console.log("Files.refresh");
             // Update tree view
             const self = this;
             this.isEditorOpen = false;
@@ -486,8 +488,11 @@ export default {
         },
         handleDrop($event) {
             // Upload files (drag and drop)
-            this.isDragEnter = false;
-            this.uploadFiles($event.dataTransfer.files);
+            const self = this;
+            self.isDragEnter = false;
+            // Convert FileList into Array
+            const files = [...$event.dataTransfer.files];
+            self.uploadFiles(files);
         },
         handleUploadButton($event) {
             // Upload files (upload button)
@@ -523,20 +528,25 @@ export default {
         'config.mode': function(val, preVal) {
             this.setOption('keyMap', val);
         },
-        'stack.stack': function(val, preVal) {
-            const self = this;
-            if (self.stack.last().type == 'blob') {
-                self.showBlob();
-            } else {
-                self.refresh();
-            }
+        stack: {
+            handler(val, preVal) {
+                console.log('Files.watch stack.stack');
+                const self = this;
+                if (self.stack.last().type == 'blob') {
+                    self.showBlob();
+                } else {
+                    self.refresh();
+                }
+            },
+            deep: true
         }
     },
     mounted() {
+        console.log('Files.mounted');
         const self = this;
-        self.editor = CodeMirror.fromTextArea(self.$el.querySelector('textarea'), self.codeMirrorOptions);
+        self.editor = markRaw(CodeMirror.fromTextArea(self.$el.querySelector('textarea'), self.codeMirrorOptions));
         self.editor.save = () => self.saveAction(); // save file command
         // window._editor = self.editor;
     }
-}
+})
 </script>

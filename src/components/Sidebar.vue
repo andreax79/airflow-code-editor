@@ -21,7 +21,8 @@
 import { defineComponent } from 'vue';
 import axios from 'axios';
 import TreeView from '@grapoza/vue-tree';
-import { prepareHref, splitPath, getIcon } from '../commons';
+import { prepareHref, splitPath } from '../commons';
+import { getIcon } from '../tree_entry';
 
 export default defineComponent({
     props: [ 'stack', 'current', 'historyView', 'workspaceView' ],
@@ -138,7 +139,7 @@ export default defineComponent({
                             response.data.value.forEach((part) => {
                                 part.label = part.label || part.id;
                                 if (!part.icon || part.icon == 'fa-file') {
-                                    part.icon = getIcon(part.type, part.label);
+                                    part.icon = getIcon(part.label, part.type);
                                 }
                                 part.treeNodeSpec = {
                                     'expandable': !part.leaf,

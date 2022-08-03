@@ -27,7 +27,7 @@
                     <div class="panel-body"></div>
                 </div>
                 <div class="tree-view" style="display: none">
-                    <files :stack='historyStack' :config="config" :is-git="true"></files>
+                    <container :stack="historyStack" :config="config" :is-git="true"></container>
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
         </div>
         <div id="files-view" v-show='current.section == "files"'>
             <div style="height: 100%">
-                <files :stack='stack' :config="config" :is-git="false"></files>
+                <container :stack="stack" :config="config" :is-git="false"></container>
             </div>
         </div>
     </pane>
@@ -69,14 +69,14 @@ import { Stack } from '../commons';
 import { HistoryView } from '../history';
 import { WorkspaceView } from '../workspace';
 import Sidebar from './Sidebar.vue';
-import FilesView from './Files.vue';
+import FilesEditorContainer from './FilesEditorContainer.vue';
 
 export default defineComponent({
     components: {
         splitpanes: Splitpanes,
         pane: Pane,
         sidebar: Sidebar,
-        files: FilesView
+        container: FilesEditorContainer
     },
     data() {
         return {

@@ -25,7 +25,7 @@ import { prepareHref, splitPath } from '../commons';
 import { getIcon } from '../tree_entry';
 
 export default defineComponent({
-    props: [ 'stack', 'current', 'historyView', 'workspaceView' ],
+    props: [ 'stack', 'historyState', 'current', 'workspaceView' ],
     components: {
         tree: TreeView
     },
@@ -49,7 +49,7 @@ export default defineComponent({
                 if (section == 'tags' || section == 'local-branches' || section == 'remote-branches') {
                     self.current.section = section;
                     self.current.object = object;
-                    self.historyView.update({ id: section, name: object });
+                    self.historyState.update({ id: section, name: object });
 
                 } else if (section == 'workspace') {
                     self.current.section = section;
@@ -124,7 +124,7 @@ export default defineComponent({
                 if (name) {
                     self.current.section = section;
                     self.current.object = name;
-                    self.historyView.update({ id: section, name: name });
+                    self.historyState.update({ id: section, name: name });
                 } else {
                     jQuery('#sidebar-tree-' + section + '-exp').click();
                 }
@@ -153,14 +153,14 @@ export default defineComponent({
                       })
                       .catch(error => reject());
                 });
-        },
+        }
     },
     mounted() {
         // Init
         const self = this;
         self.fetchTree()
             .then(self.parseURIFragment)
-            .then(self.showContainer);
+            .then(self.showContainer)
     }
 })
 </script>

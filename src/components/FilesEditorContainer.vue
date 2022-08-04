@@ -23,7 +23,7 @@ export default defineComponent({
     watch: {
         stack: {
             handler(val, preVal) {
-                console.log('Pane.watch stack.stack');
+                console.log('FilesEditorContainer.watch stack');
                 const self = this;
                 if (self.stack.last().type == 'blob') {
                     self.isEditorOpen = true;

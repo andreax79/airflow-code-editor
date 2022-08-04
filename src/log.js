@@ -16,8 +16,8 @@
 
 import { COLORS, git } from "./commons";
 
-export function LogView(id, historyView) {
-    let self = this;
+export function LogView(id, historyState) {
+    const self = this;
 
     self.update = function(ref) {
         jQuery(svg).empty();
@@ -28,7 +28,7 @@ export function LogView(id, historyView) {
     };
 
     self.populate = function() {
-        let maxCount = 1000;
+        const maxCount = 1000;
         if (content.childElementCount > 0) {
             // The last node is the 'Show more commits placeholder'. Remove it.
             content.removeChild(content.lastElementChild);
@@ -252,7 +252,7 @@ export function LogView(id, historyView) {
                 }
                 jQuery(self.element).addClass("active");
                 currentSelection = self;
-                logView.historyView.commitView.update(self);
+                historyState.updateCommit(self);
             }
         };
 
@@ -288,7 +288,6 @@ export function LogView(id, historyView) {
         self.createElement();
     };
 
-    self.historyView = historyView;
     self.element = jQuery(id)[0];
     let svg = self.element.children[0];
     let content = self.element.children[1];

@@ -240,9 +240,8 @@ body {
 #commit-view .commit-view-header {
   border: solid #dddddd;
   border-width: 0 0 1px 0;
-}
-#commit-view .commit-view-header .nav-pills li a {
-  border-radius: 0px;
+  padding: 1em;
+  text-align: right
 }
 #commit-view .commit-view-content {
   display: flex;
@@ -701,3 +700,58 @@ body {
 footer {
   display: none;
 }
+
+.show-commit {
+    font-family: monospace;
+    overflow: auto;
+    line-height: 1.2em;
+    margin-top: 1em;
+}
+
+.show-commit .diff-default {
+    padding-left: 2em;
+}
+
+.show-commit .diff-header {
+    padding-left: 1em;
+    line-height: 1.4em;
+    font-family: sans-serif;
+}
+
+.show-commit .badge {
+    float: right;
+    margin-top: 0.5em;
+    margin-right: 0.5em;
+}
+
+.show-commit .font-weight-bold {
+    font-weight: bold;
+}
+
+.show-commit .diff-file-header {
+    font-weight: bold;
+    line-height: 3em;
+    padding-left: 1em;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin-top: 2em;
+    margin-bottom: 1em;
+    background-color: #f6f6f6;
+    font-family: sans-serif;
+}
+
+.show-commit .diff-line-add {
+    background-color: #e6ffec;
+    padding-left: 1em;
+}
+
+.show-commit .diff-line-del {
+    background-color: #ffebe9;
+    padding-left: 1em;
+}
+
+.show-commit .diff-line-offset {
+    background-color: #ddf4ff;
+    line-height: 2em;
+}
+

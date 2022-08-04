@@ -18,10 +18,23 @@ import { DiffView } from "./diff";
 import { CommitMessageView } from "./commit";
 import { ChangedFilesView } from "./changed_files";
 
-export function WorkspaceView() {
-    let self = this;
+export class WorkspaceView {
 
-    self.update = function(mode) {
+    constructor() {
+        const self = this;
+        self.element = jQuery('#workspace-view')[0];
+        self.diffView = new DiffView('#workspace-diff-view .diff-view-container', true, true, self);
+        self.workspaceEditor = jQuery("#workspace-editor", self.element)[0];
+        self.workingCopyView = new ChangedFilesView(self, "working-copy", "Working Copy");
+        self.workspaceEditor.appendChild(self.workingCopyView.element);
+        self.commitMessageView = new CommitMessageView(self);
+        self.workspaceEditor.appendChild(self.commitMessageView.element);
+        self.stagingAreaView = new ChangedFilesView(self, "staging-area", "Staging Area");
+        self.workspaceEditor.appendChild(self.stagingAreaView.element);
+    }
+
+    update(mode) {
+        const self = this;
         document.location.hash = 'workspace';
         self.workingCopyView.update();
         self.stagingAreaView.update();
@@ -29,16 +42,6 @@ export function WorkspaceView() {
         if (self.workingCopyView.getSelectedItemsCount() + self.stagingAreaView.getSelectedItemsCount() == 0) {
             self.diffView.update(undefined, undefined, undefined, mode);
         }
-    };
+    }
 
-    self.element = jQuery('#workspace-view')[0];
-    let workspaceDiffView = jQuery("#workspace-diff-view", self.element)[0];
-    self.diffView = new DiffView('#workspace-diff-view .diff-view-container', true, true, self);
-    let workspaceEditor = jQuery("#workspace-editor", self.element)[0];
-    self.workingCopyView = new ChangedFilesView(self, "working-copy", "Working Copy");
-    workspaceEditor.appendChild(self.workingCopyView.element);
-    self.commitMessageView = new CommitMessageView(self);
-    workspaceEditor.appendChild(self.commitMessageView.element);
-    self.stagingAreaView = new ChangedFilesView(self, "staging-area", "Staging Area");
-    workspaceEditor.appendChild(self.stagingAreaView.element);
-};
+}

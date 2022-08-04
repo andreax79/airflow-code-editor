@@ -362,7 +362,9 @@ export function DiffView(id, sideBySide, hunkSelectionAllowed, parent) {
             cmd.push("--cached");
         }
         git(cmd, patch, function (data) {
-            parent.update();
+            if (parent != null) {
+                parent.update();
+            }
         });
     }
 

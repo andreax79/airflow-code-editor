@@ -1,14 +1,13 @@
 <template>
     <div>
-        <div id="sidebar-content">
+        <div class="sidebar-content">
             <tree id="sidebar-tree"
                   :initial-model="model"
                   :model-defaults="modelDefaults">
-                <template #text="{ model, customClasses }">
+                <template #text="{ model }">
                     <div :title="model.treeNodeSpec.title"
                          class="grtvn-self-text"
-                         v-on:click="click(model)"
-                         :class="customClasses.treeViewNodeSelfText">
+                         v-on:click="click(model)">
                          <i v-if="model.icon" :class="'fa ' + model.icon" aria-hidden="true"></i>
                          {{ model.label }}
                     </div>
@@ -17,6 +16,21 @@
         </div>
     </div>
 </template>
+<style>
+.sidebar-content {
+    flex: 1 1 0;
+    -webkit-flex: 1 1 0;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    cursor: default;
+    color: #eeeeee;
+    padding: 1em;
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self {
+    line-height: inherit;
+}
+</style>
 <script>
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';

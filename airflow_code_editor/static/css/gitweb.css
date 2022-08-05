@@ -54,19 +54,6 @@ body {
 #global-container .splitpanes.default-theme .splitpanes__splitter::before {
   background-color: #666666;
 }
-#sidebar .branch-current {
-  font-weight: bold;
-}
-#sidebar-content {
-  flex: 1 1 0;
-  -webkit-flex: 1 1 0;
-  height: 100%;
-  overflow-x: auto;
-  overflow-y: auto;
-  cursor: default;
-  color: #eeeeee;
-  padding: 1em;
-}
 .list-group-item .name {
   color: #000000;
 }

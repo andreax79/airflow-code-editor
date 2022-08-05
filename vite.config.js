@@ -12,6 +12,7 @@ export default defineConfig({
         }
     },
     build: {
+        sourcemap: true,
         emptyOutDir: false,
         outDir: 'airflow_code_editor/static',
         rollupOptions: {

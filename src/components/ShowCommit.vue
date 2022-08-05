@@ -5,6 +5,61 @@
   </div>
   </div>
 </template>
+<style>
+.show-commit {
+    font-family: monospace;
+    overflow: auto;
+    line-height: 1.2em;
+    margin-top: 1em;
+}
+
+.show-commit .diff-default {
+    padding-left: 2em;
+}
+
+.show-commit .diff-header {
+    padding-left: 1em;
+    line-height: 1.4em;
+    font-family: sans-serif;
+}
+
+.show-commit .badge {
+    float: right;
+    margin-top: 0.5em;
+    margin-right: 0.5em;
+}
+
+.show-commit .font-weight-bold {
+    font-weight: bold;
+}
+
+.show-commit .diff-file-header {
+    font-weight: bold;
+    line-height: 3em;
+    padding-left: 1em;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin-top: 2em;
+    margin-bottom: 1em;
+    background-color: #f6f6f6;
+    font-family: sans-serif;
+}
+
+.show-commit .diff-line-add {
+    background-color: #e6ffec;
+    padding-left: 1em;
+}
+
+.show-commit .diff-line-del {
+    background-color: #ffebe9;
+    padding-left: 1em;
+}
+
+.show-commit .diff-line-offset {
+    background-color: #ddf4ff;
+    line-height: 2em;
+}
+</style>
 <script>
 import { defineComponent } from 'vue';
 import { git } from "../commons";
@@ -18,18 +73,17 @@ export default defineComponent({
     },
     methods: {
         processLine(line) {
-            const self = this;
             const c = line[0];
             let classes = '';
             let skip = false;
-            if (self.inHeader) { // global header
+            if (this.inHeader) { // global header
                 if (line.startsWith('commit')) { // commit id
                     line = line.substring(7);
                     classes = "badge";
                 } else if (line.startsWith('diff --git')) { // end of global header
                     skip = true;
-                    self.inHeader = false;
-                    self.inFileHeader = true;
+                    this.inHeader = false;
+                    this.inFileHeader = true;
                 } else {
                     classes = "diff-header";
                     if (line.startsWith('Author:')) {
@@ -38,22 +92,22 @@ export default defineComponent({
                         classes += " font-weight-bold";
                     }
                 }
-            } else if ((!self.inFileHeader) && (line.startsWith('diff --git'))) {
+            } else if ((!this.inFileHeader) && (line.startsWith('diff --git'))) {
                 skip = true;
-                self.inFileHeader = true;
-            } else if (self.inFileHeader) { // file header
+                this.inFileHeader = true;
+            } else if (this.inFileHeader) { // file header
                 skip = true;
                 if (line.startsWith('+++ ')) { // filename
                     classes += " diff-file-header";
                     line = line.substring(5);
                     if (line.startsWith('dev/null')) {
-                        line = self.last.substring(5);
+                        line = this.last.substring(5);
                     }
                     if (line[0] == '/') {
                         line = line.substring(1);
                     }
                     skip = false;
-                    self.inFileHeader = false;
+                    this.inFileHeader = false;
                 }
             } else {
                 if (c == '+') {
@@ -67,33 +121,26 @@ export default defineComponent({
                     classes = "diff-default";
                 }
             }
-            self.last = line;
+            this.last = line;
             return { classes: classes, line: line, skip: skip };
         },
         parseDiff(diff) {
-            const self = this;
-            self.inHeader = true; // git diff header
-            self.inFileHeader = false; // file header
-            self.last = null;
-            self.lines = diff.split("\n").map(self.processLine);
+            this.inHeader = true; // git diff header
+            this.inFileHeader = false; // file header
+            this.last = null;
+            this.lines = diff.split("\n").map(this.processLine);
         },
         refresh() {
-            const self = this;
-            if (self.commit) {
-                const cmd = [ 'show', '--unified=3', self.commit.commit ];
-                git(cmd, self.parseDiff);
+            if (this.commit) {
+                const cmd = [ 'show', '--unified=3', this.commit.commit ];
+                git(cmd, this.parseDiff);
             }
         },
     },
-    watch: {
-        'commit': {
-            handler(val, preVal) {
-                const self = this;
-                console.log('ShowCommit.watch commit');
-                self.refresh();
-            },
-            deep: true
-        }
-    },
+    mounted() {
+        // Init
+        console.log('ShowCommit.mounted');
+        this.refresh();
+    }
 })
 </script>

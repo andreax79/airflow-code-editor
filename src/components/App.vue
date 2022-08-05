@@ -2,10 +2,15 @@
 
   <splitpanes class="default-theme">
     <pane key="1" :size="sidebarSize">
-        <sidebar id="sidebar" :stack="stack" :historyState="historyState" :current="current" :workspace-view="workspaceView"></sidebar>
+        <sidebar class="app-sidebar"
+            :current="current"
+            @showFile="showFile"
+            @showHistory="showHistory"
+            @showWorkspace="showWorkspace"
+            ></sidebar>
     </pane>
-    <pane key="2" :size="100 - sidebarSize" id="main-view">
-        <historyview :historyState="historyState"
+    <pane key="2" :size="100 - sidebarSize" class="app-main-view">
+        <historyview ref="historyview"
             :config="config"
             v-show='current.section == "local-branches" | current.section == "remote-branches" | current.section == "tags"'></historyview>
         <div id="workspace-view" v-show='current.section == "workspace"'>
@@ -31,20 +36,34 @@
             <div id="workspace-editor">
             </div>
         </div>
-        <div id="files-view" v-show='current.section == "files"'>
-            <div style="height: 100%">
-                <container :stack="stack" :config="config" :is-git="false"></container>
-            </div>
-        </div>
+        <container
+            clas="app-files-view"
+            ref="container"
+            v-show='current.section == "files"'
+            :config="config"
+            :is-git="false"></container>
     </pane>
   </splitpanes>
 </template>
+<style>
+.app-sidebar {
+    height: 100%;
+    overflow-y: auto;
+    background-color: #333333;
+}
+.app-main-view {
+    display: flex;
+    display: -webkit-flex;
+    min-height: 0;
+    min-width: 0;
+    flex: 1 1 0;
+    -webkit-flex: 1 1 0;
+}
+</style>
 <script>
 import { defineComponent } from 'vue';
 import { Splitpanes, Pane } from 'splitpanes';
-import { Stack } from '../stack';
 import { WorkspaceView } from '../workspace';
-import { HistoryState } from '../history_state';
 import Sidebar from './Sidebar.vue';
 import FilesEditorContainer from './FilesEditorContainer.vue';
 import HistoryView from './HistoryView.vue';
@@ -63,8 +82,6 @@ export default defineComponent({
                 section: null, // current sidebar section (files, werkspace, ...)
                 object: null, // current sidebar object
             },
-            stack: new Stack(), // files stack
-            historyState: new HistoryState(),
             config: {
                 theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
                 mode: localStorage.getItem('airflow_code_editor_mode') || 'default', // edit mode (default, vim, etc...)
@@ -76,14 +93,27 @@ export default defineComponent({
     methods: {
         initViews() {
             // Init views
-            const self = this;
-            self.workspaceView = new WorkspaceView();
+            this.workspaceView = new WorkspaceView();
         },
+        showFile(target) {
+            this.current.section = 'files';
+            this.current.object = target.path;
+            this.$refs.container.updateStack(target.path, target.type);
+        },
+        showHistory(target) {
+            this.current.section = target.id;
+            this.current.object = target.name;
+            this.$refs.historyview.update(target);
+        },
+        showWorkspace(target) {
+            this.current.section = target.id;
+            this.current.object = target.name;
+            this.workspaceView.update();
+        }
     },
     mounted() {
         // Init
-        const self = this;
-        self.initViews();
+        this.initViews();
     }
 })
 </script>

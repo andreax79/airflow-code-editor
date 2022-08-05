@@ -39,7 +39,7 @@ import { prepareHref, splitPath } from '../commons';
 import { getIcon } from '../tree_entry';
 
 export default defineComponent({
-    props: [ 'stack', 'historyState', 'current', 'workspaceView' ],
+    props: [ 'current' ],
     components: {
         tree: TreeView
     },
@@ -61,28 +61,24 @@ export default defineComponent({
                 const object = match !== null ? match[3] : null;
 
                 if (section == 'tags' || section == 'local-branches' || section == 'remote-branches') {
-                    self.current.section = section;
-                    self.current.object = object;
-                    self.historyState.update({ id: section, name: object });
+                    this.$emit("showHistory", { id: section, name: object });
 
                 } else if (section == 'workspace') {
-                    self.current.section = section;
-                    self.current.object = null;
-                    self.workspaceView.update();
+                    this.$emit("showWorkspace", { id: 'workspace', name: name });
 
                 } else if (section == 'edit' && object) {
-                    self.current.section = 'files';
-                    self.current.object = '/' + object.split('/')[0];
-                    self.stack.updateStack('/' + object, 'blob');
+                    this.$emit("showFile", { path: '/' + object, type: 'blob' });
 
                 } else { // files
                     self.current.section = 'files';
                     if (object) {
                         self.current.object = '/' + object.split('/')[0];
-                        self.stack.updateStack('/' + object, 'tree');
+                        // self.stack.updateStack('/' + object, 'tree');
+                        this.$emit("showFile", { path: '/' + object, type: 'tree' });
                     } else {
                         self.current.object = null;
-                        self.stack.updateStack('/', 'tree');
+                        // self.stack.updateStack('/', 'tree');
+                        this.$emit("showFile", { path: '/', type: 'tree' });
                     }
                 }
                 resolve(true);
@@ -117,22 +113,16 @@ export default defineComponent({
             const name = (sectionAndName[1] || '').trim();
             console.log('Sidebar.click section: ' + section + ' name: ' + name);
             if (section == 'workspace' || section == 'git') { // Workspace
-                self.current.section = 'workspace';
-                self.current.object = name;
-                self.workspaceView.update();
+                this.$emit("showWorkspace", { id: 'workspace', name: name });
 
             } else if (section == 'files') { // Files
-                self.current.section = section
-                self.current.object = '/' + name;
-                self.stack.updateStack('/' + name, model.leaf ? 'blob' : 'tree');
+                this.$emit("showFile", { path: '/' + name, type: model.leaf ? 'blob' : 'tree' });
 
             } else if (section == 'tags' ||
                        section == 'remote-branches' ||
                        section == 'local-branches') { // Git tags/branches
                 if (name) {
-                    self.current.section = section;
-                    self.current.object = name;
-                    self.historyState.update({ id: section, name: name });
+                    this.$emit("showHistory", { id: section, name: name });
                 } else {
                     // Open tree node
                     jQuery('#sidebar-tree-' + section + '-exp').click();

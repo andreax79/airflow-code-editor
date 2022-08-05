@@ -1,7 +1,7 @@
 <template>
     <div class="tree-view">
         <ol class="breadcrumb">
-          <breadcrumb :stack="stack" :isGit="isGit"></breadcrumb>
+          <breadcrumb :stack="stack" :isGit="isGit" v-if="showBreadcrumb"></breadcrumb>
           <div class="breadcrumb-buttons">
               <button v-on:click="newAction()" v-if="!isGit" type="button" class="btn btn-default btn-sm">New <i class="fa fa-plus-square" aria-hidden="true"></i></button>
               <button v-on:click="uploadAction()" v-if="!isGit" type="button" class="btn btn-default btn-sm">Upload <i class="fa fa-cloud-upload" aria-hidden="true"></i></button>
@@ -48,6 +48,54 @@
 
     </div>
 </template>
+<style>
+.tree-view {
+    flex: 1 1 0;
+    -webkit-flex: 1 1 0;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    display: flex;
+    display: -webkit-flex;
+    min-height: 0;
+    min-width: 0;
+    height: 100%;
+}
+.tree-view .breadcrumb {
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    margin-bottom: 0;
+    border-radius: 0px;
+}
+.tree-view .breadcrumb li {
+    margin-top: 0.6rem;
+    margin-bottom: 0.6rem;
+}
+.tree-view .breadcrumb a {
+    text-decoration: none;
+    cursor: pointer;
+}
+.tree-view .breadcrumb-buttons {
+    float: right;
+}
+.tree-view-tree-content {
+    margin: 0;
+    height: inherit;
+    background-color: #fff;
+}
+.tree-view-tree-content a:hover {
+    text-decoration: none;
+}
+.tree-view-tree-content .icon {
+        line-height: 2em;
+}
+.tree-view-tree-content .icon a,
+.tree-view-tree-content .name a,
+.tree-view-tree-content .action a {
+        color: inherit;
+}
+.tree-view .tree-item-symlink {
+    font-style: italic;
+}
+</style>
 <script>
 import axios from 'axios';
 import { defineComponent } from 'vue';
@@ -62,7 +110,7 @@ export default defineComponent({
         'breadcrumb': Breadcrumb,
         'vue-good-table': VueGoodTable
     },
-    props: [ 'stack', 'config', 'isGit' ],
+    props: [ 'stack', 'config', 'isGit', 'showBreadcrumb' ],
     data() {
         return {
             items: [], // tree items (blobs/trees)
@@ -119,33 +167,30 @@ export default defineComponent({
         },
         updateLocation() {
             // Update href hash
-            const self = this;
-            if (!self.isGit) {
-                document.location.hash = self.normalize('files' + (self.stack.last().object || '/'));
+            if (!this.isGit) {
+                document.location.hash = this.normalize('files' + (this.stack.last().object || '/'));
             }
         },
         click(item) {
             // File/directory action
-            const self = this;
             if (item.name == '..') {
-                self.stack.pop();
+                this.stack.pop();
             } else {
-                self.stack.push(item);
+                this.stack.push(item);
             }
             // Update href hash
-            self.updateLocation();
+            this.updateLocation();
             return false;
         },
         breadcrumbClicked(index, item) {
             // Breadcrumb action
-            const self = this;
-            self.stack.slice(index + 1);
+            this.stack.slice(index + 1);
             // Update href hash
-            self.updateLocation();
+            this.updateLocation();
             return false;
         },
         moveAction(item) {
-            // Delete a file
+            // Rename a file
             const self = this;
             BootstrapDialog.show({
                 title: 'Move/Rename File',
@@ -153,10 +198,8 @@ export default defineComponent({
                 buttons: [{
                     label: 'Ok',
                     action(dialogRef) {
-                        let target = dialogRef.getModalBody().find('input').val().trim();
-                        git([ 'mv-local', item.object, target ], function(data) {
-                            self.refresh();
-                        });
+                        const target = dialogRef.getModalBody().find('input').val().trim();
+                        git([ 'mv-local', item.object, target ], (data) => self.refresh());
                         dialogRef.close();
                     }
                 },{
@@ -178,9 +221,7 @@ export default defineComponent({
                     label: 'Delete',
                     cssClass: 'btn-danger',
                     action(dialogRef) {
-                        git([ 'rm-local', item.object ], function(data) {
-                            self.refresh();
-                        });
+                        git([ 'rm-local', item.object ], (data) => self.refresh());
                         dialogRef.close();
                     }
                 },{
@@ -194,28 +235,25 @@ export default defineComponent({
         },
         newAction() {
             // New file button action
-            const self = this;
-            let item = { name: '✧', type: 'blob', object: (self.stack.last().object || '') + '/✧' };
-            self.stack.push(item);
+            let item = { name: '✧', type: 'blob', object: (this.stack.last().object || '') + '/✧' };
+            this.stack.push(item);
         },
         uploadAction() {
             // Upload button action
-            const self = this;
             this.$refs.file.click();
         },
         refresh() {
             console.log("Files.refresh");
             // Update tree view
-            const self = this;
             let path = null;
             let last = this.stack.last();
             if (last.type != 'blob') {
-                if (self.isGit) { // git
-                    path = 'tree' + self.normalize('git/' + last.object);
+                if (this.isGit) { // git
+                    path = 'tree' + this.normalize('git/' + last.object);
                 } else { // local
-                    path = 'tree' + self.normalize('files' + (last.object || ''));
+                    path = 'tree' + this.normalize('files' + (last.object || ''));
                     // Update url hash
-                    document.location.hash = self.normalize('files' + (last.object || ''));
+                    document.location.hash = this.normalize('files' + (last.object || ''));
                 }
                 // Get tree items
                 axios.get(prepareHref(path), { params: { long: true }})
@@ -223,7 +261,7 @@ export default defineComponent({
                         let blobs = []; // files
                         let trees = []; // directories
                         response.data.value.forEach((part) => {
-                            let item = new TreeEntry(part, self.isGit, last.object);
+                            let item = new TreeEntry(part, this.isGit, last.object);
                             if (item.type == 'tree') {
                                 trees.push(item);
                             } else {
@@ -235,10 +273,10 @@ export default defineComponent({
                         blobs.sort(compare);
                         trees.sort(compare);
                         // Add link to parent directory on top
-                        if (self.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
+                        if (this.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
                             trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'fa-folder', href: '#' });
                         }
-                        self.items = trees.concat(blobs);
+                        this.items = trees.concat(blobs);
                   })
                   .catch(error => {
                         console.log(error);
@@ -247,23 +285,21 @@ export default defineComponent({
         },
         handleDrop($event) {
             // Upload files (drag and drop)
-            const self = this;
-            self.isDragEnter = false;
+            this.isDragEnter = false;
             // Convert FileList into Array
             const files = [...$event.dataTransfer.files];
-            self.uploadFiles(files);
+            this.uploadFiles(files);
         },
         handleUploadButton($event) {
             // Upload files (upload button)
-            const self = this;
             const files = Array.from($event.target.files);
-            self.uploadFiles(files);
+            this.uploadFiles(files);
             $event.target.value = '';
         },
         uploadFiles(files) {
             // Upload files
             const self = this;
-            if (!self.isGit) {
+            if (!this.isGit) {
                 files.forEach((file) => {
                     const filename = self.normalize((self.stack.last().object || '') + '/' + self.basename(file.name));
                     const payload = file;
@@ -284,16 +320,14 @@ export default defineComponent({
         stack: {
             handler(val, preVal) {
                 console.log('Files.watch stack');
-                const self = this;
-                self.refresh();
+                this.refresh();
             },
             deep: true
         }
     },
     mounted() {
         console.log('Files.mounted');
-        const self = this;
-        self.refresh();
+        this.refresh();
     }
 })
 </script>

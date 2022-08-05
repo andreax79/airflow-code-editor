@@ -16,7 +16,7 @@
 
 import { COLORS, git } from "./commons";
 
-export function LogView(id, historyState) {
+export function LogView(id, historyView) {
     const self = this;
 
     self.update = function(ref) {
@@ -252,7 +252,7 @@ export function LogView(id, historyState) {
                 }
                 jQuery(self.element).addClass("active");
                 currentSelection = self;
-                historyState.updateCommit(self);
+                historyView.updateCommit(self);
             }
         };
 

@@ -2,12 +2,10 @@
     <div id="history-view">
         <div id="log-view" class="list-group"><svg xmlns="http://www.w3.org/2000/svg"></svg><div></div></div>
         <div id="commit-view">
-            <div class="commit-view-header">
-                <div class="btn-group" role="group" aria-label="...">
-                  <button type="button" :class="tab == 'commit' ? 'btn btn-primary' : 'btn btn-default'" @click="tab = 'commit'">Commit</button>
-                  <button type="button" :class="tab == 'tree' ? 'btn btn-primary' : 'btn btn-default'" @click="tab = 'tree'">Tree</button>
-                </div>
-            </div>
+            <ul class="nav nav-tabs">
+              <li role="presentation" :class="tab == 'commit' ? 'active' : ''" ><a href="#" @click.prevent="tab = 'commit'" >Commit</a></li>
+              <li role="presentation" :class="tab == 'tree' ? 'active' : ''" ><a href="#" @click.prevent="tab = 'tree'">Tree</a></li>
+            </ul>
             <div class="diff-view-container panel panel-default" v-show="tab == 'commit'">
                 <commit :commit="historyState.commit"></commit>
             </div>
@@ -49,7 +47,6 @@ export default defineComponent({
                 }
                 if ((self.historyState.commit != null) && (self.commit != self.historyState.commit.commit)) {
                     self.commit = self.historyState.commit.commit;
-                    // self.diffView.update(self.commit);
                 }
             },
             deep: true
@@ -60,7 +57,6 @@ export default defineComponent({
             // Init views
             const self = this;
             self.logView = new LogView('#log-view', self.historyState);
-            // self.diffView = new DiffView('#commit-view .diff-view-container', false, false, null);
         },
     },
     mounted() {

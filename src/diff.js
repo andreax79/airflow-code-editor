@@ -16,14 +16,10 @@
 
 import { git } from "./commons";
 
-export function DiffView(id, sideBySide, hunkSelectionAllowed, parent) {
+export function DiffView(id, parent) {
     let self = this;
 
-    self.update = function(cmd, diffOpts, file, mode) {
-        gitApplyType = mode;
-        jQuery(".diff-stage", self.element).attr("style", "display:none");
-        jQuery(".diff-cancel", self.element).attr("style", "display:none");
-        jQuery(".diff-unstage", self.element).attr("style", "display:none");
+    self.update = function(cmd, diffOpts, file) {
         if (cmd) {
             self.gitCmd = cmd;
             self.gitDiffOpts = diffOpts;
@@ -57,9 +53,7 @@ export function DiffView(id, sideBySide, hunkSelectionAllowed, parent) {
                 fullCmd.push("--");
                 fullCmd.push(self.gitFile);
             }
-            git(fullCmd, function(diff) {
-                self.refresh(diff);
-            });
+            git(fullCmd, (diff) => self.refresh(diff));
         } else {
             self.refresh("");
         }
@@ -69,24 +63,9 @@ export function DiffView(id, sideBySide, hunkSelectionAllowed, parent) {
         self.currentDiff = diff;
         self.diffHeader = "";
         jQuery("span", self.element).text('Context: ' + self.context);
-        if (sideBySide) {
-            let diffLines = diff.split("\n");
-            self.updateSplitView(self.leftLines, diffLines, '-');
-            self.updateSplitView(self.rightLines, diffLines, '+');
-        } else {
-            self.updateSimpleView(self.singleLines, diff);
-        }
-    }
-
-    self.updateSimpleView = function(view, diff) {
-        jQuery(view).empty();
-
-        let context = { inHeader: true };
-        let diffLines = diff.split("\n");
-        for (let i = 0; i < diffLines.length; ++i) {
-            let line = diffLines[i];
-            context = self.addDiffLine(view, line, context);
-        }
+        const diffLines = diff.split("\n");
+        self.updateSplitView(self.leftLines, diffLines, '-');
+        self.updateSplitView(self.rightLines, diffLines, '+');
     }
 
     self.updateSplitView = function(view, diffLines, operation) {
@@ -167,85 +146,6 @@ export function DiffView(id, sideBySide, hunkSelectionAllowed, parent) {
         return context;
     }
 
-    self.createSelectionPatch = function (reverse) {
-        let patch = "";
-        // First create the header
-        for (let l = 0; l < self.leftLines.childElementCount; ++l) {
-            let line = self.leftLines.children[l].textContent;
-            if (line[0] == "@") {
-                break;
-            } else {
-                patch += line + "\n";
-            }
-        }
-        patch += self.rightLines.children[l - 1].textContent + "\n";
-        // Then build the patch itself
-        let refLineNo = 0;
-        let patchOffset = 0;
-        let hunkAddedLines = [];
-        let hunkRemovedLines = [];
-        for (; l < self.leftLines.childElementCount; ++l) {
-            let leftElt = self.leftLines.children[l];
-            let leftLine = leftElt.textContent;
-            let leftCmd = leftLine[0];
-
-            if (leftCmd == "@" || (leftCmd == " " && !jQuery(leftElt).hasClass("diff-line-phantom"))) {
-                if (hunkAddedLines.length != 0 || hunkRemovedLines.length != 0) {
-                    patch += self.flushSelectionPatch(hunkAddedLines, hunkRemovedLines, refLineNo, patchOffset);
-                    refLineNo += hunkRemovedLines.length
-                    patchOffset += hunkAddedLines.length - hunkRemovedLines.length;
-                    let hunkAddedLines = [];
-                    let hunkRemovedLines = [];
-                }
-                if (leftCmd == "@") {
-                    let splittedContext = leftLine.split(" ");
-                    if (!reverse) {
-                        refLineNo = Math.abs(splittedContext[1].split(",")[0]);
-                    } else {
-                        refLineNo = Math.abs(splittedContext[2].split(",")[0]);
-                    }
-                } else {
-                    ++refLineNo;
-                }
-            } else if (leftCmd == "-" || jQuery(leftElt).hasClass("diff-line-phantom")) {
-                if (leftCmd == "-") {
-                    if (jQuery(leftElt).hasClass("active")) {
-                        if (!reverse) {
-                            hunkRemovedLines.push(leftLine);
-                        } else {
-                            hunkAddedLines.push(self.reverseLine(leftLine));
-                        }
-                    } else if (!reverse) {
-                        ++refLineNo;
-                    }
-                }
-                let rightElt = self.rightLines.children[l];
-                if (!jQuery(rightElt).hasClass("diff-line-phantom")) {
-                    if (jQuery(rightElt).hasClass("active")) {
-                        if (!reverse) {
-                            hunkAddedLines.push(rightElt.textContent);
-                        } else {
-                            hunkRemovedLines.push(self.reverseLine(rightElt.textContent));
-                        }
-                    } else if (reverse) {
-                        ++refLineNo;
-                    }
-                }
-            }
-        }
-        if (hunkAddedLines.length != 0 || hunkRemovedLines.length != 0) {
-            patch += self.flushSelectionPatch(hunkAddedLines, hunkRemovedLines, refLineNo, patchOffset);
-        }
-        return patch;
-    }
-
-    self.flushSelectionPatch = function(hunkAddedLines, hunkRemovedLines, refLineNo, patchOffset) {
-        let patch = "@@ -" + refLineNo + "," + hunkRemovedLines.length +" +" + (refLineNo + patchOffset) + "," + hunkAddedLines.length + " @@\n";
-        hunkRemovedLines.forEach(function (line) { patch += line + "\n" });
-        hunkAddedLines.forEach(function (line) { patch += line + "\n" });
-        return patch;
-    }
-
     self.reverseLine = function(line) {
         switch (line[0]) {
             case '-':
@@ -302,109 +202,28 @@ export function DiffView(id, sideBySide, hunkSelectionAllowed, parent) {
         self.update();
     }
 
-    self.handleClick = function(event) {
-        let lineElt = event.target;
-        while (lineElt && !jQuery(lineElt).hasClass("diff-view-line")) {
-            lineElt = lineElt.parentElement;
-        }
-        if (!lineElt) {
-            return;
-        }
-        let diffLine = lineElt.textContent;
-        let cmd = diffLine[0];
-        if (cmd == "+" || cmd == "-") {
-            jQuery(lineElt).toggleClass("active");
-        } else if (cmd == "@") {
-            lineElt.webuiActive = !lineElt.webuiActive;
-            for (let elt = lineElt.nextElementSibling; elt; elt = elt.nextElementSibling) {
-                cmd = elt.textContent[0];
-                if (cmd == "+" || cmd == "-") {
-                    jQuery(elt).toggleClass("active", lineElt.webuiActive);
-                } else if (cmd == "@") {
-                    break;
-                }
-            }
-        }
-
-        let isActive = false
-        let lineContainers = [self.leftLines, self.rightLines];
-        for (let i = 0; i < lineContainers.length; ++i) {
-            let lineContainer = lineContainers[i];
-            for (let j = 0; j < lineContainer.childElementCount; ++j) {
-                let elt = lineContainer.children[j];
-                if (jQuery(elt).hasClass("active")) {
-                    isActive = true;
-                    break;
-                }
-            }
-        }
-        if (isActive) {
-            if (gitApplyType == "stage") {
-                jQuery(".diff-stage", self.element).removeAttr("style");
-                jQuery(".diff-cancel", self.element).removeAttr("style");
-                jQuery(".diff-unstage", self.element).attr("style", "display:none");
-            } else {
-                jQuery(".diff-stage", self.element).attr("style", "display:none");
-                jQuery(".diff-cancel", self.element).attr("style", "display:none");
-                jQuery(".diff-unstage", self.element).removeAttr("style");
-            }
-        } else {
-            jQuery(".diff-stage", self.element).attr("style", "display:none");
-            jQuery(".diff-cancel", self.element).attr("style", "display:none");
-            jQuery(".diff-unstage", self.element).attr("style", "display:none");
-        }
-    }
-
-    self.applySelection = function(reverse, cached) {
-        let patch = self.createSelectionPatch(reverse);
-        let cmd = [ "apply", "--unidiff-zero" ];
-        if (cached) {
-            cmd.push("--cached");
-        }
-        git(cmd, patch, function (data) {
-            if (parent != null) {
-                parent.update();
-            }
-        });
-    }
-
     self.element = jQuery(id)[0];
     let panelBody = jQuery(".panel-body", self.element)[0];
-    if (sideBySide) {
-        self.left = jQuery('<div class="diff-view"><div class="diff-view-lines"></div></div>')[0];
-        panelBody.appendChild(self.left);
-        self.leftLines = self.left.firstChild;
-        jQuery(self.left).scroll(self.diffViewScrolled);
-        self.left.webuiPrevScrollTop = self.left.scrollTop;
-        self.left.webuiPrevScrollLeft = self.left.scrollLeft;
-        self.right = jQuery('<div class="diff-view"><div class="diff-view-lines"></div></div>')[0];
-        panelBody.appendChild(self.right);
-        self.rightLines = self.right.firstChild;
-        jQuery(self.right).scroll(self.diffViewScrolled);
-        self.right.webuiPrevScrollTop = self.right.scrollTop;
-        self.right.webuiPrevScrollLeft = self.right.scrollLeft;
-        if (hunkSelectionAllowed) {
-            jQuery(self.left).click(self.handleClick);
-            jQuery(self.right).click(self.handleClick);
-        }
-    } else {
-        let single = jQuery('<div class="diff-view"><div class="diff-view-lines"></div></div>')[0];
-        panelBody.appendChild(single);
-        self.singleLines = single.firstChild;
-    }
+    self.left = jQuery('<div class="diff-view"><div class="diff-view-lines"></div></div>')[0];
+    panelBody.appendChild(self.left);
+    self.leftLines = self.left.firstChild;
+    jQuery(self.left).scroll(self.diffViewScrolled);
+    self.left.webuiPrevScrollTop = self.left.scrollTop;
+    self.left.webuiPrevScrollLeft = self.left.scrollLeft;
+    self.right = jQuery('<div class="diff-view"><div class="diff-view-lines"></div></div>')[0];
+    panelBody.appendChild(self.right);
+    self.rightLines = self.right.firstChild;
+    jQuery(self.right).scroll(self.diffViewScrolled);
+    self.right.webuiPrevScrollTop = self.right.scrollTop;
+    self.right.webuiPrevScrollLeft = self.right.scrollLeft;
 
     jQuery(".diff-context-remove", self.element).click(self.removeContext);
     jQuery(".diff-context-add", self.element).click(self.addContext);
     jQuery(".diff-context-all", self.element).click(self.allContext);
     jQuery(".diff-ignore-whitespace", self.element).click(self.toggleIgnoreWhitespace);
 
-    jQuery(".diff-stage", self.element).click(function() { self.applySelection(false, true); });
-    jQuery(".diff-cancel", self.element).click(function() { self.applySelection(true, false); });
-    jQuery(".diff-unstage", self.element).click(function() { self.applySelection(true, true); });
-
     self.context = 3;
     self.complete = false;
     self.ignoreWhitespace = false;
-    let gitApplyType = "stage";
 };
 

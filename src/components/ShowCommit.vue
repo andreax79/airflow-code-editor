@@ -79,8 +79,10 @@ export default defineComponent({
         },
         refresh() {
             const self = this;
-            const cmd = [ 'show', '--unified=3', self.commit.commit ];
-            git(cmd, self.parseDiff);
+            if (self.commit) {
+                const cmd = [ 'show', '--unified=3', self.commit.commit ];
+                git(cmd, self.parseDiff);
+            }
         },
     },
     watch: {

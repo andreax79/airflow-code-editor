@@ -437,6 +437,9 @@ body {
 .tree-view-tree-content a:hover {
   text-decoration: none;
 }
+.tree-view-tree-content .icon {
+    line-height: 2em;
+}
 .tree-view-tree-content .icon a,
 .tree-view-tree-content .name a,
 .tree-view-tree-content .action a {
@@ -699,6 +702,15 @@ body {
 }
 footer {
   display: none;
+}
+
+#commit-view .nav-tabs {
+    padding-top: 1em;
+    padding-left: 1em;
+}
+
+#commit-view .nav-tabs a:hover {
+    color: #000;
 }
 
 .show-commit {

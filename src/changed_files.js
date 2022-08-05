@@ -111,7 +111,7 @@ export function ChangedFilesView(workspaceView, type, label) {
         if (type == "staging-area") {
             cmd.push("--cached");
         }
-        workspaceView.diffView.update(cmd, undefined, [ element.model ] , type == "working-copy" ? "stage" : "unstage");
+        workspaceView.diffView.update(cmd, undefined, [ element.model ]);
     };
 
     self.unselect = function() {

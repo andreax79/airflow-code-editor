@@ -22,7 +22,9 @@ export function formatSize(size, type) {
     if (isNaN(size)) {
         return "";
     } else if (type == 'tree') { // tree - number of files in the folder
-        if (size == 1) {
+        if (size == null) {
+            return "";
+        } else if (size == 1) {
             return size + ' item';
         } else {
             return size + ' items';

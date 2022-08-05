@@ -23,7 +23,7 @@ export class WorkspaceView {
     constructor() {
         const self = this;
         self.element = jQuery('#workspace-view')[0];
-        self.diffView = new DiffView('#workspace-diff-view .diff-view-container', true, true, self);
+        self.diffView = new DiffView('#workspace-diff-view .diff-view-container', self);
         self.workspaceEditor = jQuery("#workspace-editor", self.element)[0];
         self.workingCopyView = new ChangedFilesView(self, "working-copy", "Working Copy");
         self.workspaceEditor.appendChild(self.workingCopyView.element);
@@ -33,14 +33,14 @@ export class WorkspaceView {
         self.workspaceEditor.appendChild(self.stagingAreaView.element);
     }
 
-    update(mode) {
+    update() {
         const self = this;
         document.location.hash = 'workspace';
         self.workingCopyView.update();
         self.stagingAreaView.update();
         self.commitMessageView.update();
         if (self.workingCopyView.getSelectedItemsCount() + self.stagingAreaView.getSelectedItemsCount() == 0) {
-            self.diffView.update(undefined, undefined, undefined, mode);
+            self.diffView.update(undefined, undefined, undefined);
         }
     }
 

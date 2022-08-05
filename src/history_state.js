@@ -12,7 +12,7 @@ export class HistoryState {
     update(item) {
         const self = this;
         self.item = item;
-        self.commit = null;
+        self.commit = { commit: item.name };
         self.stack.updateStack(item.name, 'tree');
         document.location.hash = item.id + '/' + item.name;
     }

@@ -1,7 +1,7 @@
 <template>
     <div class="tree-view">
         <ol class="breadcrumb">
-          <breadcrumb :stack="stack" :is-git="false"></breadcrumb>
+          <breadcrumb :stack="stack" :isGit="isGit"></breadcrumb>
           <div class="breadcrumb-buttons">
               <button v-on:click="newAction()" v-if="!isGit" type="button" class="btn btn-default btn-sm">New <i class="fa fa-plus-square" aria-hidden="true"></i></button>
               <button v-on:click="uploadAction()" v-if="!isGit" type="button" class="btn btn-default btn-sm">Upload <i class="fa fa-cloud-upload" aria-hidden="true"></i></button>

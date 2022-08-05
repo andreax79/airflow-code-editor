@@ -18,7 +18,7 @@
     </div>
 </template>
 <script>
-import { defineComponent } from 'vue';
+import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import TreeView from '@grapoza/vue-tree';
 import { prepareHref, splitPath } from '../commons';
@@ -31,7 +31,7 @@ export default defineComponent({
     },
     data() {
         return {
-            model: [],
+            model: ref([]),
             modelDefaults: {
                 loadChildrenAsync: this.loadChildrenAsync
             }
@@ -54,7 +54,7 @@ export default defineComponent({
                 } else if (section == 'workspace') {
                     self.current.section = section;
                     self.current.object = null;
-                    self.workspaceView.update([ 'stage' ]);
+                    self.workspaceView.update();
 
                 } else if (section == 'edit' && object) {
                     self.current.section = 'files';
@@ -87,15 +87,9 @@ export default defineComponent({
                 axios.get(prepareHref('tree'))
                       .then((response) => {
                             self.model.length = 0; // flush model
-                            response.data.value.forEach((part) => {
-                                part.label = part.label || part.id;
-                                part.treeNodeSpec = {
-                                    'expandable': !part.leaf,
-                                }
-                                if (!part.leaf) {
-                                    part.children = [];
-                                }
-                                self.model.push(part);
+                            response.data.value.forEach((node) => {
+                                node = self.prepareTreeNode(node);
+                                self.model.push(node);
                             });
                             resolve(true);
                       })
@@ -106,12 +100,12 @@ export default defineComponent({
             const self = this;
             const sectionAndName = splitPath(model.id);
             const section = sectionAndName[0];
-            const name = sectionAndName[1];
-            console.log('Sidebar.click section:' + section + ' name:' + name);
+            const name = (sectionAndName[1] || '').trim();
+            console.log('Sidebar.click section: ' + section + ' name: ' + name);
             if (section == 'workspace' || section == 'git') { // Workspace
                 self.current.section = 'workspace';
                 self.current.object = name;
-                self.workspaceView.update([ 'stage' ]);
+                self.workspaceView.update();
 
             } else if (section == 'files') { // Files
                 self.current.section = section
@@ -120,37 +114,41 @@ export default defineComponent({
 
             } else if (section == 'tags' ||
                        section == 'remote-branches' ||
-                       section == 'local-branches') {
+                       section == 'local-branches') { // Git tags/branches
                 if (name) {
                     self.current.section = section;
                     self.current.object = name;
                     self.historyState.update({ id: section, name: name });
                 } else {
+                    // Open tree node
                     jQuery('#sidebar-tree-' + section + '-exp').click();
                 }
             }
             return false;
         },
+        prepareTreeNode(node, parent) {
+            const self = this;
+            node.label = node.label || node.id;
+            node.type = node.leaf ? 'blob' : 'tree';
+            if (!node.icon || node.icon == 'fa-file') {
+                node.icon = getIcon(node.label, node.type);
+            }
+            node.treeNodeSpec = {
+                'expandable': !node.leaf,
+            }
+            if (!node.leaf) {
+                node.children = [];
+            }
+            if (parent) {
+                node.id = parent.id + '/' + node.id;
+            }
+            return node;
+        },
         loadChildrenAsync(parent) {
             const self = this;
             return new Promise((resolve, reject) => {
                 axios.get(prepareHref('tree/' + parent.id))
-                      .then((response) => {
-                            response.data.value.forEach((part) => {
-                                part.label = part.label || part.id;
-                                if (!part.icon || part.icon == 'fa-file') {
-                                    part.icon = getIcon(part.label, part.type);
-                                }
-                                part.treeNodeSpec = {
-                                    'expandable': !part.leaf,
-                                }
-                                if (!part.leaf) {
-                                    part.children = [];
-                                }
-                                part.id = parent.id + '/' + part.id;
-                            });
-                            resolve(response.data.value);
-                      })
+                      .then((response) => resolve(response.data.value.map((node) => self.prepareTreeNode(node, parent))))
                       .catch(error => reject());
                 });
         }

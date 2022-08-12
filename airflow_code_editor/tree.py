@@ -21,6 +21,12 @@ from airflow_code_editor.commons import (
     Args,
     TreeFunc,
     TreeOutput,
+    ICON_HOME,
+    ICON_GIT,
+    ICON_TAGS,
+    FOLDER_ICON,
+    ICON_LOCAL_BRANCHES,
+    ICON_REMOTE_BRANCHES,
 )
 from airflow_code_editor.utils import (
     always,
@@ -84,14 +90,14 @@ def get_root_node(path: Optional[str], args: Args) -> TreeOutput:
                     {
                         'id': 'files/~' + mount,
                         'label': mount,
-                        'icon': 'fa-folder',
+                        'icon': FOLDER_ICON,
                         'leaf': False,
                     }
                 )
     return result
 
 
-@node(id='files', label='Files', leaf=False, icon='fa-home')
+@node(id='files', label='Files', leaf=False, icon=ICON_HOME)
 def get_files_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree files node"
     result = []
@@ -146,27 +152,27 @@ def prepare_ls_tree_output(line: str) -> Dict[str, Any]:
     }
 
 
-@node(id='git', label='Git Workspace', icon='fa-briefcase', condition=git_enabled)
+@node(id='git', label='Git Workspace', icon=ICON_GIT, condition=git_enabled)
 def get_git_node(path: Optional[str], args: Args) -> TreeOutput:
     "List the contents of a git tree object"
     output = git_command_output('ls-tree', '-l', path or 'HEAD')
     return [prepare_ls_tree_output(line) for line in output if line]
 
 
-@node(id='tags', label='Tags', leaf=False, icon='fa-tags', condition=git_enabled)
+@node(id='tags', label='Tags', leaf=False, icon=ICON_TAGS, condition=git_enabled)
 def get_tags_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree tags node"
     if path:
         return get_git_node(path, args)
     output = git_command_output('tag')
-    return [prepare_git_output(line, 'fa-tags') for line in output if line]
+    return [prepare_git_output(line, ICON_TAGS) for line in output if line]
 
 
 @node(
     id='local-branches',
     label='Local Branches',
     leaf=False,
-    icon='fa-code-fork',
+    icon=ICON_LOCAL_BRANCHES,
     condition=git_enabled,
 )
 def get_local_branches_node(path: Optional[str], args: Args) -> TreeOutput:
@@ -174,14 +180,14 @@ def get_local_branches_node(path: Optional[str], args: Args) -> TreeOutput:
     if path:
         return get_git_node(path, args)
     output = git_command_output('branch')
-    return [prepare_git_output(line, 'fa-code-fork') for line in output if line]
+    return [prepare_git_output(line, ICON_LOCAL_BRANCHES) for line in output if line]
 
 
 @node(
     id='remote-branches',
     label='Remote Branches',
     leaf=False,
-    icon='fa-globe',
+    icon=ICON_REMOTE_BRANCHES,
     condition=git_enabled,
 )
 def get_remote_branches_node(path: Optional[str], args: Args) -> TreeOutput:
@@ -189,7 +195,7 @@ def get_remote_branches_node(path: Optional[str], args: Args) -> TreeOutput:
     if path:
         return get_git_node(path, args)
     output = git_command_output('branch', '--remotes')
-    return [prepare_git_output(line, 'fa-globe') for line in output if line]
+    return [prepare_git_output(line, ICON_REMOTE_BRANCHES) for line in output if line]
 
 
 def get_tree(path: Optional[str] = None, args: Args = {}) -> TreeOutput:

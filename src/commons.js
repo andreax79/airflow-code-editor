@@ -1,5 +1,6 @@
-import { BootstrapDialog } from './bootstrap-dialog';
+import { createApp, ref } from 'vue';
 import axios from 'axios';
+import VueUniversalModal from 'vue-universal-modal';
 
 export const CSRF_REFRESH = 1000 * 60 * 10;
 export const COLORS = [
@@ -17,21 +18,29 @@ export const COLORS = [
     "#ff911a", "#fc8120", "#e7623e", "#fa5236", "#ca4da9", "#a74fd3", "#5a68ff", "#6d69db", "#489bd9", "#00bcde", "#36a436", "#47a519", "#798d0a", "#c1a120", "#bf7730", "#8e8e8e"]
 
 var csrfToken = null;
+var vueApp = null;
 
 export function showError(message) {
-    BootstrapDialog.alert({
-        title: 'Error',
-        type: BootstrapDialog.TYPE_DANGER,
-        message: message,
-    });
+    if (vueApp) {
+        vueApp.showError(message);
+    }
 }
 
 export function showWarning(message) {
-    BootstrapDialog.alert({
-        title: 'Error',
-        type: BootstrapDialog.TYPE_WARNING,
-        message: message,
-    });
+    if (vueApp) {
+        vueApp.showWarning(message);
+    }
+}
+
+export function normalize(path) {
+    if (path[0] != '/') {
+        path = '/' + path;
+    }
+    return path.split(/[/]+/).join('/');
+}
+
+export function basename(path) {
+    return path.substring(path.lastIndexOf('/') + 1);
 }
 
 export function prepareHref(path) {
@@ -57,148 +66,6 @@ export function splitPath(path) {
     }
 }
 
-export function getIcon(type, path) {
-    if (type == 'tree') {
-        return 'fa-folder';
-    } else {
-        let extension = (path.substring(path.lastIndexOf('.') + 1) || '').toLowerCase();
-        if ([ 'zip', 'tar', 'tgz', 'tbz2', 'txz', 'z', 'gz', 'xz', 'bz', 'bz2', '7z', 'lz' ].indexOf(extension) != -1) {
-            return 'fa-file-archive-o';
-        } else if ([ 'jpg', 'jpeg', 'png', 'svg', 'git', 'bmp', 'ief', 'tif', 'tiff', 'ico' ].indexOf(extension) != -1) {
-            return 'fa-file-image-o';
-        } else if ([ 'py' ].indexOf(extension) != -1) {
-            return 'fa-file-text-o';
-        }
-        return 'fa-file-o';
-    }
-}
-
-export function TreeEntry(data, isGit, path) {
-    let self = this;
-    if (data) {
-        self.mode = data.mode;
-        self.isGit = isGit;
-        self.type = data.leaf ? 'blob' : 'tree';
-        if (self.isGit) {
-            self.object = data.id;
-        } else {
-            self.object = (path || '') + '/' + data.id;
-        }
-        self.mtime = data.mtime ? data.mtime.replace('T', ' ') : '';
-        self.size = data.size;
-        self.name = data.label || data.id;
-        self.isSymbolicLink = (self.mode & 120000) == 120000; // S_IFLNK
-        self.icon = getIcon(self.type, self.name);
-        // href
-        if (self.isGit) { // git blob
-            self.href = prepareHref('repo/' + self.object + '/' + self.name);
-        } else { // local file/dir
-            if (self.type == 'tree') {
-                self.href = '#files' + encodeURI(self.object);
-            } else {
-                self.href = '#edit' + encodeURI(self.object);
-            }
-        }
-        // download href
-        if (self.type == 'tree') { // tree
-            self.downloadHref = '#';
-        } else if (self.isGit) { // git blob
-            self.downloadHref = prepareHref('repo/' + self.object + '/' + self.name);
-        } else { // local file
-            self.downloadHref = prepareHref('files/' + self.object);
-        }
-        // size - https://en.wikipedia.org/wiki/Kilobyte
-        if (isNaN(self.size)) {
-            self.formattedSize = "";
-        } else if (self.type == 'tree') { // tree - number of files in the folder
-            if (self.size == 1) {
-                self.formattedSize = self.size + ' item';
-            } else {
-                self.formattedSize = self.size + ' items';
-            }
-        } else if (self.size < 10**3) {
-            self.formattedSize = self.size.toString() + " B";
-        } else if (self.size < 10**6) {
-            self.formattedSize = (self.size / 10**3).toFixed(2) + " kB";
-        } else if (self.size < 10**9) {
-            self.formattedSize = (self.size / 10**6).toFixed(2) + " MB";
-        } else {
-            self.formattedSize = (self.size / 10**9).toFixed(2) + " GB";
-        }
-    }
-}
-
-
-export function Stack() {
-    let self = this;
-
-    self.stack = [ { name: 'root', object: undefined } ],
-
-    self.updateStack = function(path, type) {
-        // path: absolute path (local file) or ref/path (git)
-        // type: last item type (tree or blob)
-        let stack = [];
-        let fullPath = null;
-        if (path == '/' || !path) {
-            path = '';
-        }
-        path.split('/').forEach(function(part, index) {
-            if (index === 0 && !part) {
-                stack.push({ name: 'root', object: undefined });
-                fullPath = '';
-            } else {
-                if (fullPath === null) {
-                    fullPath = part;
-                    part = 'root';
-                } else {
-                    fullPath += '/' + part;
-                }
-                if (part[0] == '~') {
-                    part = part.substring(1);
-                }
-                stack.push({
-                    name: part,
-                    object: fullPath,
-                    uri: encodeURI((fullPath !== undefined && fullPath.startsWith('/')) ? ('#files' + fullPath) : null),
-                    type: 'tree'
-                });
-            }
-        });
-        if (type == 'blob') {
-            stack[stack.length - 1].type = 'blob';
-        }
-        self.stack = stack;
-    }
-
-    self.last = function() {
-        // Return last stack element
-        return self.stack[self.stack.length - 1];
-    }
-
-    self.parent = function() {
-        // Return stack - 2 element
-        return self.stack.length > 1 ? self.stack[self.stack.length - 2] : undefined;
-    }
-
-    self.isGit = function() {
-        // Return true if last is a git ref
-        return (self.last().object !== undefined && !self.last().object.startsWith('/'));
-    }
-
-    self.pop = function() {
-        return self.stack.pop();
-    }
-
-    self.push = function(item) {
-        return self.stack.push(item);
-    }
-
-    self.slice = function(index) {
-        self.stack = self.stack.slice(0, index);
-    }
-
-};
-
 function refreshCsrfToken() {
     // Refresh CSRF Token
     axios.get(prepareHref('ping'))
@@ -217,10 +84,9 @@ export function initCsrfToken(csrfTokenParam) {
 }
 
 export function git(args, callback) {
-    const payload = { args: [].concat.apply([], args) };  // flat the array
+    const payload = { args: [].concat.apply([], args.filter(x => x != null)) };  // flat the array
     axios.post(prepareHref('repo'), payload)
          .then((response) => {
-            window.rrr = response;
             const messageStartIndex = response.data.length - parseInt(response.headers['x-git-stderr-length']);
             const rcode = parseInt(response.headers['x-git-return-code']);
             const output = response.data.substring(0, messageStartIndex);
@@ -241,4 +107,16 @@ export function git(args, callback) {
             console.log(error);
             showError(error.response ? error.response.data.message : error);
          });
+}
+
+export function initApp(app, target, teleportTarget, csrfTokenParam) {
+    // CSRF Token setup
+    initCsrfToken(csrfTokenParam);
+    // Add VueUniversalModal
+    app.use(VueUniversalModal, {
+        teleportTarget: teleportTarget
+    });
+    // Mount app
+    vueApp = app.mount(target);
+    return vueApp;
 }

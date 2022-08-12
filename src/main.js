@@ -1,15 +1,14 @@
-import Vue from 'vue'
-import App from './components/App.vue'
-import { initCsrfToken } from "./commons";
+import { createApp } from 'vue';
+import App from './components/App.vue';
+import { initApp } from './commons';
 
 window.init = function(csrfTokenParam) {
-    // Init
-    CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';
-    // CSRF Token setup
-    initCsrfToken(csrfTokenParam)
-    jQuery('#global-container').appendTo(jQuery("body"));
+    const target = '#global-container';
+    const teleportTarget = '#airflow-code-editor-modals';
+    // CodeMirror
+    window.CodeMirror.modeURL = '/static/code_editor/mode/%N/%N.js';
     // Init app
-    window.app = new Vue({
-      render: h => h(App),
-    }).$mount('#global-container')
+    jQuery(target).appendTo(jQuery('body'));
+    const app = createApp(App);
+    window.app = initApp(app, target, teleportTarget, csrfTokenParam);
 }

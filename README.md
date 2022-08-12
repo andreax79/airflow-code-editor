@@ -171,6 +171,7 @@ Example:
 * Vue.js - https://github.com/vuejs/vue
 * Vue-good-table, data table for VueJS - https://github.com/xaksis/vue-good-table
 * Vue-tree, TreeView control for VueJS - https://github.com/grapoza/vue-tree
+* Vue-universal-modal Universal modal plugin for Vue@3 - https://github.com/hoiheart/vue-universal-modal
 * Splitpanes - https://github.com/antoniandre/splitpanes
 * Axios, Promise based HTTP client for the browser and node.js - https://github.com/axios/axios
 * PyFilesystem2, Python's Filesystem abstraction layer - https://github.com/PyFilesystem/pyfilesystem2

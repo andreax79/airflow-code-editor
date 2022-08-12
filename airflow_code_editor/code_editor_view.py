@@ -17,7 +17,7 @@
 
 import logging
 import mimetypes
-from flask import abort, request
+from flask import request, make_response
 from flask_wtf.csrf import generate_csrf
 from airflow.version import version
 from airflow_code_editor.commons import HTTP_404_NOT_FOUND
@@ -79,14 +79,14 @@ class AbstractCodeEditorView(object):
         try:
             # Download git blob - path = '<hash>/<name>'
             path, attachment_filename = path.split('/', 1)
-        except:
+        except Exception:
             # No attachment filename
             attachment_filename = None
         response = execute_git_command(["cat-file", "-p", path])
         if attachment_filename:
-            response.headers["Content-Disposition"] = (
-                'attachment; filename="{0}"'.format(attachment_filename)
-            )
+            response.headers[
+                "Content-Disposition"
+            ] = 'attachment; filename="{0}"'.format(attachment_filename)
             try:
                 content_type = mimetypes.guess_type(attachment_filename)[0]
                 if content_type:
@@ -114,7 +114,10 @@ class AbstractCodeEditorView(object):
                 return root_fs.path(path).send_file(as_attachment=True)
         except Exception as ex:
             logging.error(ex)
-            abort(HTTP_404_NOT_FOUND)
+            strerror = getattr(ex, 'strerror', str(ex))
+            errno = getattr(ex, 'errno', 0)
+            message = prepare_api_response(error_message=strerror, errno=errno)
+            return make_response(message, HTTP_404_NOT_FOUND)
 
     def _format(self):
         "Format code"

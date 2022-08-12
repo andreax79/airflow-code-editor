@@ -17,7 +17,7 @@
 import { COLORS, git } from "./commons";
 
 export function LogView(id, historyView) {
-    let self = this;
+    const self = this;
 
     self.update = function(ref) {
         jQuery(svg).empty();
@@ -28,7 +28,8 @@ export function LogView(id, historyView) {
     };
 
     self.populate = function() {
-        let maxCount = 1000;
+        currentSelection = null;
+        const maxCount = 1000;
         if (content.childElementCount > 0) {
             // The last node is the 'Show more commits placeholder'. Remove it.
             content.removeChild(content.lastElementChild);
@@ -49,7 +50,8 @@ export function LogView(id, historyView) {
                     }
                     entry.element.setAttribute("style", "height:" + self.lineHeight + "px");
                     if (!currentSelection) {
-                        entry.select();
+                        currentSelection = entry;
+                        jQuery(entry.element).addClass("active");
                     }
                 } else {
                     self.nextRef = entry.commit;
@@ -145,7 +147,7 @@ export function LogView(id, historyView) {
                     streams.splice(index + j, 0, obj);
                 }
             }
-            for (let j = index + j; j < streams.length; ++j) {
+            for (let j = index + entry.parents.length; j < streams.length; ++j) {
                 let stream = streams[j];
                 let x = (j + 1) * xOffset;
                 stream.path.cmds += (currentY - self.lineHeight / 2) + " L " + x + " " + currentY + " L " + x + " ";
@@ -252,7 +254,7 @@ export function LogView(id, historyView) {
                 }
                 jQuery(self.element).addClass("active");
                 currentSelection = self;
-                logView.historyView.commitView.update(self);
+                historyView.updateCommit(self);
             }
         };
 
@@ -288,7 +290,6 @@ export function LogView(id, historyView) {
         self.createElement();
     };
 
-    self.historyView = historyView;
     self.element = jQuery(id)[0];
     let svg = self.element.children[0];
     let content = self.element.children[1];

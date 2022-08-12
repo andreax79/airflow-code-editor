@@ -386,3 +386,22 @@
 - download git objects from /repo/<object> instead of /files/~git/<object>
 - node packages upgrade
 - CodeMirror upgrade
+
+## 7.0.0
+
+2022-08-12
+
+### Changed
+
+- Migrate from Vue 2 to Vue 3
+- Refactor History View
+- Refactor Workspace View
+- Refactor Files and Editor components
+- Refactor CSS
+- Replace Bootstap Modals with Vue-universal-modal
+- Replace Font Awesome with Material Icons
+
+### Fix
+
+- Raise the correct exception at file loading and show the error in the editor
+- Fix exception related to https://github.com/axios/axios/issues/811

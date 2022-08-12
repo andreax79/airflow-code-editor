@@ -15,14 +15,14 @@
 #   limitations under the Licens
 
 import os
+import errno
 import fs
 from fs.mountfs import MountFS, MountError
 from fs.multifs import MultiFS
 from fs.path import abspath, forcedir, normpath
 from typing import Any, List, Union
-from flask import abort, send_file, stream_with_context, Response
+from flask import send_file, stream_with_context, Response
 from airflow_code_editor.utils import read_mount_points_config
-from airflow_code_editor.commons import HTTP_404_NOT_FOUND
 
 __all__ = [
     'RootFS',
@@ -197,7 +197,7 @@ class FSPath(object):
     def send_file(self, as_attachment: bool):
         "Send the contents of a file to the client"
         if not self.exists():
-            abort(HTTP_404_NOT_FOUND)
+            raise FileNotFoundError(errno.ENOENT, 'File not found', self.path)
         elif self.root_fs.hassyspath(self.path):
             # Local filesystem
             return send_file(

@@ -207,7 +207,9 @@ def git_call(
 
 
 def get_default_branch() -> str:
-    stdout = git_call(['config', '--global', 'init.defaultBranch'], capture_output=True)[1]
+    stdout = git_call(
+        ['config', '--global', 'init.defaultBranch'], capture_output=True
+    )[1]
     default_branch = stdout.decode('utf8').strip('\n')
     return default_branch or DEFAULT_GIT_BRANCH
 

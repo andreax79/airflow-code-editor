@@ -1,35 +1,68 @@
 <template>
     <div>
-        <div id="sidebar-content">
+        <div class="sidebar-content">
             <tree id="sidebar-tree"
                   :initial-model="model"
                   :model-defaults="modelDefaults">
-                <template #text="{ model, customClasses }">
+                <template #text="{ model }">
                     <div :title="model.treeNodeSpec.title"
                          class="grtvn-self-text"
-                         v-on:click="click(model)"
-                         :class="customClasses.treeViewNodeSelfText">
-                         <i v-if="model.icon" :class="'fa ' + model.icon" aria-hidden="true"></i>
+                         v-on:click="click(model)">
+                         <icon :icon="model.icon" />
                          {{ model.label }}
                     </div>
                 </template>
             </tree>
+            <span class="bug-report">
+               <a href="https://github.com/andreax79/airflow-code-editor/issues" target="_blank"><icon icon="bug_report"/> Report an issue</a>
+            </span>
         </div>
     </div>
 </template>
+<style>
+.sidebar-content {
+    flex: 1 1 0;
+    -webkit-flex: 1 1 0;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    cursor: default;
+    color: #eeeeee;
+    padding: 1em;
+}
+.sidebar-content .bug-report {
+    position: absolute;
+    z-index: 10;
+    bottom: 5px;
+    left: 5px;
+}
+.sidebar-content .bug-report a {
+    color: #ddd;
+}
+.sidebar-content .bug-report .material-icons {
+    margin-right: 0;
+}
+.grtv-wrapper.grtv-default-skin .grtvn-self {
+    line-height: inherit;
+}
+</style>
 <script>
+import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import TreeView from '@grapoza/vue-tree';
-import { prepareHref, splitPath, getIcon } from '../commons';
+import { prepareHref, splitPath } from '../commons';
+import { getIcon } from '../tree_entry';
+import Icon from './Icon.vue';
 
-export default {
-    props: [ 'stack', 'current', 'historyView', 'workspaceView' ],
+export default defineComponent({
+    props: [ 'current' ],
     components: {
-        tree: TreeView
+        'icon': Icon,
+        'tree': TreeView
     },
     data() {
         return {
-            model: [],
+            model: ref([]),
             modelDefaults: {
                 loadChildrenAsync: this.loadChildrenAsync
             }
@@ -38,35 +71,25 @@ export default {
     methods: {
         parseURIFragment() {
             // Change the active section according to the uri fragment (hash)
-            const self = this;
             return new Promise((resolve, reject) => {
                 const match = /#?([a-z-]+)(\/(.*))?/.exec(document.location.hash);
                 const section = match !== null ? match[1] : 'files';
                 const object = match !== null ? match[3] : null;
 
                 if (section == 'tags' || section == 'local-branches' || section == 'remote-branches') {
-                    self.current.section = section;
-                    self.current.object = object;
-                    self.historyView.update({ id: section, name: object });
+                    this.$emit("show", { id: section, name: object });
 
                 } else if (section == 'workspace') {
-                    self.current.section = section;
-                    self.current.object = null;
-                    self.workspaceView.update([ 'stage' ]);
+                    this.$emit("show", { id: 'workspace', name: name });
 
                 } else if (section == 'edit' && object) {
-                    self.current.section = 'files';
-                    self.current.object = '/' + object.split('/')[0];
-                    self.stack.updateStack('/' + object, 'blob');
+                    this.$emit("show", { id: 'files', path: '/' + object, type: 'blob' });
 
                 } else { // files
-                    self.current.section = 'files';
                     if (object) {
-                        self.current.object = '/' + object.split('/')[0];
-                        self.stack.updateStack('/' + object, 'tree');
+                        this.$emit("show", { id: 'files', path: '/' + object, type: 'tree' });
                     } else {
-                        self.current.object = null;
-                        self.stack.updateStack('/', 'tree');
+                        this.$emit("show", { id: 'files', path: '/', type: 'tree' });
                     }
                 }
                 resolve(true);
@@ -74,7 +97,6 @@ export default {
         },
         showContainer() {
             // Show global container
-            const self = this;
             jQuery('#global-container').show();
             return(Promise.resolve(true));
         },
@@ -85,15 +107,9 @@ export default {
                 axios.get(prepareHref('tree'))
                       .then((response) => {
                             self.model.length = 0; // flush model
-                            response.data.value.forEach((part) => {
-                                part.label = part.label || part.id;
-                                part.treeNodeSpec = {
-                                    'expandable': !part.leaf,
-                                }
-                                if (!part.leaf) {
-                                    part.children = [];
-                                }
-                                self.model.push(part);
+                            response.data.value.forEach((node) => {
+                                node = self.prepareTreeNode(node);
+                                self.model.push(node);
                             });
                             resolve(true);
                       })
@@ -101,63 +117,59 @@ export default {
                 });
         },
         click(model) {
-            const self = this;
             const sectionAndName = splitPath(model.id);
             const section = sectionAndName[0];
-            const name = sectionAndName[1];
+            const name = (sectionAndName[1] || '').trim();
+            console.log('Sidebar.click section: ' + section + ' name: ' + name);
             if (section == 'workspace' || section == 'git') { // Workspace
-                self.current.section = 'workspace';
-                self.current.object = name;
-                self.workspaceView.update([ 'stage' ]);
+                this.$emit("show", { id: 'workspace', name: name });
 
             } else if (section == 'files') { // Files
-                self.current.section = section
-                self.current.object = '/' + name;
-                self.stack.updateStack('/' + name, model.leaf ? 'blob' : 'tree');
+                this.$emit("show", { id: 'files', path: '/' + name, type: model.leaf ? 'blob' : 'tree' });
 
             } else if (section == 'tags' ||
                        section == 'remote-branches' ||
-                       section == 'local-branches') {
+                       section == 'local-branches') { // Git tags/branches
                 if (name) {
-                    self.current.section = section;
-                    self.current.object = name;
-                    self.historyView.update({ id: section, name: name });
+                    this.$emit("show", { id: section, name: name });
                 } else {
+                    // Open tree node
                     jQuery('#sidebar-tree-' + section + '-exp').click();
                 }
             }
             return false;
         },
+        prepareTreeNode(node, parent) {
+            node.label = node.label || node.id;
+            node.type = node.leaf ? 'blob' : 'tree';
+            if (!node.icon || node.icon == 'file') {
+                node.icon = getIcon(node.label, node.type);
+            }
+            node.treeNodeSpec = {
+                'expandable': !node.leaf,
+            }
+            if (!node.leaf) {
+                node.children = [];
+            }
+            if (parent) {
+                node.id = parent.id + '/' + node.id;
+            }
+            return node;
+        },
         loadChildrenAsync(parent) {
             const self = this;
             return new Promise((resolve, reject) => {
                 axios.get(prepareHref('tree/' + parent.id))
-                      .then((response) => {
-                            response.data.value.forEach((part) => {
-                                part.label = part.label || part.id;
-                                if (!part.icon || part.icon == 'fa-file') {
-                                    part.icon = getIcon(part.type, part.label);
-                                }
-                                part.treeNodeSpec = {
-                                    'expandable': !part.leaf,
-                                }
-                                if (!part.leaf) {
-                                    part.children = [];
-                                }
-                                part.id = parent.id + '/' + part.id;
-                            });
-                            resolve(response.data.value);
-                      })
+                      .then((response) => resolve(response.data.value.map((node) => self.prepareTreeNode(node, parent))))
                       .catch(error => reject());
                 });
-        },
+        }
     },
     mounted() {
         // Init
-        const self = this;
-        self.fetchTree()
-            .then(self.parseURIFragment)
-            .then(self.showContainer);
+        this.fetchTree()
+            .then(this.parseURIFragment)
+            .then(this.showContainer)
     }
-}
+})
 </script>

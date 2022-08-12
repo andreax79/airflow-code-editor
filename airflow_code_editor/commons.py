@@ -32,6 +32,13 @@ __all__ = [
     'PLUGIN_DEFAULT_CONFIG',
     'ROOT_MOUNTPOUNT',
     'JS_FILES',
+    'ICON_HOME',
+    'ICON_GIT',
+    'ICON_TAGS',
+    'FILE_ICON',
+    'FOLDER_ICON',
+    'ICON_LOCAL_BRANCHES',
+    'ICON_REMOTE_BRANCHES',
     'VERSION_FILE',
     'VERSION',
     'Args',
@@ -99,6 +106,14 @@ JS_FILES = [
     'sublime.js',
     'airflow_code_editor.js',
 ]
+
+ICON_HOME = 'home'
+ICON_GIT = 'work'
+ICON_TAGS = 'style'
+FILE_ICON = 'file'
+FOLDER_ICON = 'folder'
+ICON_LOCAL_BRANCHES = 'fork_right'
+ICON_REMOTE_BRANCHES = 'public'
 
 VERSION_FILE = Path(__file__).parent / "VERSION"
 VERSION = VERSION_FILE.read_text().strip()

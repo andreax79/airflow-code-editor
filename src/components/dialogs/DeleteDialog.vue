@@ -1,0 +1,66 @@
+<template>
+  <modal v-model="show" :close="close">
+    <div class="airflow-code-editor-modal airflow-code-editor-modal-delete">
+      <h1>Confirm Delete</h1>
+      <label>Are you sure you want to delete {{ target }}</label>
+      <div class="delete-dialog-buttons">
+        <button @click="cancel" class="btn btn-default">Cancel</button>
+        <button @click="ok" class="btn btn-primary">Ok</button>
+      </div>
+    </div>
+  </modal>
+</template>
+<style>
+.airflow-code-editor-modal.airflow-code-editor-modal-delete {
+    padding: 1em;
+    font-size: 1em;
+}
+.airflow-code-editor-modal-delete h1 {
+    font-size: 1.5em;
+    text-align: left;
+    margin-top: 0;
+    margin-bottom: 1em;
+}
+.airflow-code-editor-modal-delete label {
+    display: block;
+    text-align: left;
+    margin-bottom: 1em;
+}
+.airflow-code-editor-modal-delete .delete-dialog-buttons {
+    margin-top: 1em;
+    text-align: right;
+}
+.airflow-code-editor-modal-delete .delete-dialog-buttons .btn {
+    margin-left: 1em;
+}
+</style>
+<script>
+import { defineComponent } from 'vue';
+import { git } from '../../commons';
+
+export default defineComponent({
+    props: [],
+    data() {
+        return {
+            target: null,
+            show: false,
+        }
+    },
+    methods: {
+        showDialog(target) {
+            this.target = target;
+            this.show = true;
+        },
+        ok() {
+            git([ 'rm-local', this.target ], data => this.$emit('refresh'));
+            this.close();
+        },
+        cancel() {
+            this.close();
+        },
+        close() {
+            this.show = false;
+        },
+    }
+})
+</script>

@@ -18,14 +18,21 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 
 ### Screenshots
 
-![File manager](https://user-images.githubusercontent.com/1288154/133688225-1a5e2298-bfb2-402f-999c-1126b4e4ceb5.png)
+#### File Manager
 
-![Code editor](https://user-images.githubusercontent.com/1288154/133688469-96a0ae00-a1dd-4923-b09a-59cd41a5b4e7.png)
+![File Manager](https://user-images.githubusercontent.com/1288154/186698558-55ecbc61-d9fa-418e-8eac-b441e8b7a56a.png)
 
-![Git tags](https://andreax79.github.io/airflow-code-editor/screenshots/3.png)
+#### Editor
 
-![Git workspace](https://andreax79.github.io/airflow-code-editor/screenshots/4.png)
+![Editor](https://user-images.githubusercontent.com/1288154/186698576-4fd8be33-169a-48a0-9c48-8ab942c5bc89.png)
 
+#### Git History
+
+![Git History - Tags](https://user-images.githubusercontent.com/1288154/186698589-f9342845-c819-4a7f-b1e0-92228016c1cd.png)
+
+#### Git Workspace
+
+![Git Workspace](https://user-images.githubusercontent.com/1288154/186698602-bf82b405-5df0-4a9d-ad49-03e3b22e20e6.png)
 
 ### Install Instructions
 

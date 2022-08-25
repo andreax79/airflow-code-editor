@@ -405,3 +405,11 @@
 
 - Raise the correct exception at file loading and show the error in the editor
 - Fix exception related to https://github.com/axios/axios/issues/811
+
+## 7.0.1
+
+2022-08-25
+
+### Fix
+
+- Fix "send_file() got an unexpected keyword argument 'attachment_filename'" exception for new version of Flask

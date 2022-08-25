@@ -200,18 +200,28 @@ class FSPath(object):
             raise FileNotFoundError(errno.ENOENT, 'File not found', self.path)
         elif self.root_fs.hassyspath(self.path):
             # Local filesystem
-            return send_file(
-                self.root_fs.getsyspath(self.path),
-                as_attachment=as_attachment,
-                attachment_filename=self.name if as_attachment else None,
-            )
+            if as_attachment:
+                # Send file as attachment (set Content-Disposition: attachment header)
+                try:
+                    # flask >= 2.0 -  download_name replaces the attachment_filename
+                    return send_file(
+                        self.root_fs.getsyspath(self.path),
+                        as_attachment=True,
+                        download_name=self.name,
+                    )
+                except TypeError:
+                    return send_file(
+                        self.root_fs.getsyspath(self.path),
+                        as_attachment=True,
+                    )
+            else:
+                return send_file(self.root_fs.getsyspath(self.path))
         else:
             # Other filesystems
             response = Response(stream_with_context(self.read_file_chunks()))
             if as_attachment:
-                response.headers[
-                    'Content-Disposition'
-                ] = 'attachment;filename={}'.format(self.name)
+                content_disposition = 'attachment;filename={}'.format(self.name)
+                response.headers['Content-Disposition'] = content_disposition
             return response
 
     def write_file(self, data: Union[str, bytes], is_text: bool) -> None:

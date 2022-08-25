@@ -127,7 +127,7 @@ def read_mount_points_config() -> Dict[str, MountPoint]:
                 k, v = part.split('=')
                 mount_conf[k] = v
             config[mount_conf['name']] = MountPoint(
-                path=mount_conf['path'], default=False
+                path=mount_conf['path'], default=mount_conf['name'] == ROOT_MOUNTPOUNT
             )
         except Exception:
             pass
@@ -148,7 +148,9 @@ def read_mount_points_config() -> Dict[str, MountPoint]:
             break
         name = configuration.conf.get(PLUGIN_NAME, 'mount{}_name'.format(suffix))
         path = configuration.conf.get(PLUGIN_NAME, 'mount{}_path'.format(suffix))
-        config[name] = MountPoint(path=path, default=False)
+        config[name] = MountPoint(
+            path=path, default=mount_conf['name'] == ROOT_MOUNTPOUNT
+        )
     return config
 
 

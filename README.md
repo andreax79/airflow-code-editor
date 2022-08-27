@@ -68,6 +68,7 @@ All the settings are optional.
 * **line_length**  Python code formatter - max line length (default: 88)
 * **string_normalization**  Python code formatter - if true normalize string quotes and prefixes (default: False)
 * **mount**, **mount1**, ...  configure additional folder (mount point) - format: name=xxx,path=yyy
+* **ignored_entries** comma-separated list of entries to be excluded from file/directory list (default: .*,__pycache__)
 
 ```
    [code_editor]
@@ -107,6 +108,7 @@ You can also set options with the following environment variables:
 * AIRFLOW__CODE_EDITOR__LINE_LENGTH
 * AIRFLOW__CODE_EDITOR__STRING_NORMALIZATION
 * AIRFLOW__CODE_EDITOR__MOUNT, AIRFLOW__CODE_EDITOR__MOUNT1, AIRFLOW__CODE_EDITOR__MOUNT2, ...
+* AIRFLOW__CODE_EDITOR__IGNORED_ENTRIES
 
 Example:
 ```

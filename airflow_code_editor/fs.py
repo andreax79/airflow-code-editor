@@ -17,12 +17,13 @@
 import os
 import errno
 import fs
+from fnmatch import fnmatch
 from fs.mountfs import MountFS, MountError
 from fs.multifs import MultiFS
 from fs.path import abspath, forcedir, normpath
 from typing import Any, List, Optional, Union
 from flask import send_file, stream_with_context, Response
-from airflow_code_editor.utils import read_mount_points_config
+from airflow_code_editor.utils import read_mount_points_config, get_plugin_config
 
 __all__ = [
     'RootFS',
@@ -159,12 +160,25 @@ class FSPath(object):
         "Check if this path exists"
         return self.root_fs.exists(self.path)
 
-    def iterdir(self):
+    def iterdir(self, show_ignored_entries=False):
         "Iterate over the files in this directory"
+        ignored_entries = get_plugin_config('ignored_entries').split(',')
+        mount_points = [x[0].rstrip('/') for x in self.root_fs.mounts]
         for name in sorted(self.root_fs.listdir(self.path)):
-            if name.startswith(".") or name == "__pycache__":
-                continue
-            yield self.root_fs.path(self.path, name)
+            skip = False
+            if not show_ignored_entries:
+                fullpath = os.path.join(self.path, name)
+                # Skip mount points
+                if fullpath in mount_points:
+                    skip = True
+                # Ship hidden files
+                for patter in ignored_entries:
+                    if fnmatch(
+                        fullpath if patter.startswith('/') else name, patter.strip()
+                    ):
+                        skip = True
+            if not skip:
+                yield self.root_fs.path(self.path, name)
 
     def size(self) -> Optional[int]:
         "Return file size for files and number of files for directories"

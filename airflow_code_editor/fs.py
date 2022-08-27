@@ -20,7 +20,7 @@ import fs
 from fs.mountfs import MountFS, MountError
 from fs.multifs import MultiFS
 from fs.path import abspath, forcedir, normpath
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union
 from flask import send_file, stream_with_context, Response
 from airflow_code_editor.utils import read_mount_points_config
 
@@ -161,20 +161,20 @@ class FSPath(object):
 
     def iterdir(self):
         "Iterate over the files in this directory"
-        try:
-            for name in sorted(self.root_fs.listdir(self.path)):
-                if name.startswith(".") or name == "__pycache__":
-                    continue
-                yield self.root_fs.path(self.path, name)
-        except IOError:
-            yield from []
+        for name in sorted(self.root_fs.listdir(self.path)):
+            if name.startswith(".") or name == "__pycache__":
+                continue
+            yield self.root_fs.path(self.path, name)
 
-    def size(self) -> int:
+    def size(self) -> Optional[int]:
         "Return file size for files and number of files for directories"
-        if self.is_dir():
-            return len(self.root_fs.listdir(self.path))
-        else:
-            return self.root_fs.getsize(self.path)
+        try:
+            if self.is_dir():
+                return len(self.root_fs.listdir(self.path))
+            else:
+                return self.root_fs.getsize(self.path)
+        except fs.errors.FSError:
+            return None
 
     def move(self, target) -> None:
         "Move/rename a file or directory"

@@ -146,7 +146,14 @@ class AbstractCodeEditorView(object):
             )
 
     def _tree(self, path, args={}):
-        return {'value': get_tree(path, args)}
+        try:
+            return prepare_api_response(value=get_tree(path, args))
+        except Exception as ex:
+            logging.error(ex)
+            return prepare_api_response(
+                value=[],
+                error_message="Error: {message}".format(message=error_message(ex)),
+            )
 
     def _ping(self):
         return {'value': generate_csrf()}

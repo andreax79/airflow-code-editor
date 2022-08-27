@@ -18,6 +18,7 @@ import itertools
 from pathlib import Path
 from typing import cast, Dict, List, Optional
 from collections import namedtuple
+from fs.errors import FSError
 from flask import jsonify
 from airflow import configuration
 from airflow_code_editor.commons import (
@@ -158,6 +159,8 @@ def error_message(ex: Exception) -> str:
     "Get exception error message"
     if ex is None:
         return ''
+    elif isinstance(ex, FSError):
+        return str(ex)
     elif hasattr(ex, 'strerror'):
         return ex.strerror
     elif hasattr(ex, 'message'):

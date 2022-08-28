@@ -1,5 +1,6 @@
 <template>
     <div class="tree-view">
+        <spinner v-show="loading"/>
         <files ref="files"
             :stack="stack"
             :config="config"
@@ -8,6 +9,7 @@
             @changePath="changePath"
             @changePathUp="changePathUp"
             @updateLocation="updateLocation"
+            @loaded="loaded"
             v-show="!isEditorOpen"></files>
         <editor ref="editor"
             :stack="stack"
@@ -16,6 +18,7 @@
             :showBreadcrumb="true"
             @changePathUp="changePathUp"
             @updateLocation="updateLocation"
+            @loaded="loaded"
             v-if="isEditorOpen"></editor>
     </div>
 </template>
@@ -25,17 +28,20 @@ import { Stack } from '../stack';
 import { normalize } from '../commons';
 import Files from './Files.vue';
 import Editor from './Editor.vue';
+import Spinner from './Spinner.vue';
 
 export default defineComponent({
     components: {
         'files': Files,
         'editor': Editor,
+        'spinner': Spinner,
     },
     props: [ 'config', 'isGit' ],
     data() {
         return {
             stack: new Stack(), // files stack
             isEditorOpen: false, // is editor open
+            loading: false,
         }
     },
     methods: {
@@ -48,6 +54,7 @@ export default defineComponent({
             }
         },
         updateStack(path, type) {
+            this.loading = true;
             // Update current file/directory
             this.stack.updateStack(path, type);
             // Refresh files/editor
@@ -56,6 +63,7 @@ export default defineComponent({
         changePath(item) {
             // Change File/directory
             console.log("FilesEditorContainer.changePath item.name:" + item.name);
+            this.loading = true;
             if (item.name == '..') {
                 this.stack.pop();
             } else {
@@ -67,6 +75,7 @@ export default defineComponent({
         changePathUp(index) {
             // Change directory to a parent directory (for breadcrum)
             console.log("FilesEditorContainer.changePathUp index: " + index);
+            this.loading = true;
             this.stack.slice(index + 1);
             // Refresh files/editor
             this.refresh();
@@ -86,6 +95,10 @@ export default defineComponent({
             }
             // Update href hash
             this.updateLocation();
+        },
+        loaded() {
+            // Emitted then commit is loaded
+            this.loading = false;  // Hide the spinner
         },
     },
 })

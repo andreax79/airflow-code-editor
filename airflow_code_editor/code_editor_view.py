@@ -82,11 +82,12 @@ class AbstractCodeEditorView(object):
         except Exception:
             # No attachment filename
             attachment_filename = None
-        response = execute_git_command(["cat-file", "-p", path])
+        response = execute_git_command(["cat-file", "-p", path]).prepare_git_response()
         if attachment_filename:
-            response.headers[
-                "Content-Disposition"
-            ] = 'attachment; filename="{0}"'.format(attachment_filename)
+            content_disposition = 'attachment; filename="{0}"'.format(
+                attachment_filename
+            )
+            response.headers["Content-Disposition"] = content_disposition
             try:
                 content_type = mimetypes.guess_type(attachment_filename)[0]
                 if content_type:
@@ -98,7 +99,7 @@ class AbstractCodeEditorView(object):
     def _git_repo_post(self, path):
         "Execute a GIT command (invoked by the HTTP POST method)"
         git_args = request.json.get('args', [])
-        return execute_git_command(git_args)
+        return execute_git_command(git_args).prepare_git_response()
 
     def _load(self, path):
         "Send the contents of a file to the client"

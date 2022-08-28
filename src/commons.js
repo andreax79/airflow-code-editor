@@ -87,20 +87,16 @@ export function git(args, callback) {
     const payload = { args: [].concat.apply([], args.filter(x => x != null)) };  // flat the array
     axios.post(prepareHref('repo'), payload)
          .then((response) => {
-            const messageStartIndex = response.data.length - parseInt(response.headers['x-git-stderr-length']);
-            const rcode = parseInt(response.headers['x-git-return-code']);
-            const output = response.data.substring(0, messageStartIndex);
-            const message = response.data.substring(messageStartIndex);
-            if (rcode === 0) {
+            if (response.data.returncode === 0) {
                 if (callback) {
-                    callback(output);
+                    callback(response.data.data);
                 }
                 // Return code is 0 but there is stderr output: this is a warning message
-                if (message.length > 0) {
-                    showWarning(message);
+                if (response.data.error) {
+                    showWarning(response.data.error.message);
                 }
             } else {
-                showError(message);
+                showError(response.data.error.message);
             }
          })
          .catch((error) => {

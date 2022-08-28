@@ -20,7 +20,7 @@ import subprocess
 import threading
 import shlex
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from datetime import datetime
 from flask import make_response, Response
 from flask_login import current_user  # type: ignore
@@ -37,6 +37,7 @@ from airflow_code_editor.utils import (
     get_plugin_boolean_config,
     get_root_folder,
     read_mount_points_config,
+    prepare_api_response,
 )
 from airflow_code_editor.fs import RootFS
 
@@ -51,33 +52,48 @@ def git_enabled() -> bool:
     return get_plugin_boolean_config('git_enabled')
 
 
-def prepare_git_response(
-    git_cmd: Optional[str],
-    result: GitOutput = None,
-    stderr: GitOutput = None,
-    returncode: int = 0,
-) -> Response:
-    if result is None:
-        result = stderr
-    elif stderr:
-        result = result + stderr
-    if git_cmd == 'cat-file':
-        response = make_response(
-            result, HTTP_200_OK if returncode == 0 else HTTP_404_NOT_FOUND
-        )
-        response.headers['Content-Type'] = 'text/plain'
-    else:
-        response = make_response(result)
-        response.headers['X-Git-Return-Code'] = str(returncode)
-        response.headers['X-Git-Stderr-Length'] = str(len(stderr or ''))
-        response.headers['Content-Type'] = 'text/plain'
-    return response
-
-
 _execute_git_command_lock = threading.Lock()
 
 
-def execute_git_command(git_args: List[str]) -> Response:
+class CompletedGitCommand:
+    def __init__(
+        self,
+        args: List[str],
+        returncode: int,
+        stdout: GitOutput = None,
+        stderr: GitOutput = None,
+    ):
+        self.args = args
+        self.returncode = returncode
+        if self.git_cmd == 'cat-file':
+            self.stdout = stdout
+            self.stderr = stderr
+        else:
+            self.stdout = stdout.decode('utf-8') if isinstance(stdout, bytes) else stdout
+            self.stderr = stderr.decode('utf-8') if isinstance(stderr, bytes) else stderr
+
+    @property
+    def git_cmd(self):
+        return self.args[0] if self.args else None
+
+    def prepare_git_response(self) -> Response:
+        if self.git_cmd == 'cat-file':
+            response = make_response(
+                self.stdout or self.stderr,
+                HTTP_200_OK if self.returncode == 0 else HTTP_404_NOT_FOUND,
+            )
+            response.headers['Content-Type'] = 'text/plain'
+        else:
+            message = prepare_api_response(
+                data=self.stdout,
+                returncode=self.returncode,
+                error_message=self.stderr or None,
+            )
+            response = make_response(message)
+        return response
+
+
+def execute_git_command(git_args: List[str]) -> CompletedGitCommand:
     with _execute_git_command_lock:
         logging.info(' '.join(git_args))
         git_cmd = git_args[0] if git_args else None
@@ -99,9 +115,7 @@ def execute_git_command(git_args: List[str]) -> Response:
                 )
             else:
                 stdout = None
-                stderr = bytes(
-                    'Command not supported: git %s' % ' '.join(git_args), 'utf-8'
-                )
+                stderr = 'Command not supported: git {0}'.format(' '.join(git_args))
                 returncode = 1
         except OSError as ex:
             logging.error(ex)
@@ -114,7 +128,7 @@ def execute_git_command(git_args: List[str]) -> Response:
             stderr = ex.message if hasattr(ex, 'message') else str(ex)
             returncode = 1
         finally:
-            return prepare_git_response(git_cmd, stdout, stderr, returncode)
+            return CompletedGitCommand(git_args, returncode, stdout, stderr)
 
 
 def git_ls_local(git_args: List[str]) -> str:

@@ -70,48 +70,33 @@ class TestUtils(TestCase):
     def test_invalid_command(self):
         with app.app_context():
             r = execute_git_command(['invalid-command'])
-        t = r.data.decode('utf-8')
-        assert r.status_code == 200
-        assert 'Command not supported' in t
+        assert r.returncode != 0
+        assert 'Command not supported' in r.stderr
 
     def test_ls_tree(self):
         with app.app_context():
             r = execute_git_command(['ls-tree', 'HEAD', '-l'])
-        if r.headers.get('X-Git-Return-Code') != '0':
-            raise Exception(r.data.decode('utf-8').split('\n'))
-        t = r.data.decode('utf-8')
-        assert r.status_code == 200
-        assert t is not None
+        assert r.returncode == 0
+        assert r.stdout
 
     def test_mounts(self):
         with app.app_context():
             r = execute_git_command(['mounts'])
-        if r.headers.get('X-Git-Return-Code') != '0':
-            raise Exception(r.data.decode('utf-8').split('\n'))
-        t = r.data.decode('utf-8')
-        assert r.status_code == 200
-        assert t == 'airflow_home\nlogs'
+        assert r.returncode == 0
+        assert r.stdout == 'airflow_home\nlogs'
 
     def test_ls_local_logs(self):
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', '~logs'])
-        if r.headers.get('X-Git-Return-Code') != '0':
-            raise Exception(r.data.decode('utf-8').split('\n'))
-        t = r.data.decode('utf-8')
-        assert r.status_code == 200
-        assert t is not None
+        assert r.returncode == 0
+        assert r.stdout
 
     def test_ls_local_airflow_home(self):
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', '~airflow_home'])
-        if r.headers.get('X-Git-Return-Code') != '0':
-            raise Exception(r.data.decode('utf-8').split('\n'))
-        t = r.data.decode('utf-8')
-        assert r.status_code == 200
-        assert t is not None
-        print(t)
-        for line in t.split('\n'):
-            print('>>>>', line)
+        assert r.returncode == 0
+        assert r.stdout
+        for line in r.stdout.split('\n'):
             i = line.split()
             assert i[1] in ['tree', 'blob']
             assert i[2].startswith('/~airflow_home/')
@@ -119,12 +104,9 @@ class TestUtils(TestCase):
     def test_ls_local_folder(self):
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', 'folder'])
-        if r.headers.get('X-Git-Return-Code') != '0':
-            raise Exception(r.data.decode('utf-8').split('\n'))
-        t = r.data.decode('utf-8')
-        assert r.status_code == 200
-        assert t is not None
-        for line in t.split('\n'):
+        assert r.returncode == 0
+        assert r.stdout
+        for line in r.stdout.split('\n'):
             i = line.split()
             assert i[1] == 'blob'
             assert i[2].startswith('/folder/')
@@ -139,8 +121,7 @@ class TestUtils(TestCase):
             assert os.path.exists(source)
             with app.app_context():
                 r = execute_git_command(['rm-local', 'new.file'])
-            if r.headers.get('X-Git-Return-Code') != '0':
-                raise Exception(r.data.decode('utf-8').split('\n'))
+            assert r.returncode == 0
             assert not os.path.exists(source)
         finally:
             try:
@@ -157,8 +138,7 @@ class TestUtils(TestCase):
                 f.write('test')
             with app.app_context():
                 r = execute_git_command(['mv-local', 'new.file', 'folder'])
-            if r.headers.get('X-Git-Return-Code') != '0':
-                raise Exception(r.data.decode('utf-8').split('\n'))
+            assert r.returncode == 0
             assert os.path.exists(target)
         finally:
             try:
@@ -183,11 +163,8 @@ class TestInitGitRepo(TestCase):
     def test_ls_tree(self):
         with app.app_context():
             r = execute_git_command(['ls-tree', 'HEAD', '-l'])
-        if r.headers.get('X-Git-Return-Code') != '0':
-            raise Exception(r.data.decode('utf-8').split('\n'))
-        t = r.data.decode('utf-8')
-        assert r.status_code == 200
-        assert t is not None
+        assert r.returncode == 0
+        assert r.stdout
 
 
 class TestConfig(TestCase):

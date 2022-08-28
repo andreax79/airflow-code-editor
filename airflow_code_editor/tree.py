@@ -127,10 +127,10 @@ def git_command_output(*args: str) -> List[str]:
     "Execute a git command and return the output as a list of string"
     r = execute_git_command(list(args))
     # Check exit code
-    if r.headers.get('X-Git-Return-Code') != '0':
+    if r.returncode != 0:
         return []
     # Return stdout lines
-    return r.data.decode('utf-8').split('\n')
+    return r.stdout.split('\n')
 
 
 def prepare_git_output(line: str, icon: str) -> Dict[str, Any]:

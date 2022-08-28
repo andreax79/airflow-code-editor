@@ -99,10 +99,12 @@ export default defineComponent({
                       this.editor.setValue(String(data));
                       this.editor.setValue(data);
                       this.editorPath = path;
+                      this.$emit('loaded', false); // close the spinner
                       // Update url hash
                       this.$emit('updateLocation');
                   })
                   .catch((error) => {
+                      this.$emit('loaded', false); // close the spinner
                       this.editor.setValue('');
                       this.editorPath = path;
                       try {

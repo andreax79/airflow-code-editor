@@ -223,8 +223,10 @@ export default defineComponent({
                             trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'folder', href: '#' });
                         }
                         this.items = trees.concat(blobs);
+                        this.$emit('loaded', false); // close the spinner
                   })
                   .catch(error => {
+                        this.$emit('loaded', false); // close the spinner
                         console.log(error);
                   })
             }

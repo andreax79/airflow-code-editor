@@ -230,6 +230,7 @@ export default defineComponent({
             }
         },
         refresh() {
+            // --untracked-files=all - Also shows individual files in untracked directories
             git([ 'status', '--porcelain', '--untracked-files=all' ], this.parseStatus);
         },
     },

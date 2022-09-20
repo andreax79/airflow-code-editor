@@ -15,6 +15,7 @@
 #   limitations under the Licens
 
 import cmd
+import sys
 import shlex
 from airflow_code_editor.fs import RootFS
 
@@ -95,6 +96,9 @@ class Shell(cmd.Cmd):
         return True
 
 def main():
+    if sys.argv[1:]:
+        line = " ".join(sys.argv[1:])
+        return Shell().onecmd(line)
     try:
         Shell().cmdloop()
     except KeyboardInterrupt:

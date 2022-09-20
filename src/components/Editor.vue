@@ -123,6 +123,11 @@ export default defineComponent({
                     'Content-Type': 'text/plain'
                 }
             };
+            path = normalize(path);
+            if (path == "/") {
+                showError('Invalid filename');
+                return;
+            }
             axios.post(prepareHref('files' + path), payload, options)
                  .then((response) => {
                     if (response.data.error) {
@@ -256,6 +261,7 @@ export default defineComponent({
                 }
                 if (this.isNew(last.name)) {
                     // New file
+                    this.$emit('loaded', false); // close the spinner
                     this.editor.setValue('');
                     setTimeout(() => this.editor.refresh(), 100);
                 } else {

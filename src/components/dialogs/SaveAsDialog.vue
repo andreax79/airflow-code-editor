@@ -3,7 +3,7 @@
     <div class="airflow-code-editor-modal airflow-code-editor-modal-save-as">
       <h1>Save File</h1>
       <label>Please enter a new name for the item:</label>
-      <input type="text" class="form-control" v-model="target" />
+      <input type="text" class="form-control" v-model="target" @keyup.enter="ok" />
       <div class="save-as-dialog-buttons">
         <button @click="cancel" class="btn btn-default">Cancel</button>
         <button @click="ok" class="btn btn-primary"

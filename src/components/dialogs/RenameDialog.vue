@@ -3,10 +3,11 @@
     <div class="airflow-code-editor-modal airflow-code-editor-modal-rename">
       <h1>Move/Rename File</h1>
       <label>Please enter a new name for the item:</label>
-      <input type="text" class="form-control" v-model="target" />
+      <input type="text" class="form-control" v-model="target" @keyup.enter="ok" />
       <div class="rename-dialog-buttons">
         <button @click="cancel" class="btn btn-default">Cancel</button>
-        <button @click="ok" class="btn btn-primary">Ok</button>
+        <button @click="ok" class="btn btn-primary"
+          :disabled="target == ''">Ok</button>
       </div>
     </div>
   </modal>
@@ -37,7 +38,7 @@
 </style>
 <script>
 import { defineComponent } from 'vue';
-import { git } from '../../commons';
+import { normalize, git, showError } from '../../commons';
 
 export default defineComponent({
     props: [],
@@ -56,8 +57,12 @@ export default defineComponent({
         },
         ok() {
             // Rename a file
-            if (this.source != this.target) {
-                git([ 'mv-local', this.source, this.target ], data => this.$emit('refresh'));
+            let target = normalize(this.target);
+            if (target == "/") {
+                showError('Invalid filename');
+                this.close();
+            } else if (this.source != target) {
+                git([ 'mv-local', this.source, target ], data => this.$emit('refresh'));
             }
             this.close();
         },

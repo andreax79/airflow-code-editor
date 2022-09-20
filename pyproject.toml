@@ -1,0 +1,8 @@
+[tool.black]
+line-length = 120
+
+[tool.coverage.run]
+source = ["airflow_code_editor"]
+
+[tool.coverage.report]
+exclude_lines = [ "# pragma: no cover", "if TYPE_CHECKING:" ]

@@ -110,9 +110,7 @@ def execute_git_command(git_args: List[str]) -> CompletedGitCommand:
             # Git commands
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
                 git_default_args = shlex.split(get_plugin_config('git_default_args'))
-                returncode, stdout, stderr = git_call(
-                    git_default_args + git_args, capture_output=True
-                )
+                returncode, stdout, stderr = git_call(git_default_args + git_args, capture_output=True)
             else:
                 stdout = None
                 stderr = 'Command not supported: git {0}'.format(' '.join(git_args))
@@ -149,10 +147,7 @@ def git_ls_local(git_args: List[str]) -> str:
         s = item.stat()
         if long_:
             mtime = datetime.utcfromtimestamp(s.st_mtime).isoformat()[:16]
-            result.append(
-                '%06o %s %s#%s %8s\t%s'
-                % (s.st_mode, type_, str(item), mtime, item.size(), item.name)
-            )
+            result.append('%06o %s %s#%s %8s\t%s' % (s.st_mode, type_, str(item), mtime, item.size(), item.name))
         else:
             result.append('%06o %s %s\t%s' % (s.st_mode, type_, str(item), item.name))
     return '\n'.join(result)
@@ -193,37 +188,29 @@ LOCAL_COMMANDS = {
 }
 
 
-def git_call(
-    argv: List[str], capture_output: bool = False
-) -> Tuple[int, GitOutput, GitOutput]:
+def git_call(argv: List[str], capture_output: bool = False) -> Tuple[int, bytes, bytes]:
     "Run git command. If capture_output is true, stdout and stderr will be captured."
     if not git_enabled():
-        return 1, '', 'Git is disabled'
+        return 1, b'', b'git is disabled'
     cmd: List[str] = [get_plugin_config('git_cmd')] + argv
     cwd: Path = get_root_folder()
     env: Dict[str, str] = prepare_git_env()
-    if capture_output:
-        git = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+    try:
+        completed = subprocess.run(
+            args=cmd,
+            stdin=subprocess.PIPE if capture_output else None,
+            stdout=subprocess.PIPE if capture_output else None,
+            stderr=subprocess.PIPE if capture_output else None,
             cwd=cwd,
             env=env,
         )
-        stdout, stderr = git.communicate()
-        returncode: int = git.returncode
-    else:
-        stdout = b''
-        stderr = b''
-        returncode = subprocess.call(cmd, cwd=cwd, env=env)
-    return returncode, stdout, stderr
+        return completed.returncode, completed.stdout, completed.stderr
+    except FileNotFoundError:
+        return 127, b'', b'git command not found'
 
 
 def get_default_branch() -> str:
-    stdout = git_call(
-        ['config', '--global', 'init.defaultBranch'], capture_output=True
-    )[1]
+    stdout = git_call(['config', '--global', 'init.defaultBranch'], capture_output=True)[1]
     default_branch = stdout.decode('utf8').strip('\n')
     return default_branch or DEFAULT_GIT_BRANCH
 
@@ -231,11 +218,7 @@ def get_default_branch() -> str:
 def init_git_repo() -> None:
     "Initialize the git repository in root folder"
     cwd: Path = get_root_folder()
-    if (
-        git_enabled()
-        and not (cwd / '.git').exists()
-        and get_plugin_boolean_config('git_init_repo')
-    ):
+    if git_enabled() and not (cwd / '.git').exists() and get_plugin_boolean_config('git_init_repo'):
         git_call(['init', '-b', get_default_branch(), '.'])
         gitignore = cwd / '.gitignore'
         if not gitignore.exists():

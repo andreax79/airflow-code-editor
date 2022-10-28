@@ -4,11 +4,11 @@
       <circle class="spinner-path"
               cx="50"
               cy="50"
-              r="20"
+              r="10"
               fill="none"
-              stroke-width="5"
+              stroke-width="1"
               stroke-miterlimit="10"
-              stroke="#0000ff" />
+              stroke="#5555ff" />
     </g>
   </svg>
 </template>

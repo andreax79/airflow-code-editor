@@ -173,9 +173,7 @@ class FSPath(object):
                     skip = True
                 # Ship hidden files
                 for patter in ignored_entries:
-                    if fnmatch(
-                        fullpath if patter.startswith('/') else name, patter.strip()
-                    ):
+                    if fnmatch(fullpath if patter.startswith('/') else name, patter.strip()):
                         skip = True
             if not skip:
                 yield self.root_fs.path(self.path, name)

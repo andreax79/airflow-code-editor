@@ -170,9 +170,7 @@ class TestInitGitRepo(TestCase):
 class TestConfig(TestCase):
     def setUp(self):
         self.root_dir = tempfile.mkdtemp()
-        configuration.conf.set(
-            PLUGIN_NAME, 'git_init_repo', str(PLUGIN_DEFAULT_CONFIG['git_init_repo'])
-        )
+        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', str(PLUGIN_DEFAULT_CONFIG['git_init_repo']))
 
     @contextlib.contextmanager
     def env_vars(self, overrides):

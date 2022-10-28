@@ -60,9 +60,7 @@ class TestTree(TestCase):
             assert folder['size'] == 3
             assert stat.S_ISDIR(folder['mode'])
 
-            self.assertEqual(
-                len([x.get('id') for x in t if x.get('id') == 'test_utils.py']), 1
-            )
+            self.assertEqual(len([x.get('id') for x in t if x.get('id') == 'test_utils.py']), 1)
             test_utils = [x for x in t if x.get('id') == 'test_utils.py'][0]
             assert test_utils['leaf']
             assert not stat.S_ISDIR(test_utils['mode'])
@@ -84,12 +82,8 @@ class TestTreeGitDisabled(TestCase):
         configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
         configuration.conf.set(PLUGIN_NAME, 'root_directory', str(self.root_dir))
         configuration.conf.set(PLUGIN_NAME, 'git_enabled', 'False')
-        os.environ['GIT_AUTHOR_NAME'] = os.environ[
-            'GIT_COMMITTER_NAME'
-        ] = 'git_author_name'
-        os.environ['GIT_AUTHOR_EMAIL'] = os.environ[
-            'GIT_COMMITTER_EMAIL'
-        ] = 'git_author_email'
+        os.environ['GIT_AUTHOR_NAME'] = os.environ['GIT_COMMITTER_NAME'] = 'git_author_name'
+        os.environ['GIT_AUTHOR_EMAIL'] = os.environ['GIT_COMMITTER_EMAIL'] = 'git_author_email'
 
     def test_tree(self):
         with app.app_context():

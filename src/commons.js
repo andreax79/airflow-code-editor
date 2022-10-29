@@ -19,6 +19,7 @@ export const COLORS = [
 
 var csrfToken = null;
 var vueApp = null;
+var themesPath = null;
 
 export function showError(message) {
     if (vueApp) {
@@ -105,7 +106,20 @@ export function git(args, callback) {
          });
 }
 
-export function initApp(app, target, teleportTarget, csrfTokenParam) {
+export function importTheme(theme) {
+    // Import an editor theme
+    return new Promise((resolve, reject) => {
+        let link = document.createElement('link');
+        link.onload = () => resolve(true);
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = themesPath + '/' + theme + '.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    });
+}
+
+export function initApp(app, target, teleportTarget, csrfTokenParam, themesPathParam) {
+    themesPath = themesPathParam;
     // CSRF Token setup
     initCsrfToken(csrfTokenParam);
     // Add VueUniversalModal

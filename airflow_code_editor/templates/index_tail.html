@@ -7,7 +7,8 @@
 jQuery(document).ready(function() {
     // Init
     var csrfToken = "{{ csrf_token() }}";
-    init(csrfToken);
+    var themesPath = "{{ url_for('static', filename='code_editor/css/theme') }}";
+    init(csrfToken, themesPath);
 });
 
 </script>

@@ -426,3 +426,11 @@
 
 - Send git api result in JSON format
 - CodeMirror upgrade
+
+## 7.1.1
+
+2022-10-29
+
+### Fix
+
+- Fix theme settings

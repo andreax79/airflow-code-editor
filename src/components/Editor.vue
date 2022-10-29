@@ -46,7 +46,7 @@
 <script>
 import axios from 'axios';
 import { defineComponent, markRaw } from 'vue';
-import { normalize, prepareHref, git, showError } from '../commons';
+import { normalize, prepareHref, git, showError, importTheme } from '../commons';
 import Breadcrumb from './Breadcrumb.vue';
 import Icon from './Icon.vue';
 import SettingsDialog from './dialogs/SettingsDialog.vue';
@@ -169,31 +169,23 @@ export default defineComponent({
             if (this.editor) {
                 this.editor.setOption(option, value);
             }
-            // Store settings in localStorage
-            if (option == 'keyMap') {
-                option = 'mode';
-            }
-            localStorage.setItem('airflow_code_editor_' + option, value);
         },
         setTheme(theme) {
             // Set editor theme
             if (theme == 'default') {
                 this.setOption('theme', theme);
             } else {
-                let link = document.createElement('link');
-                link.onload = () => this.setOption('theme', theme);
-                let baseUrl = jQuery('link[rel=stylesheet]').filter((i, e) => e.href.match(/gitweb.css/) !== null)[0].href.split('/gitweb.css')[0];;
-                link.rel = 'stylesheet';
-                link.type = 'text/css';
-                link.href = baseUrl + '/theme/' + theme + '.css';
-                document.getElementsByTagName('head')[0].appendChild(link);
+                importTheme(theme).then(() => this.setOption('theme', theme));
             }
         },
         updateSettings(config) {
             this.config.theme = config.theme;
             this.config.mode = config.mode;
-            this.setTheme(this.config.theme);
-            this.setOption('keyMap', this.config.mode);
+            this.setTheme(this.config.theme); // Set theme
+            this.setOption('keyMap', this.config.mode); // Set editor mode
+            // Save setting on the local storage
+            localStorage.setItem('airflow_code_editor_theme', config.theme);
+            localStorage.setItem('airflow_code_editor_mode', config.mode);
         },
         saveAction() {
             // Save button action

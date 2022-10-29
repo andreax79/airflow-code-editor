@@ -28,6 +28,9 @@ webserver:
 scheduler:
 	@./scripts/airflow.sh scheduler
 
+standalone:
+	@./scripts/airflow.sh standalone
+
 build: clean
 	python3 setup.py bdist_wheel
 	python3 setup.py sdist bdist_wheel

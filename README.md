@@ -142,26 +142,31 @@ Example:
     source ./scripts/activate.sh
   ```
 
-4. Make changes you need. Build npm package with:
+4. Switch node version
+
+  ```bash
+    nvm use
+  ```
+
+5. Make changes you need. Build npm package with:
 
   ```bash
     make npm-build
   ```
 
-5. You can start Airflow webserver or scheduler with these commands:
+6. You can start Airflow webserver or scheduler with these commands:
 
   ```bash
-    make webserver
-    make scheduler
+    make standalone
   ```
 
-6. Run tests
+7. Run tests
 
   ```bash
     make test
   ```
 
-7. Commit and push changes
+8. Commit and push changes
 
   ```bash
     git add .
@@ -169,7 +174,7 @@ Example:
     git push
   ```
 
-7. Create [pull request](https://github.com/andreax79/airflow-code-editor/compare) to the original repo
+9. Create [pull request](https://github.com/andreax79/airflow-code-editor/compare) to the original repo
 
 ### Links
 

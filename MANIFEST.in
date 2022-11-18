@@ -8,3 +8,4 @@ recursive-exclude * *.orig
 recursive-exclude tests *
 recursive-exclude test_virtualenv *
 prune test*
+global-exclude .gitignore

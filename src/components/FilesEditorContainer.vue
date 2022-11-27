@@ -36,7 +36,7 @@ export default defineComponent({
         'editor': Editor,
         'spinner': Spinner,
     },
-    props: [ 'config', 'isGit' ],
+    props: [ 'config', 'isGit', 'target' ],
     data() {
         return {
             stack: new Stack(), // files stack
@@ -44,10 +44,21 @@ export default defineComponent({
             loading: false,
         }
     },
+    mounted() {
+        if (this.target) {
+            this.update(this.target);
+        }
+    },
     methods: {
+        update(target) {
+            if (target) {
+                this.updateStack(target.path, target.type);
+            }
+        },
         updateLocation() {
             // Update href hash
             if (!this.isGit) {
+                this.$emit('setTabTitle', this.stack.last());
                 const section = (this.stack.last().type == 'blob') ? 'edit' : 'files';
                 const object = this.stack.last().object || '/';
                 document.location.hash = normalize(section + object);

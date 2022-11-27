@@ -79,7 +79,7 @@ export default defineComponent({
         'commit': ShowCommit,
         'spinner': Spinner,
     },
-    props: [ 'config' ],
+    props: [ 'config', 'target' ],
     data() {
         return {
             tab: 'commit', // active tab
@@ -87,6 +87,11 @@ export default defineComponent({
             id: ref(null), // section (tags, local-branches, remote-branches)
             name: ref(null), // reference
             commit: ref(null) // commit object
+        }
+    },
+    mounted() {
+        if (this.target) {
+            this.update(this.target);
         }
     },
     methods: {

@@ -46,6 +46,9 @@ export default defineComponent({
             showDiffPane: false,
         }
     },
+    mounted() {
+        this.refresh();
+    },
     methods: {
         showDiff(target) {
             this.loading = true;

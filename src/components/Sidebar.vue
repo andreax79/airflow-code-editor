@@ -55,7 +55,6 @@ import { getIcon } from '../tree_entry';
 import Icon from './Icon.vue';
 
 export default defineComponent({
-    props: [ 'current' ],
     components: {
         'icon': Icon,
         'tree': TreeView

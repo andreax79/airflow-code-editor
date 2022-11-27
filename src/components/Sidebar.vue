@@ -49,7 +49,7 @@
 <script>
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';
-import TreeView from '@grapoza/vue-tree';
+import { TreeView } from '@grapoza/vue-tree';
 import { prepareHref, splitPath } from '../commons';
 import { getIcon } from '../tree_entry';
 import Icon from './Icon.vue';

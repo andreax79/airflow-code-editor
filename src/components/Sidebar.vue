@@ -7,6 +7,7 @@
                 <template #text="{ model }">
                     <div :title="model.treeNodeSpec.title"
                          class="grtvn-self-text"
+                         @contextmenu.prevent.stop="showMenu($event, model)"
                          v-on:click="click(model)">
                          <icon :icon="model.icon" />
                          {{ model.label }}
@@ -17,6 +18,12 @@
                <a href="https://github.com/andreax79/airflow-code-editor/issues" target="_blank"><icon icon="bug_report"/> Report an issue</a>
             </span>
         </div>
+        <vue-simple-context-menu
+            element-id="sidebar-tree-menu"
+            :options="options"
+            ref="sidebarTreeMenu"
+            @option-clicked="menuOptionClicked"
+        />
     </div>
 </template>
 <style>
@@ -50,6 +57,7 @@
 import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import { TreeView } from '@grapoza/vue-tree';
+import VueSimpleContextMenu from 'vue-simple-context-menu';
 import { prepareHref, splitPath } from '../commons';
 import { getIcon } from '../tree_entry';
 import Icon from './Icon.vue';
@@ -57,14 +65,21 @@ import Icon from './Icon.vue';
 export default defineComponent({
     components: {
         'icon': Icon,
-        'tree': TreeView
+        'tree': TreeView,
+        'vue-simple-context-menu': VueSimpleContextMenu,
     },
     data() {
         return {
             model: ref([]),
             modelDefaults: {
                 loadChildrenAsync: this.loadChildrenAsync
-            }
+            },
+            options: [
+                {
+                  name: '<span class="material-icons">refresh</span> Refresh',
+                  slug: 'refresh',
+                },
+            ],
         }
     },
     methods: {
@@ -162,7 +177,43 @@ export default defineComponent({
                       .then((response) => resolve(response.data.value.map((node) => self.prepareTreeNode(node, parent))))
                       .catch(error => reject());
                 });
-        }
+        },
+        showMenu(event, item) {
+            if (item && !item.leaf) {
+                this.$refs.sidebarTreeMenu.showMenu(event, item);
+            }
+        },
+        menuOptionClicked(event) {
+            if (event.option.slug == 'refresh') {
+                this.menuOptionRefresh(event);
+            }
+        },
+        menuOptionRefresh(event) {
+            if (!event.item.treeNodeSpec.expandable) {
+                return;
+            }
+            // Close
+            event.item.treeNodeSpec.state.expanded = false;
+            event.item.children = [];
+            event.item.treeNodeSpec._.state.areChildrenLoaded = false;
+            // Reload
+            setTimeout(() => {
+                let spec = event.item.treeNodeSpec;
+                spec.state.expanded = true;
+                // If children need to be loaded asynchronously, load them.
+                if (spec.state.expanded && !spec._.state.areChildrenLoaded && !spec._.state.areChildrenLoading) {
+                    spec._.state.areChildrenLoading = true;
+                    spec.loadChildrenAsync(event.item)
+                        .then((childrenResult) => {
+                            if (childrenResult) {
+                                spec._.state.areChildrenLoaded = true;
+                                event.item.children.splice(0, event.item.children.length, ...childrenResult);
+                            }
+                            spec._.state.areChildrenLoading = false;
+                        });
+                }
+            }, 1);
+        },
     },
     mounted() {
         // Init

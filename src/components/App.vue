@@ -94,6 +94,7 @@ footer {
 <script>
 import 'splitpanes/dist/splitpanes.css';
 import 'vue-universal-modal/dist/index.css';
+import 'vue-simple-context-menu/dist/vue-simple-context-menu.css';
 import '../css/material-icons.css';
 import { v4 as uuidv4 } from 'uuid';
 import { defineComponent, ref } from 'vue';

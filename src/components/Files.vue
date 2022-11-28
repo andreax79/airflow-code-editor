@@ -20,33 +20,41 @@
               :columns="columns"
               :rows="items">
               <template #table-row="props">
-                <span v-if="props.column.field == 'name'" :class="props.column.field">
-                  <a v-on:click.prevent="$emit('changePath', props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')" >
-                    {{ props.row.name }}
-                  </a>
-                </span>
-                <span v-else-if="props.column.field == 'icon'" :class="props.column.field">
-                  <a v-on:click.prevent="$emit('changePath', props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')" >
-                    <icon :icon="props.row.icon"/>
-                  </a>
-                </span>
-                <span v-else-if="props.column.field == 'action'" class="btn-group">
-                  <a v-if="props.row.type == 'blob'" class="download btn btn-default btn-sm" title="Download" :href="props.row.downloadHref"><icon icon="file_download"/></a>
-                  <a v-if="(!props.row.isGit) && (props.row.type == 'blob' || props.row.size == 0)" class="trash-o btn btn-default btn-sm" title="Delete" target="_blank" v-on:click.prevent="showDeleteDialog(props.row)" :href="props.row.href"><icon icon="delete"/></a>
-                  <a v-if="!props.row.isGit && (props.row.name != '..')" class="i-cursor btn btn-default btn-sm" title="Move/Rename" target="_blank" v-on:click.prevent="showRenameDialog(props.row)" :href="props.row.href"><icon icon="drive_file_rename_outline"/></a>
-                  <a v-if="!props.row.isGit && (props.row.name != '..')" class="external-link btn btn-default btn-sm" title="Open in a new window" target="_blank" :href="props.row.href"><icon icon="open_in_new"/></a>
-                </span>
-                <span v-else-if="props.column.field == 'size'" :class="props.column.field">
-                  {{ props.row.formattedSize }}
-                </span>
-                <span v-else :class="props.column.field">
-                  {{ props.formattedRow[props.column.field] }}
-                </span>
+                <div @contextmenu.prevent.stop="showMenu($event, props.row)">
+                  <span v-if="props.column.field == 'name'" :class="props.column.field">
+                    <a v-on:click.prevent="$emit('changePath', props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')">
+                      {{ props.row.name }}
+                    </a>
+                  </span>
+                  <span v-else-if="props.column.field == 'icon'" :class="props.column.field">
+                    <a v-on:click.prevent="$emit('changePath', props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')">
+                      <icon :icon="props.row.icon"/>
+                    </a>
+                  </span>
+                  <span v-else-if="props.column.field == 'action'" class="btn-group">
+                    <a v-if="props.row.type == 'blob'" class="download btn btn-default btn-sm" title="Download" :href="props.row.downloadHref"><icon icon="file_download"/></a>
+                    <a v-if="(!props.row.isGit) && (props.row.type == 'blob' || props.row.size == 0)" class="trash-o btn btn-default btn-sm" title="Delete" target="_blank" v-on:click.prevent="showDeleteDialog(props.row)" :href="props.row.href"><icon icon="delete"/></a>
+                    <a v-if="!props.row.isGit && (props.row.name != '..')" class="i-cursor btn btn-default btn-sm" title="Move/Rename" target="_blank" v-on:click.prevent="showRenameDialog(props.row)" :href="props.row.href"><icon icon="drive_file_rename_outline"/></a>
+                    <a v-if="!props.row.isGit && (props.row.name != '..')" class="external-link btn btn-default btn-sm" title="Open in a new window" target="_blank" :href="props.row.href"><icon icon="open_in_new"/></a>
+                  </span>
+                  <span v-else-if="props.column.field == 'size'" :class="props.column.field">
+                    {{ props.row.formattedSize }}
+                  </span>
+                  <span v-else :class="props.column.field">
+                    {{ props.formattedRow[props.column.field] }}
+                  </span>
+                </div>
               </template>
             </vue-good-table>
         </div>
         <rename-dialog ref="renameDialog" @refresh="refresh"></rename-dialog>
         <delete-dialog ref="deleteDialog" @refresh="refresh"></delete-dialog>
+        <vue-simple-context-menu
+            :element-id="'files-menu-' + uuid"
+            :options="options"
+            ref="filesMenu"
+            @option-clicked="menuOptionClicked"
+        />
     </div>
 </template>
 <style>
@@ -108,8 +116,9 @@ import axios from 'axios';
 import { defineComponent } from 'vue';
 import { VueGoodTable } from 'vue-good-table-next';
 // import 'vue-good-table-next/dist/vue-good-table-next.css';
+import VueSimpleContextMenu from 'vue-simple-context-menu';
 import { basename, normalize, prepareHref, git } from '../commons';
-import { TreeEntry } from '../tree_entry';
+import { TreeEntry, prepareMenuOptions } from '../tree_entry';
 import Icon from './Icon.vue';
 import Breadcrumb from './Breadcrumb.vue';
 import RenameDialog from './dialogs/RenameDialog.vue';
@@ -122,8 +131,9 @@ export default defineComponent({
         'vue-good-table': VueGoodTable,
         'rename-dialog': RenameDialog,
         'delete-dialog': DeleteDialog,
+        'vue-simple-context-menu': VueSimpleContextMenu,
     },
-    props: [ 'stack', 'config', 'isGit', 'showBreadcrumb' ],
+    props: [ 'stack', 'config', 'isGit', 'showBreadcrumb', 'uuid' ],
     data() {
         return {
             items: [], // tree items (blobs/trees)
@@ -165,7 +175,8 @@ export default defineComponent({
                   tdClass: 'vgt-right-align',
                   sortable: false
                 }
-            ]
+            ],
+            options: [],
         }
     },
     methods: {
@@ -263,6 +274,31 @@ export default defineComponent({
                 });
             }
         },
+        showMenu(event, item) {
+            // Prepare the menu
+            this.options = prepareMenuOptions(item);
+            // Show menu
+            this.$refs.filesMenu.showMenu(event, item);
+        },
+        menuOptionClicked(event) {
+            if (event.option.slug == 'open') {
+                this.$emit('changePath', event.item);
+            } else if (event.option.slug == 'download') {
+                window.open(event.item.downloadHref);
+            } else if (event.option.slug == 'delete') {
+                this.showDeleteDialog(event.item);
+            } else if (event.option.slug == 'rename') {
+                this.showRenameDialog(event.item);
+            } else if (event.option.slug == 'open_in_new') {
+                window.open(event.item.href, '_blank');
+            } else if (event.option.slug == 'refresh') {
+                this.refresh();
+            } else if (event.option.slug == 'new') {
+                this.newAction();
+            } else if (event.option.slug == 'upload') {
+                this.uploadAction();
+            }
+        }
     },
     mounted() {
         this.refresh();

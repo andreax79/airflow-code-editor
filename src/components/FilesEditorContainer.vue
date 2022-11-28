@@ -2,6 +2,7 @@
     <div class="tree-view">
         <spinner v-show="loading"/>
         <files ref="files"
+            :uuid="uuid"
             :stack="stack"
             :config="config"
             :isGit="isGit"
@@ -12,6 +13,7 @@
             @loaded="loaded"
             v-show="!isEditorOpen"></files>
         <editor ref="editor"
+            :uuid="uuid"
             :stack="stack"
             :config="config"
             :isGit="isGit"
@@ -36,7 +38,7 @@ export default defineComponent({
         'editor': Editor,
         'spinner': Spinner,
     },
-    props: [ 'config', 'isGit', 'target' ],
+    props: [ 'config', 'isGit', 'target', 'uuid' ],
     data() {
         return {
             stack: new Stack(), // files stack

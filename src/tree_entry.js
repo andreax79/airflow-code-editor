@@ -82,3 +82,51 @@ export class TreeEntry {
         }
     }
 }
+
+export function prepareMenuOptions(item) {
+    // Prepare the menu
+    let options = [{
+        name: '<span class="material-icons">file_open</span> Open',
+        slug: 'open'
+    }];
+    if (item.type == 'blob') {
+        options.push({
+            name: '<span class="material-icons">file_download</span> Download',
+            slug: 'download'
+        });
+    }
+    if ((!item.isGit) && (item.type == 'blob' || item.size == 0)) {
+        options.push({
+            name: '<span class="material-icons">delete</span> Delete',
+            slug: 'delete'
+        });
+    }
+    if ((!item.isGit) && (item.name != '..')) {
+        options.push({
+            name: '<span class="material-icons">drive_file_rename_outline</span> Move/Rename',
+            slug: 'rename'
+        });
+        options.push({
+            name: '<span class="material-icons">open_in_new</span> Open in a new window',
+            slug: 'open_in_new'
+        });
+    }
+    if (!item.isGit) {
+        options.push({
+            type: 'divider'
+        });
+        options.push({
+            name: '<span class="material-icons">add_circle</span> New',
+            slug: 'new'
+        });
+        options.push({
+            name: '<span class="material-icons">file_upload</span> Upload',
+            slug: 'upload'
+        });
+        options.push({
+            name: '<span class="material-icons">refresh</span> Refresh',
+            slug: 'refresh'
+        });
+    }
+    return options;
+}

@@ -18,6 +18,7 @@
                 <component
                     :is="tab.component"
                     :ref="tab.uuid"
+                    :uuid="tab.uuid"
                     :config="config"
                     :target="tab.target"
                     :is-git="false"

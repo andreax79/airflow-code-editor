@@ -1,8 +1,10 @@
 import { ref } from "vue";
 
+const STACK_ROOT = { name: 'root', object: undefined, type: 'tree' };
+
 export class Stack {
     constructor() {
-        this.stack = [ { name: 'root', object: undefined } ];
+        this.stack = [ { ... STACK_ROOT } ];
     }
 
     updateStack(path, type) {
@@ -16,7 +18,7 @@ export class Stack {
         }
         path.split('/').forEach((part, index) => {
             if (index === 0 && !part) {
-                this.stack.push({ name: 'root', object: undefined });
+                this.stack.push({ ... STACK_ROOT });
                 fullPath = '';
             } else {
                 if (fullPath === null) {
@@ -56,8 +58,17 @@ export class Stack {
         return (this.last().object !== undefined && !this.last().object.startsWith('/'));
     }
 
+    isRoot() {
+        // Return true if the stack contains only one element
+        return this.stack.length == 1;
+    }
+
     pop() {
-        return this.stack.pop();
+        if (this.isRoot()) {
+            return this.stack[0];
+        } else {
+            return this.stack.pop();
+        }
     }
 
     push(item) {
@@ -68,4 +79,8 @@ export class Stack {
         this.stack = this.stack.slice(0, index);
     }
 
+    indexOf(item) {
+        let t = this.stack.find(x => x.object == item.object);
+        return this.stack.indexOf(t);
+    }
 };

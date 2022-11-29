@@ -68,6 +68,7 @@ export default defineComponent({
         'tree': TreeView,
         'vue-simple-context-menu': VueSimpleContextMenu,
     },
+    props: [ 'config' ],
     data() {
         return {
             model: ref([]),
@@ -179,11 +180,13 @@ export default defineComponent({
                 });
         },
         showMenu(event, item) {
+            // Show sidebar menu
             if (item && !item.leaf) {
                 this.$refs.sidebarTreeMenu.showMenu(event, item);
             }
         },
         menuOptionClicked(event) {
+            // Menu click
             if (event.option.slug == 'refresh') {
                 this.menuOptionRefresh(event);
             }

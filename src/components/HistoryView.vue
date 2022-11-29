@@ -90,9 +90,7 @@ export default defineComponent({
         }
     },
     mounted() {
-        if (this.target) {
-            this.update(this.target);
-        }
+        this.refresh();
     },
     methods: {
         updateLocation() {
@@ -116,6 +114,11 @@ export default defineComponent({
                 this.loading = true; // Show the spinner
                 this.$refs.commit.refresh(this.commit);  // Load commit
                 this.$refs.container.updateStack(this.commit.commit, 'tree');  // Load tree
+            }
+        },
+        refresh() {
+            if (this.target) {
+                this.update(this.target);
             }
         },
         loaded() {

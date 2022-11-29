@@ -8,7 +8,6 @@
             :isGit="isGit"
             :showBreadcrumb="true"
             @changePath="changePath"
-            @changePathUp="changePathUp"
             @updateLocation="updateLocation"
             @loaded="loaded"
             v-show="!isEditorOpen"></files>
@@ -18,7 +17,7 @@
             :config="config"
             :isGit="isGit"
             :showBreadcrumb="true"
-            @changePathUp="changePathUp"
+            @changePath="changePath"
             @updateLocation="updateLocation"
             @loaded="loaded"
             v-if="isEditorOpen"></editor>
@@ -60,7 +59,7 @@ export default defineComponent({
         updateLocation() {
             // Update href hash
             if (!this.isGit) {
-                this.$emit('setTabTitle', this.stack.last());
+                this.$emit('setTab', this.stack.last());
                 const section = (this.stack.last().type == 'blob') ? 'edit' : 'files';
                 const object = this.stack.last().object || '/';
                 document.location.hash = normalize(section + object);
@@ -76,22 +75,28 @@ export default defineComponent({
         changePath(item) {
             // Change File/directory
             console.log("FilesEditorContainer.changePath item.name:" + item.name);
-            this.loading = true;
-            if (item.name == '..') {
-                this.stack.pop();
-            } else {
-                this.stack.push(item);
+            if (this.isGit) { // Git
+                this.loading = true;
+                if (item.name == '..') {
+                    this.stack.pop();
+                } else {
+                    let index = this.stack.indexOf(item);
+                    if (index != -1) {
+                        this.stack.slice(index + 1);
+                    } else {
+                        this.stack.push(item);
+                    }
+                }
+                // Refresh files/editor
+                this.refresh();
+            } if (this.config.singleTab) { // Files - single tab
+                this.updateStack(item.object, item.type);
+                this.loading = true;
+                // Refresh files/editor
+                this.refresh();
+            } else { // Files - multi tab
+                this.$emit("show", { id: 'files', path: item.object, type: item.type });
             }
-            // Refresh files/editor
-            this.refresh();
-        },
-        changePathUp(index) {
-            // Change directory to a parent directory (for breadcrum)
-            console.log("FilesEditorContainer.changePathUp index: " + index);
-            this.loading = true;
-            this.stack.slice(index + 1);
-            // Refresh files/editor
-            this.refresh();
         },
         refresh() {
             // Refresh files/editor

@@ -3,10 +3,11 @@
     <pane key="1" :size="sidebarSize">
         <sidebar class="app-sidebar"
             @show="show"
+            :config="config"
             ></sidebar>
     </pane>
     <pane key="2" :size="100 - sidebarSize" class="app-main">
-        <div class="app-main-nav" v-show="activeTabs.length > 1">
+        <div class="app-main-nav" v-show="activeTabs.length > 1 && !config.singleTab">
             <ul class="nav nav-tabs">
               <li role="presentation" v-for="tab in tabs" :class="selectedTab == tab.uuid ? 'active': ''">
                 <a v-if="!tab.closed" href="#" @click.stop="selectTab(tab)">{{ tab.name }} <i class='fa fa-close' @click.stop="closeTab(tab)"></i></a>
@@ -22,7 +23,8 @@
                     :config="config"
                     :target="tab.target"
                     :is-git="false"
-                    @setTabTitle="(event) => tab.name = event.name"
+                    @show="show"
+                    @setTab="(event) => { tab.name = event.name; tab.target = event; }"
                     v-show="selectedTab == tab.uuid"
                     v-if="!tab.closed"></component>
             </template>
@@ -139,6 +141,7 @@ export default defineComponent({
             config: {
                 theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
                 mode: localStorage.getItem('airflow_code_editor_mode') || 'default', // edit mode (default, vim, etc...)
+                singleTab: false,
             },
             sidebarSize: 190 * 100 / jQuery(document).width() // sidebar size (percentage)
         };
@@ -149,13 +152,20 @@ export default defineComponent({
         },
         show(target) {
             if (target.id == 'files') {
-                let tab = new TabState(target.path, FilesEditorContainer, target);
-                this.tabs.push(tab);
+                let path = target.path != '/' ? target.path : undefined;
+                let tab = this.tabs.find(tab => tab.target && tab.target.object == path && tab.target.type == target.type && !tab.closed);
+                if (tab) {
+                    if (target.type == 'tree') {
+                        this.$refs[tab.uuid][0].refresh();
+                    }
+                } else {
+                    tab = new TabState(target.path, FilesEditorContainer, target);
+                    this.tabs.push(tab);
+                }
                 this.selectedTab = tab.uuid;
             } else if (target.id == 'workspace') {
                 let tab = this.tabs.find(tab => tab.uuid == WORKSPACE_UUID && !tab.closed);
                 if (tab) {
-                    tab.closed = false;
                     this.$refs[tab.uuid][0].refresh();
                 } else {
                     tab = new TabState('Workspace', Workspace);
@@ -163,8 +173,13 @@ export default defineComponent({
                 }
                 this.selectedTab = tab.uuid;
             } else { // history (tags, local/remote branches)
-                let tab = new TabState(target.name, HistoryView, target);
-                this.tabs.push(tab);
+                let tab = this.tabs.find(tab => tab.target && tab.target.id == target.id && tab.target.name == target.name && !tab.closed);
+                if (tab) {
+                    this.$refs[tab.uuid][0].refresh();
+                } else {
+                    tab = new TabState(target.name, HistoryView, target);
+                    this.tabs.push(tab);
+                }
                 this.selectedTab = tab.uuid;
             }
         },

@@ -1,7 +1,7 @@
 <template>
     <div class="tree-view">
         <ol class="breadcrumb" v-if="showBreadcrumb">
-            <breadcrumb @changePathUp="changePathUp" :stack="stack" :is-git="isGit"></breadcrumb>
+            <breadcrumb @changePath="changePath" :stack="stack" :is-git="isGit"></breadcrumb>
         </ol>
 
         <div class="tree-view-blob-content">
@@ -221,9 +221,9 @@ export default defineComponent({
             // Settings button action
             this.$refs.settingsDialog.showDialog(this.config);
         },
-        changePathUp(index) {
-            // Change directory to a parent directory (for breadcrum)
-            this.$emit('changePathUp', index);
+        changePath(item) {
+            // Change File/directory
+            this.$emit('changePath', item);
         },
         refresh() {
             console.log('Editor.refresh');

@@ -1,7 +1,7 @@
 <template>
     <div class="tree-view">
         <ol class="breadcrumb">
-          <breadcrumb @changePathUp="changePathUp" :stack="stack" :isGit="isGit" v-if="showBreadcrumb"></breadcrumb>
+          <breadcrumb @changePath="changePath" :stack="stack" :isGit="isGit" v-if="showBreadcrumb"></breadcrumb>
           <div class="breadcrumb-buttons">
               <button v-on:click="newAction()" v-if="!isGit" type="button" class="btn btn-primary"><icon icon="add_circle"/> New</button>
               <button v-on:click="uploadAction()" v-if="!isGit" type="button" class="btn btn-primary"><icon icon="file_upload"/> Upload</button>
@@ -22,12 +22,12 @@
               <template #table-row="props">
                 <div @contextmenu.prevent.stop="showMenu($event, props.row)">
                   <span v-if="props.column.field == 'name'" :class="props.column.field">
-                    <a v-on:click.prevent="$emit('changePath', props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')">
+                    <a v-on:click.prevent="changePath(props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')">
                       {{ props.row.name }}
                     </a>
                   </span>
                   <span v-else-if="props.column.field == 'icon'" :class="props.column.field">
-                    <a v-on:click.prevent="$emit('changePath', props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')">
+                    <a v-on:click.prevent="changePath(props.row)" :href="props.row.href" :class="'tree-item-' + props.row.type + ' ' + (props.row.isSymbolicLink ? 'tree-item-symlink' : '')">
                       <icon :icon="props.row.icon"/>
                     </a>
                   </span>
@@ -191,15 +191,15 @@ export default defineComponent({
         newAction() {
             // New file button action
             const item = { name: '✧', type: 'blob', object: (this.stack.last().object || '') + '/✧' };
-            this.$emit('changePath', item);
+            this.changePath(item);
         },
         uploadAction() {
             // Upload button action
             this.$refs.file.click();
         },
-        changePathUp(index) {
-            // Change directory to a parent directory (for breadcrum)
-            this.$emit('changePathUp', index);
+        changePath(item) {
+            // Change File/directory
+            this.$emit('changePath', item);
         },
         refresh() {
             console.log("Files.refresh");
@@ -230,8 +230,12 @@ export default defineComponent({
                         blobs.sort(compare);
                         trees.sort(compare);
                         // Add link to parent directory on top
-                        if (this.stack.parent() || (last.object !== undefined && last.object.startsWith('/')) ) {
-                            trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'folder', href: '#' });
+                        if (!this.stack.isRoot()) {
+                            if (this.isGit) {
+                                trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'folder', href: '#' });
+                            } else {
+                                trees.unshift({ ...this.stack.parent(), name: '..', icon: 'folder', href: '#' });
+                            }
                         }
                         this.items = trees.concat(blobs);
                         this.$emit('loaded', false); // close the spinner
@@ -282,7 +286,7 @@ export default defineComponent({
         },
         menuOptionClicked(event) {
             if (event.option.slug == 'open') {
-                this.$emit('changePath', event.item);
+                this.changePath(event.item);
             } else if (event.option.slug == 'download') {
                 window.open(event.item.downloadHref);
             } else if (event.option.slug == 'delete') {

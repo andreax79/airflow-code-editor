@@ -51,6 +51,9 @@ export default defineComponent({
         }
     },
     methods: {
+        isChanged() {
+            return this.$refs.editor && this.$refs.editor.isChanged();
+        },
         update(target) {
             if (target) {
                 this.updateStack(target.path, target.type);

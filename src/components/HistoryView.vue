@@ -93,6 +93,9 @@ export default defineComponent({
         this.refresh();
     },
     methods: {
+        isChanged() {
+            return false;
+        },
         updateLocation() {
             // Update href hash
             document.location.hash = normalize(this.id + '/' + this.name);

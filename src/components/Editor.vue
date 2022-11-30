@@ -46,6 +46,7 @@
 <script>
 import axios from 'axios';
 import { defineComponent, markRaw } from 'vue';
+// import { str as crc32 } from 'crc-32';
 import { normalize, prepareHref, showError, importTheme } from '../commons';
 import Breadcrumb from './Breadcrumb.vue';
 import Icon from './Icon.vue';
@@ -66,6 +67,7 @@ export default defineComponent({
             editor: null, // CodeMirror instance
             isPython: false, // is editor open on a python file
             readOnly: false,
+            generation: 0,
             codeMirrorOptions: { // code mirror options
                 lineNumbers: true,
                 foldGutter: true,
@@ -84,6 +86,19 @@ export default defineComponent({
         isNew(filename) {
             return /✧$/.test(filename);
         },
+        isChanged() {
+            return !this.editor.isClean(this.generation);
+            // return this.checksum != crc32(this.editor.getValue());
+        },
+        setValue(data) {
+            this.editor.setValue(data);
+            // Update generation
+            this.generation = this.editor.changeGeneration();
+            // Update checksum
+            // this.checksum = crc32(data);
+            // Clear history
+            this.editor.clearHistory()
+        },
         async editorLoad(path) {
             // Load a file into the editor
             // Force data to String (avoid string.slit exception in CodeMirror)
@@ -96,14 +111,14 @@ export default defineComponent({
                 if (this.editor.getMode().name == 'python') {
                     data = data.replace(/\t/g, '    ');
                 }
-                this.editor.setValue(data);
+                this.setValue(data);
                 this.editorPath = path;
                 this.$emit('loaded', false); // close the spinner
                 // Update url hash
                 this.$emit('updateLocation');
             } catch(error) {
                 this.$emit('loaded', false); // close the spinner
-                this.editor.setValue('');
+                this.setValue('');
                 this.editorPath = path;
                 try {
                     const data = JSON.parse(error.response.data);
@@ -139,6 +154,10 @@ export default defineComponent({
                     this.editor.openNotification('file saved', { duration: 5000 })
                     // Update url hash
                     this.$emit('updateLocation');
+                    // Update checksum
+                    // this.checksum = crc32(payload);
+                    // Update generation
+                    this.generation = this.editor.changeGeneration();
                 }
             } catch(error) {
                 showError(error.response ? error.response.data.message : error);
@@ -263,7 +282,7 @@ export default defineComponent({
                 if (this.isNew(last.name)) {
                     // New file
                     this.$emit('loaded', false); // close the spinner
-                    this.editor.setValue('');
+                    this.setValue('');
                     setTimeout(() => this.editor.refresh(), 100);
                 } else {
                     // Load the file
@@ -278,6 +297,7 @@ export default defineComponent({
         this.editor.save = async () => this.saveAction(); // save file command
         this.refresh();
         window._editor = this.editor;
+        window._e = this;
     }
 })
 </script>

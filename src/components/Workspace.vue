@@ -50,6 +50,9 @@ export default defineComponent({
         this.refresh();
     },
     methods: {
+        isChanged() {
+            return false;
+        },
         showDiff(target) {
             this.loading = true;
             this.$refs.diff.refresh(target);

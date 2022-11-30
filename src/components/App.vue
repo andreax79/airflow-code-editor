@@ -39,7 +39,8 @@
             </template>
         </div>
     </pane>
-    <error-dialog ref="errorDialog" @refresh="refresh"></error-dialog>
+    <error-dialog ref="errorDialog"></error-dialog>
+    <close-tab-dialog ref="closeTabDialog"></close-tab-dialog>
   </splitpanes>
 </template>
 <style>
@@ -117,6 +118,7 @@ import FilesEditorContainer from './FilesEditorContainer.vue';
 import HistoryView from './HistoryView.vue';
 import Workspace from './Workspace.vue';
 import ErrorDialog from './dialogs/ErrorDialog.vue';
+import CloseTabDialog from './dialogs/CloseTabDialog.vue';
 
 const WORKSPACE_UUID = 'd15216ca-854d-4705-bff5-1887e8bf1180';
 
@@ -143,6 +145,7 @@ export default defineComponent({
         'historyview': HistoryView,
         'workspace': Workspace,
         'error-dialog': ErrorDialog,
+        'close-tab-dialog': CloseTabDialog,
         'vue-simple-context-menu': VueSimpleContextMenu,
     },
     data() {
@@ -157,7 +160,11 @@ export default defineComponent({
             sidebarSize: 190 * 100 / jQuery(document).width(), // sidebar size (percentage)
             options: [
                 {
-                  name: '<span class="material-icons">close</span> Close other tabs',
+                  name: '<span class="material-icons">close</span> Close',
+                  slug: 'close',
+                },
+                {
+                  name: '<span class="material-icons">cancel</span> Close other tabs',
                   slug: 'close_others',
                 },
             ],
@@ -217,7 +224,7 @@ export default defineComponent({
         async menuOptionClicked(event) {
             // Menu click
             if (event.option.slug == 'close_others') {
-                for (const tab of this.tabs.filter(x => x != event.item)) {
+                for (const tab of this.tabs.filter(x => x != event.item && !x.closed)) {
                     await this.closeTab(tab);
                 }
             } else if (event.option.slug == 'close') {
@@ -228,8 +235,21 @@ export default defineComponent({
             // Set active tab
             this.selectedTab = tab.uuid;
         },
+        isChanged(tab) {
+            if (tab) {
+                return this.$refs[tab.uuid][0].isChanged();
+            } else {
+                return false;
+            }
+        },
         async closeTab(tab) {
             // Close a tab
+            if (this.isChanged(tab)) {
+                // Show confirm dialog
+                if (!await this.$refs.closeTabDialog.showDialog(tab.name)) {
+                    return;
+                }
+            }
             let tabIndex = this.activeTabs.indexOf(tab);
             if (tabIndex != -1) {
                 // The user is closing the selected tab

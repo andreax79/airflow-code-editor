@@ -103,6 +103,21 @@ footer {
 .btn .material-icons {
     margin-right: 0.5em;
 }
+.vue-simple-context-menu {
+    background-color: #fff;
+    font-size: 1em;
+}
+.vue-simple-context-menu .vue-simple-context-menu__item .material-icons {
+    color: #666;
+    font-size: 1.5em;
+    margin-right: 0.5em;
+}
+.vue-simple-context-menu .vue-simple-context-menu__item:hover .material-icons {
+    color: #fff;
+}
+.vue-simple-context-menu__divider {
+    height: 1px;
+}
 </style>
 <script>
 import 'splitpanes/dist/splitpanes.css';

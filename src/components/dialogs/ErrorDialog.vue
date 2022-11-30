@@ -62,12 +62,17 @@ export default defineComponent({
     },
     methods: {
         showDialog(message) {
-            this.message = message.message;
-            this.type = message.type;
-            this.show = true;
+            return new Promise((resolve, reject) => {
+                this.message = message.message;
+                this.type = message.type;
+                this.show = true;
+                this.resolve = resolve;
+                this.reject = reject;
+            });
         },
         close() {
             this.show = false;
+            this.resolve();
         },
     }
 })

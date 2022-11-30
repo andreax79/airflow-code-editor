@@ -61,18 +61,22 @@ export default defineComponent({
     },
     methods: {
         showDialog(config) {
-            this.config = Object.assign({}, config); // copy config object
-            this.show = true;
+            return new Promise((resolve, reject) => {
+                this.config = Object.assign({}, config); // copy config object
+                this.show = true;
+                this.resolve = resolve;
+                this.reject = reject;
+            });
         },
         ok() {
-            this.$emit('updateSettings', this.config);
-            this.close();
+            this.close(this.config);
         },
         cancel() {
             this.close();
         },
-        close() {
+        close(config) {
             this.show = false;
+            this.resolve(config);
         },
     }
 })

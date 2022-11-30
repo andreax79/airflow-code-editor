@@ -45,7 +45,6 @@
 <script>
 import { defineComponent } from 'vue';
 import Icon from '../Icon.vue';
-import { git } from '../../commons';
 
 export default defineComponent({
     components: {
@@ -61,29 +60,23 @@ export default defineComponent({
     },
     methods: {
         showDialog() {
-            this.message = '';
-            this.amend = false;
-            this.show = true;
+            return new Promise((resolve, reject) => {
+                this.message = '';
+                this.amend = false;
+                this.show = true;
+                this.resolve = resolve;
+                this.reject = reject;
+            });
         },
         ok() {
-            // Commit a file
-            const cmd = [
-                'commit',
-                this.amend ? '--amend' : null,
-                '-m',
-                this.message
-            ];
-            git(cmd, (data) => {
-                console.log(data);
-                this.close();
-                this.$emit('refresh');
-            });
+            this.close({ amend: this.amend, message: this.message });
         },
         cancel() {
             this.close();
         },
-        close() {
+        close(response) {
             this.show = false;
+            this.resolve(response);
         },
         toggleamend() {
             this.amend = !this.amend;

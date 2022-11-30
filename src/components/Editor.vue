@@ -23,8 +23,8 @@
             </div>
         </div>
 
-        <settings-dialog ref="settingsDialog" @updateSettings="updateSettings"></settings-dialog>
-        <save-as-dialog ref="saveAsDialog" @editorSave="editorSave"></save-as-dialog>
+        <settings-dialog ref="settingsDialog"></settings-dialog>
+        <save-as-dialog ref="saveAsDialog"></save-as-dialog>
     </div>
 </template>
 <style>
@@ -46,7 +46,7 @@
 <script>
 import axios from 'axios';
 import { defineComponent, markRaw } from 'vue';
-import { normalize, prepareHref, git, showError, importTheme } from '../commons';
+import { normalize, prepareHref, showError, importTheme } from '../commons';
 import Breadcrumb from './Breadcrumb.vue';
 import Icon from './Icon.vue';
 import SettingsDialog from './dialogs/SettingsDialog.vue';
@@ -84,38 +84,36 @@ export default defineComponent({
         isNew(filename) {
             return /✧$/.test(filename);
         },
-        editorLoad(path) {
+        async editorLoad(path) {
             // Load a file into the editor
             // Force data to String (avoid string.slit exception in CodeMirror)
             // https://github.com/axios/axios/issues/811
-            axios.get(prepareHref('files' + path),
-                    { transformResponse: res => res })
-                 .then((response) => {
-                      let data = response.data;
-                      // Replace tabs with spaces
-                      if (this.editor.getMode().name == 'python') {
-                          data = data.replace(/\t/g, '    ');
-                      }
-                      this.editor.setValue(String(data));
-                      this.editor.setValue(data);
-                      this.editorPath = path;
-                      this.$emit('loaded', false); // close the spinner
-                      // Update url hash
-                      this.$emit('updateLocation');
-                  })
-                  .catch((error) => {
-                      this.$emit('loaded', false); // close the spinner
-                      this.editor.setValue('');
-                      this.editorPath = path;
-                      try {
-                          const data = JSON.parse(error.response.data);
-                          showError(data.error.message);
-                      } catch (ex) {
-                          showError('Error loading file');
-                      }
-                  });
+            try {
+                const response = await axios.get(prepareHref('files' + path),
+                    { transformResponse: res => res });
+                let data = response.data;
+                // Replace tabs with spaces
+                if (this.editor.getMode().name == 'python') {
+                    data = data.replace(/\t/g, '    ');
+                }
+                this.editor.setValue(data);
+                this.editorPath = path;
+                this.$emit('loaded', false); // close the spinner
+                // Update url hash
+                this.$emit('updateLocation');
+            } catch(error) {
+                this.$emit('loaded', false); // close the spinner
+                this.editor.setValue('');
+                this.editorPath = path;
+                try {
+                    const data = JSON.parse(error.response.data);
+                    showError(data.error.message);
+                } catch (ex) {
+                    showError('Error loading file');
+                }
+            };
         },
-        editorSave(path) {
+        async editorSave(path) {
             // Save editor content
             const payload = this.editor.getValue();
             const options = {
@@ -128,31 +126,35 @@ export default defineComponent({
                 showError('Invalid filename');
                 return;
             }
-            axios.post(prepareHref('files' + path), payload, options)
-                 .then((response) => {
-                    if (response.data.error) {
-                        showError(response.data.error.message || 'Error saving file');
-                    } else {
-                        // Update editor path and the breadcrumb
-                        if (path != this.editorPath) {
-                            this.editorPath = path;
-                            this.stack.updateStack(path, 'blob');
-                        }
-                        this.editor.openNotification('file saved', { duration: 5000 })
-                        // Update url hash
-                        this.$emit('updateLocation');
+            try {
+                const response = await axios.post(prepareHref('files' + path), payload, options);
+                if (response.data.error) {
+                    showError(response.data.error.message || 'Error saving file');
+                } else {
+                    // Update editor path and the breadcrumb
+                    if (path != this.editorPath) {
+                        this.editorPath = path;
+                        this.stack.updateStack(path, 'blob');
                     }
-                 })
-                 .catch((error) => showError(error.response ? error.response.data.message : error));
+                    this.editor.openNotification('file saved', { duration: 5000 })
+                    // Update url hash
+                    this.$emit('updateLocation');
+                }
+            } catch(error) {
+                showError(error.response ? error.response.data.message : error);
+            }
         },
-        editorSaveAs(path) {
+        async editorSaveAs(path) {
             // Show 'Save as...' dialog
             if (this.isNew(path)) {
                 path = path.replace('✧', 'new file.txt');
             }
-            this.$refs.saveAsDialog.showDialog(path);
+            const target = await this.$refs.saveAsDialog.showDialog(path);
+            if (target) {
+                this.editorSave(target);
+            }
         },
-        editorFormat() {
+        async editorFormat() {
             // Format code
             const payload = this.editor.getValue();
             const options = {
@@ -160,9 +162,12 @@ export default defineComponent({
                     'Content-Type': 'text/plain'
                 }
             };
-            axios.post(prepareHref('format'), payload, options)
-                 .then((response) => this.editor.setValue(response.data.data))
-                 .catch((error) => showError(error.response ? error.response.data.message : error));
+            try {
+                const response = await axios.post(prepareHref('format'), payload, options);
+                this.editor.setValue(response.data.data);
+            } catch(error) {
+                showError(error.response ? error.response.data.message : error);
+            }
         },
         setOption(option, value) {
             // Set editor option
@@ -170,15 +175,16 @@ export default defineComponent({
                 this.editor.setOption(option, value);
             }
         },
-        setTheme(theme) {
+        async setTheme(theme) {
             // Set editor theme
             if (theme == 'default') {
                 this.setOption('theme', theme);
             } else {
-                importTheme(theme).then(() => this.setOption('theme', theme));
+                await importTheme(theme);
+                this.setOption('theme', theme);
             }
         },
-        updateSettings(config) {
+        async updateSettings(config) {
             this.config.theme = config.theme;
             this.config.mode = config.mode;
             this.setTheme(this.config.theme); // Set theme
@@ -187,7 +193,7 @@ export default defineComponent({
             localStorage.setItem('airflow_code_editor_theme', config.theme);
             localStorage.setItem('airflow_code_editor_mode', config.mode);
         },
-        saveAction() {
+        async saveAction() {
             // Save button action
             if (this.isNew(this.editorPath)) {
                 this.editorSaveAs(this.editorPath);
@@ -195,7 +201,7 @@ export default defineComponent({
                 this.editorSave(this.editorPath);
             }
         },
-        saveAsAction() {
+        async saveAsAction() {
             // Save as button action
             this.editorSaveAs(this.editorPath);
         },
@@ -217,9 +223,12 @@ export default defineComponent({
             // Format button action
             this.editorFormat();
         },
-        settingsAction() {
+        async settingsAction() {
             // Settings button action
-            this.$refs.settingsDialog.showDialog(this.config);
+            const config = await this.$refs.settingsDialog.showDialog(this.config);
+            if (config) {
+                this.updateSettings(config);
+            }
         },
         changePath(item) {
             // Change File/directory
@@ -266,7 +275,7 @@ export default defineComponent({
     mounted() {
         console.log('Editor.mounted');
         this.editor = markRaw(CodeMirror.fromTextArea(this.$el.querySelector('textarea'), this.codeMirrorOptions));
-        this.editor.save = () => this.saveAction(); // save file command
+        this.editor.save = async () => this.saveAction(); // save file command
         this.refresh();
         window._editor = this.editor;
     }

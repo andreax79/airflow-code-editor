@@ -67,15 +67,16 @@ export function splitPath(path) {
     }
 }
 
-function refreshCsrfToken() {
+async function refreshCsrfToken() {
     // Refresh CSRF Token
-    axios.get(prepareHref('ping'))
-         .then((response) => {
-              csrfToken = response.data.value;
-              axios.defaults.headers.common["X-CSRFToken"] = csrfToken;
-              setTimeout(refreshCsrfToken, CSRF_REFRESH);
-         })
-         .catch((error) => setTimeout(refreshCsrfToken, CSRF_REFRESH));
+    try {
+        const response = await axios.get(prepareHref('ping'));
+        csrfToken = response.data.value;
+        axios.defaults.headers.common["X-CSRFToken"] = csrfToken;
+        setTimeout(refreshCsrfToken, CSRF_REFRESH);
+    } catch(error) {
+        setTimeout(refreshCsrfToken, CSRF_REFRESH);
+    }
 }
 
 export function initCsrfToken(csrfTokenParam) {
@@ -84,26 +85,24 @@ export function initCsrfToken(csrfTokenParam) {
     setTimeout(refreshCsrfToken, CSRF_REFRESH);
 }
 
-export function git(args, callback) {
+export async function git_async(args) {
     const payload = { args: [].concat.apply([], args.filter(x => x != null)) };  // flat the array
-    axios.post(prepareHref('repo'), payload)
-         .then((response) => {
-            if (response.data.returncode === 0) {
-                if (callback) {
-                    callback(response.data.data);
-                }
-                // Return code is 0 but there is stderr output: this is a warning message
-                if (response.data.error) {
-                    showWarning(response.data.error.message);
-                }
-            } else {
-                showError(response.data.error.message);
-            }
-         })
-         .catch((error) => {
-            console.log(error);
-            showError(error.response ? error.response.data.message : error);
-         });
+    try {
+        const response = await axios.post(prepareHref('repo'), payload);
+        if (response.data.returncode != 0) {
+            showError(response.data.error.message);
+            return null;
+        }
+        // Return code is 0 but there is stderr output: this is a warning message
+        if (response.data.error) {
+            showWarning(response.data.error.message);
+        }
+        return response.data.data
+    } catch(error) {
+        console.log(error);
+        showError(error.response ? error.response.data.message : error);
+        return null;
+    }
 }
 
 export function importTheme(theme) {

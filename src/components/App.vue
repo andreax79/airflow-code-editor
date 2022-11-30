@@ -214,17 +214,21 @@ export default defineComponent({
                 this.$refs.appMainNavMenu.showMenu(event, tab);
             }
         },
-        menuOptionClicked(event) {
+        async menuOptionClicked(event) {
             // Menu click
             if (event.option.slug == 'close_others') {
-                this.tabs.filter(x => x != event.item).forEach(this.closeTab);
+                for (const tab of this.tabs.filter(x => x != event.item)) {
+                    await this.closeTab(tab);
+                }
+            } else if (event.option.slug == 'close') {
+                await this.closeTab(event.item);
             }
         },
         selectTab(tab) {
             // Set active tab
             this.selectedTab = tab.uuid;
         },
-        closeTab(tab) {
+        async closeTab(tab) {
             // Close a tab
             let tabIndex = this.activeTabs.indexOf(tab);
             if (tabIndex != -1) {

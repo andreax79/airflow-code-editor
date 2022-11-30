@@ -62,7 +62,7 @@
 </style>
 <script>
 import { defineComponent, ref } from 'vue';
-import { git } from "../commons";
+import { git_async } from "../commons";
 
 export default defineComponent({
     props: [ 'linesOfContext' ],
@@ -132,18 +132,21 @@ export default defineComponent({
             this.lines = data.split("\n").map(this.processLine);
             this.$emit('loaded');
         },
-        refresh(commit) {
+        async refresh(commit) {
             if (commit) {
                 this.commit = commit;
             }
             if (this.commit) {
                 console.log('loading');
                 const cmd = [ 'show', '--unified=' + this.linesOfContext, this.commit.commit ];
-                git(cmd, this.parseDiff);
+                const data = await git_async(cmd);
+                if (data) {
+                    this.parseDiff(data);
+                }
             }
         },
     },
-    mounted() {
+    async mounted() {
         // Init
         this.refresh();
     }

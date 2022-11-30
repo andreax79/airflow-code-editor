@@ -38,7 +38,6 @@
 </style>
 <script>
 import { defineComponent } from 'vue';
-import { git } from '../../commons';
 
 export default defineComponent({
     props: [],
@@ -50,19 +49,22 @@ export default defineComponent({
     },
     methods: {
         showDialog(target) {
-            this.target = target;
-            this.show = true;
+            return new Promise((resolve, reject) => {
+                this.target = target;
+                this.show = true;
+                this.resolve = resolve;
+                this.reject = reject;
+            });
         },
         ok() {
-            // save-as a file
-            this.$emit('editorSave', this.target);
-            this.close();
+            this.close(this.target);
         },
         cancel() {
             this.close();
         },
-        close() {
+        close(target) {
             this.show = false;
+            this.resolve(target);
         },
     }
 })

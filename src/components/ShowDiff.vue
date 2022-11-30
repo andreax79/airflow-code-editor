@@ -47,7 +47,7 @@
 import axios from 'axios';
 import { defineComponent, ref } from 'vue';
 import { prepareHref, showError } from '../commons';
-import { git } from "../commons";
+import { git_async } from "../commons";
 
 export default defineComponent({
     props: [ 'linesOfContext' ],
@@ -99,7 +99,7 @@ export default defineComponent({
             this.lines = data.split("\n").map(this.processLine);
             this.$emit('loaded', true);
         },
-        showDiff() {
+        async showDiff() {
             // Show git diff
             const cmd = [
                 'diff',
@@ -108,7 +108,10 @@ export default defineComponent({
                 '--',
                 this.target.name
             ];
-            git(cmd, this.parseDiff);
+            const data = await git_async(cmd);
+            if (data) {
+                this.parseDiff(data);
+            }
         },
         parseUntrackedFileResponse(response) {
             // Show an untracked file mimic git diff format
@@ -126,22 +129,23 @@ export default defineComponent({
             this.lines = header.concat(content).map(this.processLine);
             this.$emit('loaded', true);
         },
-        showUntrackedFile(data) {
+        async showUntrackedFile(data) {
             // Show an untracked file mimic git diff format
-            axios.get(prepareHref('files/' + this.target.name),
-                    { transformResponse: res => res })
-                 .then(this.parseUntrackedFileResponse)
-                 .catch((error) => {
-                    this.$emit('loaded', false); // close the spinner
-                    try {
-                        const data = JSON.parse(error.response.data);
+            try {
+                const response = await axios.get(prepareHref('files/' + this.target.name),
+                    { transformResponse: res => res });
+                return this.parseUntrackedFileResponse(response);
+            } catch(error) {
+                this.$emit('loaded', false); // close the spinner
+                try {
+                const data = JSON.parse(error.response.data);
                         showError(data.error.message);
-                    } catch (ex) {
-                        showError('Error loading file');
-                    }
-                 });
+                } catch (ex) {
+                    showError('Error loading file');
+                }
+            };
         },
-        refresh(target) {
+        async refresh(target) {
             this.target = target;
             if (this.target && this.target.name) {
                 if (this.target.status == 'untracked') {

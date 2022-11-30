@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { COLORS, git } from "./commons";
+import { COLORS, git_async } from "./commons";
 
 export function LogView(id, historyView) {
     const self = this;
 
-    self.update = function(ref) {
+    self.update = async function(ref) {
         jQuery(svg).empty();
         streams = []
         jQuery(content).empty();
@@ -27,15 +27,16 @@ export function LogView(id, historyView) {
         self.populate();
     };
 
-    self.populate = function() {
+    self.populate = async function() {
         currentSelection = null;
         const maxCount = 1000;
         if (content.childElementCount > 0) {
             // The last node is the 'Show more commits placeholder'. Remove it.
             content.removeChild(content.lastElementChild);
         }
-        let startAt = content.childElementCount;
-        git([ "log", "--date-order", "--pretty=raw", "--decorate=full", "--max-count=" + String(maxCount + 1), String(self.nextRef), "--" ], function(data) {
+        const startAt = content.childElementCount;
+        const data = await git_async([ "log", "--date-order", "--pretty=raw", "--decorate=full", "--max-count=" + String(maxCount + 1), String(self.nextRef), "--" ]);
+        if (data) {
             let start = 0;
             let count = 0;
             self.nextRef = undefined;
@@ -73,7 +74,7 @@ export function LogView(id, historyView) {
             }
 
             self.updateGraph(startAt);
-        });
+        };
     };
 
     self.updateGraph = function(startAt) {

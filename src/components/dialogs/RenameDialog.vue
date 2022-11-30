@@ -38,7 +38,6 @@
 </style>
 <script>
 import { defineComponent } from 'vue';
-import { normalize, git, showError } from '../../commons';
 
 export default defineComponent({
     props: [],
@@ -51,26 +50,23 @@ export default defineComponent({
     },
     methods: {
         showDialog(source) {
-            this.source = source;
-            this.target = source;
-            this.show = true;
+            return new Promise((resolve, reject) => {
+                this.source = source;
+                this.target = source;
+                this.show = true;
+                this.resolve = resolve;
+                this.reject = reject;
+            });
         },
         ok() {
-            // Rename a file
-            let target = normalize(this.target);
-            if (target == "/") {
-                showError('Invalid filename');
-                this.close();
-            } else if (this.source != target) {
-                git([ 'mv-local', this.source, target ], data => this.$emit('refresh'));
-            }
-            this.close();
+            this.close(this.target);
         },
         cancel() {
             this.close();
         },
-        close() {
+        close(target) {
             this.show = false;
+            this.resolve(target);
         },
     }
 })

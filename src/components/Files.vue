@@ -47,8 +47,8 @@
               </template>
             </vue-good-table>
         </div>
-        <rename-dialog ref="renameDialog" @refresh="refresh"></rename-dialog>
-        <delete-dialog ref="deleteDialog" @refresh="refresh"></delete-dialog>
+        <rename-dialog ref="renameDialog"></rename-dialog>
+        <delete-dialog ref="deleteDialog"></delete-dialog>
         <vue-simple-context-menu
             :element-id="'files-menu-' + uuid"
             :options="options"
@@ -117,12 +117,16 @@ import { defineComponent } from 'vue';
 import { VueGoodTable } from 'vue-good-table-next';
 // import 'vue-good-table-next/dist/vue-good-table-next.css';
 import VueSimpleContextMenu from 'vue-simple-context-menu';
-import { basename, normalize, prepareHref, git } from '../commons';
+import { basename, normalize, prepareHref, git_async, showError } from '../commons';
 import { TreeEntry, prepareMenuOptions } from '../tree_entry';
 import Icon from './Icon.vue';
 import Breadcrumb from './Breadcrumb.vue';
 import RenameDialog from './dialogs/RenameDialog.vue';
 import DeleteDialog from './dialogs/DeleteDialog.vue';
+
+function filenameCompare(a, b) {
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+}
 
 export default defineComponent({
     components: {
@@ -180,13 +184,26 @@ export default defineComponent({
         }
     },
     methods: {
-        showRenameDialog(item) {
+        async showRenameDialog(item) {
             // Show Move/Rename file dialog
-            this.$refs.renameDialog.showDialog(item.object);
+            let target = await this.$refs.renameDialog.showDialog(item.object);
+            if (target) {
+                target = normalize(target);
+                if (target == "/") {
+                    showError('Invalid filename');
+                } else if (this.source != target) {
+                    await git_async([ 'mv-local', item.object, target ]);
+                    this.refresh();
+                }
+            }
         },
-        showDeleteDialog(item) {
+        async showDeleteDialog(item) {
             // Show Delete file dialog
-            this.$refs.deleteDialog.showDialog(item.object);
+            const target = await this.$refs.deleteDialog.showDialog(item.object);
+            if (target) {
+                await git_async([ 'rm-local', target ]);
+                this.refresh();
+            }
         },
         newAction() {
             // New file button action
@@ -201,7 +218,7 @@ export default defineComponent({
             // Change File/directory
             this.$emit('changePath', item);
         },
-        refresh() {
+        async refresh() {
             console.log("Files.refresh");
             // Update tree view
             let path = null;
@@ -213,37 +230,35 @@ export default defineComponent({
                     path = 'tree' + normalize('files' + (last.object || ''));
                 }
                 // Get tree items
-                axios.get(prepareHref(path), { params: { long: true }})
-                     .then((response) => {
-                        let blobs = []; // files
-                        let trees = []; // directories
-                        response.data.value.forEach((part) => {
-                            let item = new TreeEntry(part, this.isGit, last.object);
-                            if (item.type == 'tree') {
-                                trees.push(item);
-                            } else {
-                                blobs.push(item);
-                            }
-                        });
-                        // Sort files and directories
-                        const compare = (a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase());
-                        blobs.sort(compare);
-                        trees.sort(compare);
-                        // Add link to parent directory on top
-                        if (!this.stack.isRoot()) {
-                            if (this.isGit) {
-                                trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'folder', href: '#' });
-                            } else {
-                                trees.unshift({ ...this.stack.parent(), name: '..', icon: 'folder', href: '#' });
-                            }
+                try {
+                    const response = await axios.get(prepareHref(path), { params: { long: true }});
+                    let blobs = []; // files
+                    let trees = []; // directories
+                    response.data.value.forEach((part) => {
+                        let item = new TreeEntry(part, this.isGit, last.object);
+                        if (item.type == 'tree') {
+                            trees.push(item);
+                        } else {
+                            blobs.push(item);
                         }
-                        this.items = trees.concat(blobs);
-                        this.$emit('loaded', false); // close the spinner
-                  })
-                  .catch(error => {
-                        this.$emit('loaded', false); // close the spinner
-                        console.log(error);
-                  })
+                    });
+                    // Sort files and directories
+                    blobs.sort(filenameCompare);
+                    trees.sort(filenameCompare);
+                    // Add link to parent directory on top
+                    if (!this.stack.isRoot()) {
+                        if (this.isGit) {
+                            trees.unshift({ type: 'tree', name: '..', isSymbolicLink: false, icon: 'folder', href: '#' });
+                        } else {
+                            trees.unshift({ ...this.stack.parent(), name: '..', icon: 'folder', href: '#' });
+                        }
+                    }
+                    this.items = trees.concat(blobs);
+                    this.$emit('loaded', false); // close the spinner
+                } catch(error) {
+                    this.$emit('loaded', false); // close the spinner
+                    console.log(error);
+                }
             }
         },
         handleDrop($event) {
@@ -259,12 +274,11 @@ export default defineComponent({
             this.uploadFiles(files);
             $event.target.value = '';
         },
-        uploadFiles(files) {
+        async uploadFiles(files) {
             // Upload files
-            const self = this;
             if (!this.isGit) {
-                files.forEach((file) => {
-                    const filename = normalize((self.stack.last().object || '') + '/' + basename(file.name));
+                for (const file of files){
+                    const filename = normalize((this.stack.last().object || '') + '/' + basename(file.name));
                     const payload = file;
                     const options = {
                         headers: {
@@ -272,10 +286,13 @@ export default defineComponent({
                         }
                     };
                     // Upload file
-                    axios.post(prepareHref('files' + filename), payload, options)
-                         .then((response) => self.refresh())
-                         .catch((error) => console.log(error));
-                });
+                    try {
+                        await axios.post(prepareHref('files' + filename), payload, options);
+                        this.refresh();
+                    } catch(error) {
+                        console.log(error);
+                    }
+                };
             }
         },
         showMenu(event, item) {

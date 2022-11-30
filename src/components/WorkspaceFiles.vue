@@ -111,7 +111,7 @@ html body div#global-container div.splitpanes.splitpanes--vertical.default-theme
 </style>
 <script>
 import { defineComponent, ref } from 'vue';
-import { git } from '../commons';
+import { git_async } from '../commons';
 import { getIcon } from '../tree_entry';
 import Icon from './Icon.vue';
 import CommitDialog from './dialogs/CommitDialog.vue';
@@ -157,20 +157,30 @@ export default defineComponent({
             // Show item diff
             this.$emit('showDiff', item);
         },
-        showCommitDialog(item) {
+        async showCommitDialog(item) {
             // Show commit dialog
-            this.$refs.commitDialog.showDialog();
+            const response = await this.$refs.commitDialog.showDialog();
+            if (response) {
+                // Commit
+                const cmd = [
+                    'commit',
+                    response.amend ? '--amend' : null,
+                    '-m',
+                    response.message
+                ];
+                const data = await git_async(cmd);
+                console.log(data);
+                this.refresh();
+            }
         },
-        showRevertDialog(item) {
+        async showRevertDialog(item) {
             // Show revert dialog
-            this.$refs.confirmDialog.showDialog(
+            if (await this.$refs.confirmDialog.showDialog(
                 'Confirm Revert',
                 'Are you sure you want to revert changes?'
-            ).then(result => {
-                if (result) {
-                    this.revert();
-                }
-            });
+            )) {
+                this.revert();
+            }
         },
         processLine(line) {
             // Parge git status --porcelain line
@@ -215,23 +225,28 @@ export default defineComponent({
                 this.selectAll();
             }
         },
-        process() {
+        async process() {
             // Stage/Unstage selected items
             if (this.selected.length) {
                 const cmd = [ this.kind == 'staged' ? 'reset' : 'add', '--' ].concat(this.selected.map(item => item.name));
-                git(cmd, (data) => this.$emit('refresh'));
+                await git_async(cmd);
+                this.$emit('refresh');
             }
         },
-        revert() {
+        async revert() {
             // Revert changes
             if (this.selected.length) {
                 const cmd = [ 'checkout', '--' ].concat(this.selected.map(item => item.name));
-                git(cmd, (data) => this.$emit('refresh'));
+                await git_async(cmd);
+                this.$emit('refresh');
             }
         },
-        refresh() {
+        async refresh() {
             // --untracked-files=all - Also shows individual files in untracked directories
-            git([ 'status', '--porcelain', '--untracked-files=all' ], this.parseStatus);
+            const data = await git_async([ 'status', '--porcelain', '--untracked-files=all' ]);
+            if (data) {
+                this.parseStatus(data);
+            }
         },
     },
 })

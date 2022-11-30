@@ -10,9 +10,18 @@
         <div class="app-main-nav" v-show="activeTabs.length > 1 && !config.singleTab">
             <ul class="nav nav-tabs">
               <li role="presentation" v-for="tab in tabs" :class="selectedTab == tab.uuid ? 'active': ''">
-                <a v-if="!tab.closed" href="#" @click.stop="selectTab(tab)">{{ tab.name }} <i class='fa fa-close' @click.stop="closeTab(tab)"></i></a>
+                <a v-if="!tab.closed" href="#"
+                    @click.stop="selectTab(tab)"
+                    @contextmenu.prevent.stop="showMenu($event, tab)"
+                    >{{ tab.name }} <i class='fa fa-close' @click.stop="closeTab(tab)"></i></a>
               </li>
             </ul>
+            <vue-simple-context-menu
+                element-id="app-main-nav-menu"
+                :options="options"
+                ref="appMainNavMenu"
+                @option-clicked="menuOptionClicked"
+            />
         </div>
         <div class="app-main-view">
             <template v-for="tab in tabs">
@@ -102,6 +111,7 @@ import '../css/material-icons.css';
 import { v4 as uuidv4 } from 'uuid';
 import { defineComponent, ref } from 'vue';
 import { Splitpanes, Pane } from 'splitpanes';
+import VueSimpleContextMenu from 'vue-simple-context-menu';
 import Sidebar from './Sidebar.vue';
 import FilesEditorContainer from './FilesEditorContainer.vue';
 import HistoryView from './HistoryView.vue';
@@ -133,6 +143,7 @@ export default defineComponent({
         'historyview': HistoryView,
         'workspace': Workspace,
         'error-dialog': ErrorDialog,
+        'vue-simple-context-menu': VueSimpleContextMenu,
     },
     data() {
         return {
@@ -143,7 +154,13 @@ export default defineComponent({
                 mode: localStorage.getItem('airflow_code_editor_mode') || 'default', // edit mode (default, vim, etc...)
                 singleTab: false,
             },
-            sidebarSize: 190 * 100 / jQuery(document).width() // sidebar size (percentage)
+            sidebarSize: 190 * 100 / jQuery(document).width(), // sidebar size (percentage)
+            options: [
+                {
+                  name: '<span class="material-icons">close</span> Close other tabs',
+                  slug: 'close_others',
+                },
+            ],
         };
     },
     methods: {
@@ -190,6 +207,18 @@ export default defineComponent({
         showWarning(message) {
             // Show warning in modal message window
             this.$refs.errorDialog.showDialog({ message: message, type: 'warning' });
+        },
+        showMenu(event, tab) {
+            // Show tab menu
+            if (tab) {
+                this.$refs.appMainNavMenu.showMenu(event, tab);
+            }
+        },
+        menuOptionClicked(event) {
+            // Menu click
+            if (event.option.slug == 'close_others') {
+                this.tabs.filter(x => x != event.item).forEach(this.closeTab);
+            }
         },
         selectTab(tab) {
             // Set active tab

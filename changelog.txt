@@ -434,3 +434,16 @@
 ### Fix
 
 - Fix theme settings
+
+## 7.2.0
+
+2022-11-30
+
+### Added
+
+- Tabs
+- Context menu
+
+### Changed
+
+-  JavaScript dependencies update

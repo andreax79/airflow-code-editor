@@ -83,25 +83,28 @@ export class TreeEntry {
     }
 }
 
-export function prepareMenuOptions(item) {
+export function prepareMenuOptions(item, isGit) {
     // Prepare the menu
-    let options = [{
-        name: '<span class="material-icons">file_open</span> Open',
-        slug: 'open'
-    }];
-    if (item.type == 'blob') {
+    let options = []
+    if (item) {
+        options.push({
+            name: '<span class="material-icons">file_open</span> Open',
+            slug: 'open'
+        });
+    }
+    if (item && item.type == 'blob') {
         options.push({
             name: '<span class="material-icons">file_download</span> Download',
             slug: 'download'
         });
     }
-    if ((!item.isGit) && (item.type == 'blob' || item.size == 0)) {
+    if ((!isGit) && item && (item.type == 'blob' || item.size == 0)) {
         options.push({
             name: '<span class="material-icons">delete</span> Delete',
             slug: 'delete'
         });
     }
-    if ((!item.isGit) && (item.name != '..')) {
+    if ((!isGit) && item && (item.name != '..')) {
         options.push({
             name: '<span class="material-icons">drive_file_rename_outline</span> Move/Rename',
             slug: 'rename'
@@ -111,10 +114,12 @@ export function prepareMenuOptions(item) {
             slug: 'open_in_new'
         });
     }
-    if (!item.isGit) {
-        options.push({
-            type: 'divider'
-        });
+    if (!isGit) {
+        if (item) {
+            options.push({
+                type: 'divider'
+            });
+        }
         options.push({
             name: '<span class="material-icons">add_circle</span> New',
             slug: 'new'

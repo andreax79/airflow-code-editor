@@ -13,7 +13,8 @@
              @dragenter.stop.prevent="isDragEnter = true"
              @dragover.stop.prevent="() => {}"
              @dragleave.stop.prevent="isDragEnter = false"
-             @drop.stop.prevent="handleDrop">
+             @drop.stop.prevent="handleDrop"
+             @contextmenu.prevent.stop="showMenu($event, null)">
             <vue-good-table
               :fixed-header="true"
               max-height="100%"
@@ -297,7 +298,7 @@ export default defineComponent({
         },
         showMenu(event, item) {
             // Prepare the menu
-            this.options = prepareMenuOptions(item);
+            this.options = prepareMenuOptions(item, this.isGit);
             // Show menu
             this.$refs.filesMenu.showMenu(event, item);
         },

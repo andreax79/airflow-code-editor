@@ -20,7 +20,7 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 
 #### File Manager
 
-![File Manager](https://user-images.githubusercontent.com/1288154/186698558-55ecbc61-d9fa-418e-8eac-b441e8b7a56a.png)
+![File Manager](https://user-images.githubusercontent.com/1288154/204994880-5a879cb4-e3f2-4939-a86b-81d9fe967500.png)
 
 #### Editor
 
@@ -178,16 +178,17 @@ Example:
 
 ### Links
 
-* Apache Airflow - https://github.com/apache/airflow
-* Codemirror, In-browser code editor - https://github.com/codemirror/codemirror
-* Git WebUI, A standalone local web based user interface for git repositories - https://github.com/alberthier/git-webui
-* Black, The Uncompromising Code Formatter - https://github.com/psf/black
-* Vue.js - https://github.com/vuejs/vue
-* Vue-good-table, data table for VueJS - https://github.com/xaksis/vue-good-table
-* Vue-tree, TreeView control for VueJS - https://github.com/grapoza/vue-tree
-* Vue-universal-modal Universal modal plugin for Vue@3 - https://github.com/hoiheart/vue-universal-modal
-* Splitpanes - https://github.com/antoniandre/splitpanes
-* Axios, Promise based HTTP client for the browser and node.js - https://github.com/axios/axios
-* PyFilesystem2, Python's Filesystem abstraction layer - https://github.com/PyFilesystem/pyfilesystem2
-* Amazon S3 PyFilesystem - https://github.com/PyFilesystem/s3fs
-* Google Cloud Storage PyFilesystem - https://github.com/Othoz/gcsfs
+* [Apache Airflow](https://github.com/apache/airflow)
+* [Codemirror, In-browser code editor](https://github.com/codemirror/codemirror)
+* [Git WebUI, A standalone local web based user interface for git repositories](https://github.com/alberthier/git-webui)
+* [Black, The Uncompromising Code Formatter](https://github.com/psf/black)
+* [Vue.js](https://github.com/vuejs/vue)
+* [Vue-good-table, data table for VueJS](https://github.com/xaksis/vue-good-table)
+* [Vue-tree, TreeView control for VueJS](https://github.com/grapoza/vue-tree)
+* [Vue-universal-modal Universal modal plugin for Vue@3](https://github.com/hoiheart/vue-universal-modal)
+* [Vue-simple-context-menu](https://github.com/johndatserakis/vue-simple-context-menu)
+* [Splitpanes](https://github.com/antoniandre/splitpanes)
+* [Axios, Promise based HTTP client for the browser and node.js](https://github.com/axios/axios)
+* [PyFilesystem2, Python's Filesystem abstraction layer](https://github.com/PyFilesystem/pyfilesystem2)
+* [Amazon S3 PyFilesystem](https://github.com/PyFilesystem/s3fs)
+* [Google Cloud Storage PyFilesystem](https://github.com/Othoz/gcsfs)

@@ -205,7 +205,7 @@ def git_call(argv: List[str], capture_output: bool = False) -> Tuple[int, bytes,
             env=env,
         )
         return completed.returncode, completed.stdout, completed.stderr
-    except FileNotFoundError:
+    except (FileNotFoundError, PermissionError):
         return 127, b'', b'git command not found'
 
 

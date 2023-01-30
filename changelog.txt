@@ -446,4 +446,12 @@
 
 ### Changed
 
--  JavaScript dependencies update
+- JavaScript dependencies update
+
+## 7.2.1
+
+2023-01-30
+
+### Fix
+
+- Fix "Permission denied" error renaming/removing files when git is not installed

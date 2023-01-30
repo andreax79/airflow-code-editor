@@ -296,7 +296,10 @@ export default defineComponent({
         //       event.preventDefault();
         //       async () => this.saveAction(); // save file command
         //     }
-        // }
+        // },
+        dispose() {
+            // Dispose
+        },
     },
     mounted() {
         console.log('Editor.mounted');

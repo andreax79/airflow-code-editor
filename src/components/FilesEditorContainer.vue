@@ -121,6 +121,15 @@ export default defineComponent({
             // Update href hash
             this.updateLocation();
         },
+        dispose() {
+            // Dispose
+            if (this.$refs.editor) {
+                this.$refs.editor.dispose();
+            }
+            if (this.$refs.files) {
+                this.$refs.files.dispose();
+            }
+        },
         loaded() {
             // Emitted then commit is loaded
             this.loading = false;  // Hide the spinner

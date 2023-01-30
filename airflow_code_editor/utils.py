@@ -41,6 +41,7 @@ __all__ = [
     'is_enabled',
     'normalize_path',
     'prepare_api_response',
+    'terminal_enabled',
 ]
 
 
@@ -174,6 +175,11 @@ def prepare_api_response(error_message=None, **kargs):
 def always() -> bool:
     "Always return True"
     return True
+
+
+def terminal_enabled() -> bool:
+    "Return true if the terminal is enabled in the configuration"
+    return get_plugin_boolean_config('terminal_enabled')
 
 
 class DummyLexer(RegexLexer):

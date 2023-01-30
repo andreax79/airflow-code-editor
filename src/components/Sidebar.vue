@@ -94,7 +94,10 @@ export default defineComponent({
                 this.$emit("show", { id: section, name: object });
 
             } else if (section == 'workspace') {
-                this.$emit("show", { id: 'workspace', name: name });
+                this.$emit("show", { id: 'workspace' });
+
+            } else if (section == 'terminal') {
+                this.$emit("show", { id: 'terminal' });
 
             } else if (section == 'edit' && object) {
                 this.$emit("show", { id: 'files', path: '/' + object, type: 'blob' });
@@ -126,7 +129,10 @@ export default defineComponent({
             const name = (sectionAndName[1] || '').trim();
             console.log('Sidebar.click section: ' + section + ' name: ' + name);
             if (section == 'workspace' || section == 'git') { // Workspace
-                this.$emit("show", { id: 'workspace', name: name });
+                this.$emit("show", { id: 'workspace' });
+
+            } else if (section == 'terminal' ) { // Terminal
+                this.$emit("show", { id: 'terminal' });
 
             } else if (section == 'files') { // Files
                 this.$emit("show", { id: 'files', path: '/' + name, type: model.leaf ? 'blob' : 'tree' });

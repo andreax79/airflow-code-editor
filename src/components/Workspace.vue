@@ -69,6 +69,9 @@ export default defineComponent({
             // Update href hash
             this.updateLocation();
         },
+        dispose() {
+            // Dispose
+        },
         loaded(success) {
             // Emitted then commit is loaded/loading fails
             this.loading = false;  // Hide the spinner

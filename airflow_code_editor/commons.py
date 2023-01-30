@@ -26,15 +26,18 @@ __all__ = [
     'STATIC',
     'CONFIG_SECTION',
     'DEFAULT_GIT_BRANCH',
+    'DEFAULT_SHELL',
+    'DEFAULT_TERM',
     'SUPPORTED_GIT_COMMANDS',
     'HTTP_200_OK',
     'HTTP_404_NOT_FOUND',
     'PLUGIN_DEFAULT_CONFIG',
     'ROOT_MOUNTPOUNT',
     'JS_FILES',
-    'ICON_HOME',
-    'ICON_GIT',
-    'ICON_TAGS',
+    'HOME_ICON',
+    'GIT_ICON',
+    'TAGS_ICON',
+    'TERMINAL_ICON',
     'FILE_ICON',
     'FOLDER_ICON',
     'ICON_LOCAL_BRANCHES',
@@ -54,6 +57,8 @@ ROUTE = '/' + PLUGIN_NAME
 STATIC = '/static/' + PLUGIN_NAME
 CONFIG_SECTION = PLUGIN_NAME + '_plugin'
 DEFAULT_GIT_BRANCH = 'main'
+DEFAULT_SHELL = 'sh'
+DEFAULT_TERM = 'xterm-color'
 HTTP_200_OK = 200
 HTTP_404_NOT_FOUND = 404
 SUPPORTED_GIT_COMMANDS = [
@@ -86,6 +91,8 @@ PLUGIN_DEFAULT_CONFIG = {
     'string_normalization': False,
     'ignored_entries': '.*,__pycache__',
     'search_context': 2,
+    'terminal_enabled': True,
+    'terminal_shell': None,
 }
 ROOT_MOUNTPOUNT = 'root'
 JS_FILES = [
@@ -109,9 +116,10 @@ JS_FILES = [
     'airflow_code_editor.js',
 ]
 
-ICON_HOME = 'home'
-ICON_GIT = 'work'
-ICON_TAGS = 'style'
+HOME_ICON = 'home'
+GIT_ICON = 'work'
+TAGS_ICON = 'style'
+TERMINAL_ICON = 'terminal'
 FILE_ICON = 'file'
 FOLDER_ICON = 'folder'
 ICON_LOCAL_BRANCHES = 'fork_right'

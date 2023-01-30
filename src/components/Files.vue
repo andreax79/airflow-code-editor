@@ -308,6 +308,10 @@ export default defineComponent({
                 }
             }
         },
+        dispose() {
+            // Dispose
+            this.items = [];
+        },
         handleDrop($event) {
             // Upload files (drag and drop)
             this.isDragEnter = false;

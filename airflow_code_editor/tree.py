@@ -22,9 +22,10 @@ from airflow_code_editor.commons import (
     Args,
     TreeFunc,
     TreeOutput,
-    ICON_HOME,
-    ICON_GIT,
-    ICON_TAGS,
+    HOME_ICON,
+    GIT_ICON,
+    TAGS_ICON,
+    TERMINAL_ICON,
     FOLDER_ICON,
     ICON_LOCAL_BRANCHES,
     ICON_REMOTE_BRANCHES,
@@ -33,6 +34,7 @@ from airflow_code_editor.utils import (
     always,
     normalize_path,
     read_mount_points_config,
+    terminal_enabled,
 )
 from airflow_code_editor.git import (
     git_enabled,
@@ -96,7 +98,7 @@ def get_root_node(path: Optional[str], args: Args) -> TreeOutput:
     return result
 
 
-@node(id='files', label='Files', leaf=False, icon=ICON_HOME)
+@node(id='files', label='Files', leaf=False, icon=HOME_ICON)
 def get_files_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree files node"
     result = []
@@ -151,20 +153,20 @@ def prepare_ls_tree_output(line: str) -> Dict[str, Any]:
     }
 
 
-@node(id='git', label='Git Workspace', icon=ICON_GIT, condition=git_enabled)
+@node(id='git', label='Git Workspace', icon=GIT_ICON, condition=git_enabled)
 def get_git_node(path: Optional[str], args: Args) -> TreeOutput:
     "List the contents of a git tree object"
     output = git_command_output('ls-tree', '-l', path or 'HEAD')
     return [prepare_ls_tree_output(line) for line in output if line]
 
 
-@node(id='tags', label='Tags', leaf=False, icon=ICON_TAGS, condition=git_enabled)
+@node(id='tags', label='Tags', leaf=False, icon=TAGS_ICON, condition=git_enabled)
 def get_tags_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree tags node"
     if path:
         return get_git_node(path, args)
     output = git_command_output('tag')
-    return [prepare_git_output(line, ICON_TAGS) for line in output if line]
+    return [prepare_git_output(line, TAGS_ICON) for line in output if line]
 
 
 @node(
@@ -195,6 +197,11 @@ def get_remote_branches_node(path: Optional[str], args: Args) -> TreeOutput:
         return get_git_node(path, args)
     output = git_command_output('branch', '--remotes')
     return [prepare_git_output(line, ICON_REMOTE_BRANCHES) for line in output if line]
+
+
+@node(id='terminal', label='Terminal', icon=TERMINAL_ICON, condition=terminal_enabled)
+def get_term_node(path: Optional[str], args: Args) -> TreeOutput:
+    return []
 
 
 def get_tree(path: Optional[str] = None, args: Args = {}) -> TreeOutput:

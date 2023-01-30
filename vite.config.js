@@ -31,6 +31,7 @@ export default defineConfig({
         sourcemap: true,
         emptyOutDir: false,
         outDir: 'airflow_code_editor/static',
+        chunkSizeWarningLimit: 1000,
         rollupOptions: {
             input: {
                 app: 'src/index.html'

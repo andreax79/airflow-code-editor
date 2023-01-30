@@ -83,34 +83,38 @@ export class TreeEntry {
     }
 }
 
+function prepareMenuItem(title, icon) {
+    return '<span class="material-icons">' + icon + '</span> ' + title
+}
+
 export function prepareMenuOptions(item, isGit, showHiddenFiles) {
     // Prepare the menu
     let options = []
     if (item) {
         options.push({
-            name: '<span class="material-icons">file_open</span> Open',
+            name: prepareMenuItem('Open', 'file_open'),
             slug: 'open'
         });
     }
     if (item && item.type == 'blob') {
         options.push({
-            name: '<span class="material-icons">file_download</span> Download',
+            name: prepareMenuItem('Download', 'file_download'),
             slug: 'download'
         });
     }
     if ((!isGit) && item && (item.type == 'blob' || item.size == 0)) {
         options.push({
-            name: '<span class="material-icons">delete</span> Delete',
+            name: prepareMenuItem('Delete', 'delete'),
             slug: 'delete'
         });
     }
     if ((!isGit) && item && (item.name != '..')) {
         options.push({
-            name: '<span class="material-icons">drive_file_rename_outline</span> Move/Rename',
+            name: prepareMenuItem('Move/Rename', 'drive_file_rename_outline'),
             slug: 'rename'
         });
         options.push({
-            name: '<span class="material-icons">open_in_new</span> Open in a new window',
+            name: prepareMenuItem('Open in a new window', 'open_in_new'),
             slug: 'open_in_new'
         });
     }
@@ -121,15 +125,15 @@ export function prepareMenuOptions(item, isGit, showHiddenFiles) {
             });
         }
         options.push({
-            name: '<span class="material-icons">add_circle</span> New',
+            name: prepareMenuItem('New', 'add_circle'),
             slug: 'new'
         });
         options.push({
-            name: '<span class="material-icons">file_upload</span> Upload',
+            name: prepareMenuItem('Upload', 'file_upload'),
             slug: 'upload'
         });
         options.push({
-            name: '<span class="material-icons">refresh</span> Refresh',
+            name: prepareMenuItem('Refresh', 'refresh'),
             slug: 'refresh'
         });
         if (showHiddenFiles) {

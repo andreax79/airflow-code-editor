@@ -93,6 +93,8 @@ All the settings are optional.
 * **string_normalization**  Python code formatter - if true normalize string quotes and prefixes (default: False)
 * **mount**, **mount1**, ...  configure additional folder (mount point) - format: name=xxx,path=yyy
 * **ignored_entries** comma-separated list of entries to be excluded from file/directory list (default: .\*,\_\_pycache\_\_)
+* **terminal_enabled**  enable web terminal
+* **terminal_shell**  web terminal shell command
 
 ```
    [code_editor]
@@ -133,6 +135,8 @@ You can also set options with the following environment variables:
 * AIRFLOW__CODE_EDITOR__STRING_NORMALIZATION
 * AIRFLOW__CODE_EDITOR__MOUNT, AIRFLOW__CODE_EDITOR__MOUNT1, AIRFLOW__CODE_EDITOR__MOUNT2, ...
 * AIRFLOW__CODE_EDITOR__IGNORED_ENTRIES
+* AIRFLOW__CODE_EDITOR__TERMINAL_ENABLED
+* AIRFLOW__CODE_EDITOR__TERMINAL_SHELL
 
 Example:
 ```
@@ -201,6 +205,8 @@ Example:
 * [Vue-simple-context-menu](https://github.com/johndatserakis/vue-simple-context-menu)
 * [Splitpanes](https://github.com/antoniandre/splitpanes)
 * [Axios, Promise based HTTP client for the browser and node.js](https://github.com/axios/axios)
+* [Xterm.js](https://xtermjs.org/)
 * [PyFilesystem2, Python's Filesystem abstraction layer](https://github.com/PyFilesystem/pyfilesystem2)
 * [Amazon S3 PyFilesystem](https://github.com/PyFilesystem/s3fs)
 * [Google Cloud Storage PyFilesystem](https://github.com/Othoz/gcsfs)
+* [Flask-Sock, WebSocket support without gevent for Flask and other WSGI frameworks](https://github.com/miguelgrinberg/flask-sock)

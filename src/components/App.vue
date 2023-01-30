@@ -124,6 +124,7 @@ footer {
 import 'splitpanes/dist/splitpanes.css';
 import 'vue-universal-modal/dist/index.css';
 import 'vue-simple-context-menu/dist/vue-simple-context-menu.css';
+import 'xterm/css/xterm.css';
 import '../css/dialogs.css';
 import '../css/tabs.css';
 import '../css/buttons.css';
@@ -137,6 +138,7 @@ import FilesEditorContainer from './FilesEditorContainer.vue';
 import HistoryView from './HistoryView.vue';
 import Search from './Search.vue';
 import Workspace from './Workspace.vue';
+import Terminal from './Terminal.vue';
 import ErrorDialog from './dialogs/ErrorDialog.vue';
 import CloseTabDialog from './dialogs/CloseTabDialog.vue';
 
@@ -226,6 +228,9 @@ export default defineComponent({
                     tab = new TabState(target.path, Search, target);
                     this.tabs.push(tab);
                 }
+            } else if (target.id == 'terminal') {
+                tab = new TabState('Terminal', Terminal);
+                this.tabs.push(tab);
                 this.selectedTab = tab.uuid;
             } else { // history (tags, local/remote branches)
                 let tab = this.tabs.find(tab => tab.target && tab.target.id == target.id && tab.target.name == target.name && !tab.closed);
@@ -296,6 +301,8 @@ export default defineComponent({
                 }
                 // Mark the tab as closed
                 tab.closed = true
+                // Dispose the tab
+                this.$refs[tab.uuid][0].dispose();
             }
         },
     },

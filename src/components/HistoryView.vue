@@ -124,6 +124,9 @@ export default defineComponent({
                 this.update(this.target);
             }
         },
+        dispose() {
+            // Dispose
+        },
         loaded() {
             // Emitted then commit is loaded
             this.loading = false;  // Hide the spinner

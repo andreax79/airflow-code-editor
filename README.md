@@ -36,6 +36,18 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 
 ### Install Instructions
 
+#### Docker Images
+
+For the ease of deployment, use the production-ready reference container image.
+The image is based on the reference images for Apache Airflow.
+
+You can find the following images there:
+* andreax79/airflow-code-editor:latest - the latest released Airflow Code Editor image with the latest Apache Airflow version
+* andreax79/airflow-code-editor:2.5.1 - the latest released Airflow Code Editor with specific Airflow version
+* andreax79/airflow-code-editor:2.5.1-2.7.1 - specific version of Airflow and Airflow Code Editor
+
+#### Installing from PyPI
+
 1. Install the plugin
 
   ```bash

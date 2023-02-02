@@ -1,0 +1,25 @@
+dags:
+  persistence:
+    # Enable persistent volume for storing dags
+    enabled: true
+    # Access mode of the dags volume
+    accessMode: ReadWriteMany
+
+webserverSecretKeySecretName: my-webserver-secret
+
+webserver:
+  # Dags volume
+  extraVolumes:
+    - name: dags
+      persistentVolumeClaim:
+        claimName: "airflow-dags"
+  extraVolumeMounts:
+    - name: dags
+      mountPath: "/opt/airflow/dags"
+      readOnly: false
+
+images:
+  # Airflow Code Editor image
+  airflow:
+    repository: "andreax79/airflow-code-editor"
+    tag: "2.4.1-7.2.1"

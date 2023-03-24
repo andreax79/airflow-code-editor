@@ -5,7 +5,7 @@ export CURRENT_DIR=`realpath $(dirname "$0")`
 export PARENT_DIR=`dirname "$CURRENT_DIR"`
 source "${CURRENT_DIR}/config.sh"
 
-export AIRFLOW_VERSION="${AIRFLOW_VERSION:-2.4.2}"
+export AIRFLOW_VERSION="${AIRFLOW_VERSION:-2.5.2}"
 export CONSTRAINTS_VERSION="${CONSTRAINTS_VERSION:-${AIRFLOW_VERSION}}"
 export AIRFLOW_EXTRAS="password"
 export PYTHON_VERSION=$(python3 -c "import sys; print('%s.%s' % (sys.version_info.major, sys.version_info.minor))")

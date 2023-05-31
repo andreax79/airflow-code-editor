@@ -1,0 +1,26 @@
+ARG AIRFLOW_VERSION
+ARG AIRFLOW_VERSION
+
+FROM apache/airflow:${AIRFLOW_VERSION}
+ARG PLUGIN_VERSION
+
+USER root
+# Install git
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+         git \
+  && apt-get autoremove -yqq --purge \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+USER airflow
+
+# Install Airflow
+COPY requirements-optional.txt .
+RUN pip install --no-cache-dir airflow-code-editor==${PLUGIN_VERSION} -r requirements-optional.txt && rm requirements-optional.txt
+# Init airflow db
+RUN airflow db init
+# Create user 'admin' with password 'admin'
+RUN airflow users create -r Admin -u admin -e admin@example.com -f admin -l admin -p admin
+RUN airflow sync-perm
+
+ENV PYTHONPATH = /home/airflow

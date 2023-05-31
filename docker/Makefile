@@ -1,14 +1,21 @@
 IMAGE_NAME=airflow-code-editor
+DEV_IMAGE_NAME=${IMAGE_NAME}-dev
 OWNER=andreax79
-AIRFLOW_VERSION=2.5.2
+AIRFLOW_VERSION=2.6.1
+AIRFLOW_PORT=8080
 PLUGIN_VERSION=`cat ../airflow_code_editor/VERSION`
 VERSION=${AIRFLOW_VERSION}-${PLUGIN_VERSION}
 
 .PHONY: help build test format image push all
 
 help:
+	@echo "Release:"
 	@echo "- make image        Build docker image"
 	@echo "- make push         Push docker image"
+	@echo "Development:"
+	@echo "- make dev-image    Build dev image"
+	@echo "- make dev-shell    Start a shell in the dev environment"
+	@echo "- make webserver    Start Airflow webserver from dev image"
 
 .DEFAULT_GOAL := help
 
@@ -55,5 +62,34 @@ push-version:
 	@docker tag ${IMAGE_NAME}:${VERSION} ${OWNER}/${IMAGE_NAME}:${AIRFLOW_VERSION}
 	@docker push ${OWNER}/${IMAGE_NAME}:${VERSION}
 	@docker push ${OWNER}/${IMAGE_NAME}:${AIRFLOW_VERSION}
+
+dev-image:
+	@cp ../requirements-optional.txt .
+	@DOCKER_BUILDKIT=1 docker build \
+		 --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} \
+		 --build-arg AIRFLOW_VERSION=${AIRFLOW_VERSION} \
+		 --tag ${DEV_IMAGE_NAME} \
+		 -f Dockerfile.dev \
+		 .
+	@rm ./requirements-optional.txt
+
+dev-shell:
+	@touch ${PWD}/.bash_history
+	@chmod 666 ${PWD}/.bash_history
+	@docker run --rm -it \
+		-h airflow \
+		-v ${PWD}/.bash_history:/home/airflow/.bash_history \
+		-v ${PWD}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
+		${DEV_IMAGE_NAME} \
+		bash -l
+
+webserver:
+	@docker run --rm -it \
+		-h airflow \
+		-v ${PWD}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
+		${DEV_IMAGE_NAME} \
+		airflow webserver
 
 all: help

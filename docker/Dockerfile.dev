@@ -1,8 +1,8 @@
 ARG AIRFLOW_VERSION
-ARG AIRFLOW_VERSION
 
 FROM apache/airflow:${AIRFLOW_VERSION}
 ARG PLUGIN_VERSION
+ARG AIRFLOW_UID
 
 USER root
 # Install git
@@ -12,6 +12,9 @@ RUN apt-get update \
   && apt-get autoremove -yqq --purge \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
+
+# Do black magic tricks
+RUN sed -i "s/:50000:/:${AIRFLOW_UID}:/g" /etc/passwd
 USER airflow
 
 # Install Airflow

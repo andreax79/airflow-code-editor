@@ -38,12 +38,12 @@
     font-style:normal
 }
 .grtv-wrapper.grtv-default-skin .grtvn-self-expander i.grtvn-self-expanded-indicator:before{
-    font: normal normal normal 14px/1 FontAwesome;
-    content:"\f105"; /* fa-angle-right */
+    font-family: "Material Icons";
+    content: "\e5cc";
 }
 .grtv-wrapper.grtv-default-skin .grtvn-self-expander.grtvn-self-expanded i.grtvn-self-expanded-indicator:before{
-    font: normal normal normal 14px/1 FontAwesome;
-    content:"\f107"; /* fa-angle-down */
+    font-family: "Material Icons";
+    content: "\e5cf";
 }
 .grtv-wrapper.grtv-default-skin .grtvn-self-selected{
     background-color:#f0f0f8

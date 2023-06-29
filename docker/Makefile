@@ -73,7 +73,7 @@ dev-image:
 		 .
 	@rm ./requirements-optional.txt
 
-dev-shell:
+dev-shell: dags
 	@touch ${PWD}/.bash_history
 	@chmod 666 ${PWD}/.bash_history
 	@docker run --rm -it \
@@ -84,7 +84,7 @@ dev-shell:
 		${DEV_IMAGE_NAME} \
 		bash -l
 
-webserver:
+webserver: dags
 	@docker run --rm -it \
 		-h airflow \
 		-v ${PWD}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \

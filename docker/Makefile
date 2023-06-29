@@ -20,7 +20,7 @@ help:
 .DEFAULT_GOAL := help
 
 image:
-	@cp ../requirements-optional.txt .
+	@cp  ../requirements-optional.txt .
 	@DOCKER_BUILDKIT=1 docker build \
 		 --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} \
 		 --build-arg AIRFLOW_VERSION=${AIRFLOW_VERSION} \
@@ -64,31 +64,38 @@ push-version:
 	@docker push ${OWNER}/${IMAGE_NAME}:${AIRFLOW_VERSION}
 
 dev-image:
-	@cp ../requirements-optional.txt .
+	@cp ../requirements.txt ../requirements-optional.txt .
 	@DOCKER_BUILDKIT=1 docker build \
+		 --build-arg=AIRFLOW_UID=$$(id -u) \
 		 --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} \
 		 --build-arg AIRFLOW_VERSION=${AIRFLOW_VERSION} \
 		 --tag ${DEV_IMAGE_NAME} \
 		 -f Dockerfile.dev \
 		 .
-	@rm ./requirements-optional.txt
+	@rm ./requirements.txt ./requirements-optional.txt
 
-dev-shell: dags
+dags:
+	@git clone https://github.com/andreax79/airflow-maintenance-dags dags
+
+dev-shell:
 	@touch ${PWD}/.bash_history
-	@chmod 666 ${PWD}/.bash_history
 	@docker run --rm -it \
 		-h airflow \
 		-v ${PWD}/.bash_history:/home/airflow/.bash_history \
+		-v ${PWD}/dags:/opt/airflow/dags \
 		-v ${PWD}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
+		-e AIRFLOW_UID=$$(id -u) \
 		${DEV_IMAGE_NAME} \
 		bash -l
 
-webserver: dags
+webserver:
 	@docker run --rm -it \
 		-h airflow \
 		-v ${PWD}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${PWD}/dags:/opt/airflow/dags \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
+		-e AIRFLOW_UID=$$(id -u) \
 		${DEV_IMAGE_NAME} \
 		airflow webserver
 

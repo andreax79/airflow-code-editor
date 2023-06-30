@@ -42,9 +42,9 @@ For the ease of deployment, use the production-ready reference container image.
 The image is based on the reference images for Apache Airflow.
 
 You can find the following images there:
-* andreax79/airflow-code-editor:latest - the latest released Airflow Code Editor image with the latest Apache Airflow version
-* andreax79/airflow-code-editor:2.5.1 - the latest released Airflow Code Editor with specific Airflow version
-* andreax79/airflow-code-editor:2.5.1-2.7.1 - specific version of Airflow and Airflow Code Editor
+* andreax79/airflow-code-editor:**latest** - the latest released Airflow Code Editor image with the latest Apache Airflow version
+* andreax79/airflow-code-editor:**2.6.2** - the latest released Airflow Code Editor with specific Airflow version
+* andreax79/airflow-code-editor:**2.6.2-7.3.0** - specific version of Airflow and Airflow Code Editor
 
 #### Installing from PyPI
 
@@ -148,10 +148,10 @@ Example:
     cd airflow-code-editor
   ```
 
-3. Create and activate virtualenv
+3. Create dev image
 
   ```bash
-    source ./scripts/activate.sh
+    make dev-image
   ```
 
 4. Switch node version
@@ -166,10 +166,10 @@ Example:
     make npm-build
   ```
 
-6. You can start Airflow webserver or scheduler with these commands:
+6. You can start Airflow webserver with:
 
   ```bash
-    make standalone
+    make webserver
   ```
 
 7. Run tests
@@ -179,12 +179,6 @@ Example:
   ```
 
 8. Commit and push changes
-
-  ```bash
-    git add .
-    git commit
-    git push
-  ```
 
 9. Create [pull request](https://github.com/andreax79/airflow-code-editor/compare) to the original repo
 

@@ -463,3 +463,6 @@
 ### Added
 
 - Show/hide hidden files
+
+### Changed
+- CodeMirror upgrade

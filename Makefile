@@ -7,10 +7,14 @@ help:
 	@echo "- make coverage     Run tests coverage"
 	@echo "- make lint         Run lint"
 	@echo "- make codemirror   Update CodeMirror"
-	@echo "- make webserver    Start Airflow webserver"
-	@echo "- make scheduler    Start Airflow scheduler"
 	@echo "- make npm-build    Run npm build"
 	@echo "- make npm-watch    Run npm build when files change"
+	@echo "Development image:"
+	@echo "- make dev-image    Build dev image"
+	@echo "- make dev-shell    Start a shell in the dev environment"
+	@echo "- make standalone   Run an all-in-one copy of Airflow"
+	@echo "- make webserver    Start a Airflow webserver instance"
+	@echo "- make scheduler    Start a scheduler instance"
 
 lint:
 	flake8 airflow_code_editor tests
@@ -22,14 +26,20 @@ tag:
 	@grep -q "## $$(cat airflow_code_editor/VERSION)" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)
 	@git tag -a "v$$(cat airflow_code_editor/VERSION)" -m "version v$$(cat airflow_code_editor/VERSION)"
 
+dev-image:
+	$(MAKE) -C docker dev-image
+
+dev-shell:
+	$(MAKE) -C docker dev-shell
+
 webserver:
-	@./scripts/airflow.sh webserver
+	$(MAKE) -C docker webserver
 
 scheduler:
-	@./scripts/airflow.sh scheduler
+	$(MAKE) -C docker scheduler
 
 standalone:
-	@./scripts/airflow.sh standalone
+	$(MAKE) -C docker standalone
 
 build: clean
 	python3 setup.py bdist_wheel

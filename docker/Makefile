@@ -1,21 +1,26 @@
 IMAGE_NAME=airflow-code-editor
 DEV_IMAGE_NAME=${IMAGE_NAME}-dev
 OWNER=andreax79
-AIRFLOW_VERSION=2.6.1
+AIRFLOW_VERSION=2.6.2
 AIRFLOW_PORT=8080
 PLUGIN_VERSION=`cat ../airflow_code_editor/VERSION`
 VERSION=${AIRFLOW_VERSION}-${PLUGIN_VERSION}
 
 .PHONY: help build test format image push all
 
+makeFileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 help:
 	@echo "Release:"
 	@echo "- make image        Build docker image"
 	@echo "- make push         Push docker image"
-	@echo "Development:"
+	@echo "Development image:"
 	@echo "- make dev-image    Build dev image"
 	@echo "- make dev-shell    Start a shell in the dev environment"
-	@echo "- make webserver    Start Airflow webserver from dev image"
+	@echo "- make standalone   Run an all-in-one copy of Airflow"
+	@echo "- make webserver    Start a Airflow webserver instance"
+	@echo "- make scheduler    Start a scheduler instance"
+
 
 .DEFAULT_GOAL := help
 
@@ -75,28 +80,48 @@ dev-image:
 	@rm ./requirements.txt ./requirements-optional.txt
 
 dags:
-	@git clone https://github.com/andreax79/airflow-maintenance-dags dags
+	@git clone https://github.com/andreax79/airflow-maintenance-dags ${makeFileDir}/dags
 
-dev-shell:
-	@touch ${PWD}/.bash_history
+dev-shell: dags
+	@touch ${makeFileDir}/.bash_history
 	@docker run --rm -it \
 		-h airflow \
-		-v ${PWD}/.bash_history:/home/airflow/.bash_history \
-		-v ${PWD}/dags:/opt/airflow/dags \
-		-v ${PWD}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/.bash_history:/home/airflow/.bash_history \
+		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		${DEV_IMAGE_NAME} \
 		bash -l
 
-webserver:
+webserver: dags
 	@docker run --rm -it \
 		-h airflow \
-		-v ${PWD}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
-		-v ${PWD}/dags:/opt/airflow/dags \
+		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		${DEV_IMAGE_NAME} \
 		airflow webserver
+
+standalone: dags
+	@docker run --rm -it \
+		-h airflow \
+		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
+		-e AIRFLOW_UID=$$(id -u) \
+		${DEV_IMAGE_NAME} \
+		airflow standalone
+
+scheduler: dags
+	@docker run --rm -it \
+		-h airflow \
+		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
+		-e AIRFLOW_UID=$$(id -u) \
+		${DEV_IMAGE_NAME} \
+		airflow scheduler
 
 all: help

@@ -170,6 +170,7 @@ export default defineComponent({
             config: {
                 theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
                 mode: localStorage.getItem('airflow_code_editor_mode') || 'default', // edit mode (default, vim, etc...)
+                showHiddenFiles: localStorage.getItem('airflow_code_editor_show_hidden_files') == 'true',
                 singleTab: false,
             },
             sidebarSize: 190 * 100 / jQuery(document).width(), // sidebar size (percentage)

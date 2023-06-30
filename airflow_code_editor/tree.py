@@ -101,8 +101,10 @@ def get_root_node(path: Optional[str], args: Args) -> TreeOutput:
 def get_files_node(path: Optional[str], args: Args) -> TreeOutput:
     "Get tree files node"
     result = []
-    long_ = 'long' in args
-    for item in RootFS().path(path).iterdir():
+    long_ = 'long' in args  # long format
+    all_ = 'all' in args  # do not ignore entries
+
+    for item in RootFS().path(path).iterdir(show_ignored_entries=all_):
         s = item.stat()
         leaf = not item.is_dir()
         if long_:  # Long format

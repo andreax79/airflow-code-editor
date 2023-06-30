@@ -162,7 +162,9 @@ export default defineComponent({
         },
         async loadChildrenAsync(parent) {
             const self = this;
-            const response = await axios.get(prepareHref('tree/' + parent.id));
+            const path = 'tree/' + parent.id;
+            const params = this.config.showHiddenFiles ? { all: true } : {};
+            const response = await axios.get(prepareHref(path), { params: params });
             return response.data.value.map((node) => self.prepareTreeNode(node, parent));
         },
         async showMenu(event, item) {

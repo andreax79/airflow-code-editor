@@ -455,3 +455,11 @@
 ### Fix
 
 - Fix "Permission denied" error renaming/removing files when git is not installed
+
+## 7.3.0
+
+2023-06-30
+
+### Added
+
+- Show/hide hidden files

@@ -83,7 +83,7 @@ export class TreeEntry {
     }
 }
 
-export function prepareMenuOptions(item, isGit) {
+export function prepareMenuOptions(item, isGit, showHiddenFiles) {
     // Prepare the menu
     let options = []
     if (item) {
@@ -132,6 +132,17 @@ export function prepareMenuOptions(item, isGit) {
             name: '<span class="material-icons">refresh</span> Refresh',
             slug: 'refresh'
         });
+        if (showHiddenFiles) {
+            options.push({
+                name: '<span class="material-icons">lens_blur</span> Hide Hidden Files',
+                slug: 'show_hidden'
+            });
+        } else {
+            options.push({
+                name: '<span class="material-icons">lens_blur</span> Show Hidden Files',
+                slug: 'show_hidden'
+            });
+        }
     }
     return options;
 }

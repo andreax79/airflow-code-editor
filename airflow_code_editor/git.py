@@ -131,15 +131,19 @@ def execute_git_command(git_args: List[str]) -> CompletedGitCommand:
 
 def git_ls_local(git_args: List[str]) -> str:
     "'git ls-tree' like output for local folders"
-    long_ = False
+    long_ = False  # long format
     if '-l' in git_args or '--long' in git_args:
         git_args = [arg for arg in git_args if arg not in ('-l', '--long')]
         long_ = True
+    all_ = False  # do not ignore entries
+    if '-a' in git_args:
+        git_args = [arg for arg in git_args if arg not in ('-a')]
+        all_ = True
     path = git_args[1] if len(git_args) > 1 else ''
     path = normalize_path(path.split('#', 1)[0])
     result = []
     root_fs = RootFS()
-    for item in root_fs.path(path).iterdir():
+    for item in root_fs.path(path).iterdir(show_ignored_entries=all_):
         if item.is_dir():
             type_ = 'tree'
         else:

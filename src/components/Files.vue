@@ -232,7 +232,8 @@ export default defineComponent({
                 }
                 // Get tree items
                 try {
-                    const response = await axios.get(prepareHref(path), { params: { long: true }});
+                    const params = this.config.showHiddenFiles ? { long: true, all: true } : { long : true };
+                    const response = await axios.get(prepareHref(path), { params: params });
                     let blobs = []; // files
                     let trees = []; // directories
                     response.data.value.forEach((part) => {
@@ -298,7 +299,7 @@ export default defineComponent({
         },
         showMenu(event, item) {
             // Prepare the menu
-            this.options = prepareMenuOptions(item, this.isGit);
+            this.options = prepareMenuOptions(item, this.isGit, this.config.showHiddenFiles);
             // Show menu
             this.$refs.filesMenu.showMenu(event, item);
         },
@@ -314,6 +315,11 @@ export default defineComponent({
             } else if (event.option.slug == 'open_in_new') {
                 window.open(event.item.href, '_blank');
             } else if (event.option.slug == 'refresh') {
+                this.refresh();
+            } else if (event.option.slug == 'show_hidden') {
+                // Save setting on the local storage
+                this.config.showHiddenFiles = !this.config.showHiddenFiles;
+                localStorage.setItem('airflow_code_editor_show_hidden_files', this.config.showHiddenFiles);
                 this.refresh();
             } else if (event.option.slug == 'new') {
                 this.newAction();

@@ -16,11 +16,15 @@ USER airflow
 
 # Install Airflow
 COPY requirements-optional.txt .
-RUN pip install --no-cache-dir airflow-code-editor==${PLUGIN_VERSION} -r requirements-optional.txt && rm requirements-optional.txt
+RUN pip install pytest --no-cache-dir airflow-code-editor==${PLUGIN_VERSION} -r requirements-optional.txt && rm requirements-optional.txt
 # Init airflow db
 RUN airflow db init
 # Create user 'admin' with password 'admin'
 RUN airflow users create -r Admin -u admin -e admin@example.com -f admin -l admin -p admin
 RUN airflow sync-perm
+# Git config
+RUN git config --global --add safe.directory /opt/airflow/dags
+RUN git config --global user.email "dev@example.com"
+RUN git config --global user.name "Test"
 
 ENV PYTHONPATH = /home/airflow

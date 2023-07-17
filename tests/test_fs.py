@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import fs
+import shutil
 from pathlib import Path
 from flask import Flask
 from airflow_code_editor.commons import PLUGIN_NAME
@@ -30,7 +31,9 @@ def test_parent():
 
 
 def test_root_fs():
-    root_dir = Path(__file__).parent
+    root_dir = "/tmp/tests"
+    shutil.rmtree(root_dir, ignore_errors=True)
+    shutil.copytree(Path(__file__).parent, root_dir)
     configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
     configuration.conf.set(PLUGIN_NAME, 'root_directory', str(root_dir))
     configuration.conf.set(PLUGIN_NAME, 'git_enabled', 'True')

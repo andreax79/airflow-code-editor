@@ -88,9 +88,13 @@ dev-shell: dags
 		-h airflow \
 		-v ${makeFileDir}/.bash_history:/home/airflow/.bash_history \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
+		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT1="name=logs,path=/opt/airflow/logs" \
 		${DEV_IMAGE_NAME} \
 		bash -l
 
@@ -99,8 +103,12 @@ webserver: dags
 		-h airflow \
 		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
+		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT1="name=logs,path=/opt/airflow/logs" \
 		${DEV_IMAGE_NAME} \
 		airflow webserver
 
@@ -109,8 +117,12 @@ standalone: dags
 		-h airflow \
 		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
+		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT1="name=logs,path=/opt/airflow/logs" \
 		${DEV_IMAGE_NAME} \
 		airflow standalone
 
@@ -119,9 +131,28 @@ scheduler: dags
 		-h airflow \
 		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
+		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT1="name=logs,path=/opt/airflow/logs" \
 		${DEV_IMAGE_NAME} \
 		airflow scheduler
+
+test: dags
+	@docker run --rm -it \
+		-h airflow \
+		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-v ${makeFileDir}/../tests:/opt/airflow/tests \
+		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
+		-e AIRFLOW_UID=$$(id -u) \
+		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT1="name=logs,path=/opt/airflow/logs" \
+		--entrypoint pytest \
+		${DEV_IMAGE_NAME} \
+		tests
 
 all: help

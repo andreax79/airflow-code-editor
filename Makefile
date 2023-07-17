@@ -50,7 +50,7 @@ clean:
 	-rm -rf *.egg-info
 
 test:
-	@./scripts/tests.sh
+	$(MAKE) -C docker test
 
 coverage:
 	@./scripts/coverage.sh

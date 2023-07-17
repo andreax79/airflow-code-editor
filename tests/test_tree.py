@@ -11,6 +11,7 @@ from unittest import TestCase
 from airflow_code_editor.commons import PLUGIN_NAME
 from airflow_code_editor.tree import (
     get_tree,
+    get_stat,
 )
 
 assert airflow.plugins_manager

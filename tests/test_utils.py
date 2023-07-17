@@ -8,6 +8,7 @@ import contextlib
 import airflow
 import airflow.plugins_manager
 from airflow import configuration
+from pathlib import Path
 from flask import Flask
 from unittest import TestCase
 from airflow_code_editor.commons import PLUGIN_NAME, PLUGIN_DEFAULT_CONFIG
@@ -18,6 +19,7 @@ from airflow_code_editor.utils import (
     normalize_path,
 )
 from airflow_code_editor.git import (
+    git_enabled,
     execute_git_command,
 )
 
@@ -27,8 +29,10 @@ app = Flask(__name__)
 
 class TestUtils(TestCase):
     def setUp(self):
-        self.root_dir = os.path.dirname(os.path.realpath(__file__))
-        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
+        self.root_dir = "/tmp/tests"
+        shutil.rmtree(self.root_dir, ignore_errors=True)
+        shutil.copytree(Path(__file__).parent, self.root_dir)
+        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'True')
         configuration.conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
         configuration.conf.set(PLUGIN_NAME, 'git_enabled', 'True')
 
@@ -74,6 +78,7 @@ class TestUtils(TestCase):
         assert 'Command not supported' in r.stderr
 
     def test_ls_tree(self):
+        assert git_enabled()
         with app.app_context():
             r = execute_git_command(['ls-tree', 'HEAD', '-l'])
         assert r.returncode == 0

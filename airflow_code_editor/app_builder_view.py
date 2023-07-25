@@ -73,15 +73,15 @@ try:
         def format(self):
             return self._format()
 
-        @expose("/tree", methods=["GET"])
+        @expose("/tree", methods=["GET", "HEAD"])
         @auth.has_access(PERMISSIONS)
         def tree_base(self, path=None):
-            return self._tree(path, args=request.args)
+            return self._tree(path, args=request.args, method=request.method)
 
-        @expose("/tree/<path:path>", methods=["GET"])
+        @expose("/tree/<path:path>", methods=["GET", "HEAD"])
         @auth.has_access(PERMISSIONS)
         def tree(self, path=None):
-            return self._tree(path, args=request.args)
+            return self._tree(path, args=request.args, method=request.method)
 
         @expose("/ping", methods=["GET"])
         @auth.has_access(PERMISSIONS)
@@ -143,12 +143,12 @@ except (ImportError, ModuleNotFoundError):
         @expose("/tree", methods=["GET"])
         @has_dag_access(can_dag_edit=True)
         def tree_base(self, path=None):
-            return self._tree(path)
+            return self._tree(path, args=request.args, method=request.method)
 
         @expose("/tree/<path:path>", methods=["GET"])
         @has_dag_access(can_dag_edit=True)
         def tree(self, path=None):
-            return self._tree(path)
+            return self._tree(path, args=request.args, method=request.method)
 
         def _render(self, template, *args, **kargs):
             return self.render_template(

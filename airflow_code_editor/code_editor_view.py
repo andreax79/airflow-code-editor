@@ -20,8 +20,8 @@ import mimetypes
 from flask import request, make_response
 from flask_wtf.csrf import generate_csrf
 from airflow.version import version
-from airflow_code_editor.commons import HTTP_404_NOT_FOUND
-from airflow_code_editor.tree import get_tree
+from airflow_code_editor.commons import HTTP_200_OK, HTTP_404_NOT_FOUND
+from airflow_code_editor.tree import get_tree, get_stat
 from airflow_code_editor.utils import (
     get_plugin_boolean_config,
     get_plugin_int_config,
@@ -63,9 +63,7 @@ class AbstractCodeEditorView(object):
             logging.error(ex)
             return prepare_api_response(
                 path=normalize_path(path),
-                error_message="Error saving {path}: {message}".format(
-                    path=path, message=error_message(ex)
-                ),
+                error_message="Error saving {path}: {message}".format(path=path, message=error_message(ex)),
             )
 
     def _git_repo(self, path):
@@ -84,9 +82,7 @@ class AbstractCodeEditorView(object):
             attachment_filename = None
         response = execute_git_command(["cat-file", "-p", path]).prepare_git_response()
         if attachment_filename:
-            content_disposition = 'attachment; filename="{0}"'.format(
-                attachment_filename
-            )
+            content_disposition = 'attachment; filename="{0}"'.format(attachment_filename)
             response.headers["Content-Disposition"] = content_disposition
             try:
                 content_type = mimetypes.guess_type(attachment_filename)[0]
@@ -140,15 +136,19 @@ class AbstractCodeEditorView(object):
             )
         except Exception as ex:
             logging.error(ex)
-            return prepare_api_response(
-                error_message="Error formatting: {message}".format(
-                    message=error_message(ex)
-                )
-            )
+            return prepare_api_response(error_message="Error formatting: {message}".format(message=error_message(ex)))
 
-    def _tree(self, path, args={}):
+    def _tree(self, path, args={}, method="GET"):
         try:
-            return prepare_api_response(value=get_tree(path, args))
+            if method == "HEAD":
+                stat = get_stat(path)
+                response = make_response("OK", HTTP_200_OK)
+                response.headers["X-Id"] = stat["id"]
+                response.headers["X-Leaf"] = "true" if stat["leaf"] else "false"
+                response.headers["X-Exists"] = "true" if stat["exists"] else "false"
+                return response
+            else:
+                return prepare_api_response(value=get_tree(path, args))
         except Exception as ex:
             logging.error(ex)
             return prepare_api_response(

@@ -70,9 +70,7 @@ def get_plugin_boolean_config(key: str) -> bool:
     "Get a plugin boolean configuration/default for a given key"
     return cast(
         bool,
-        configuration.conf.getboolean(
-            PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
-        ),
+        configuration.conf.getboolean(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]),
     )  # type: ignore
 
 
@@ -80,9 +78,7 @@ def get_plugin_int_config(key: str) -> int:
     "Get a plugin int configuration/default for a given key"
     return cast(
         int,
-        configuration.conf.getint(
-            PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]
-        ),
+        configuration.conf.getint(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]),
     )  # type: ignore
 
 
@@ -94,8 +90,7 @@ def is_enabled() -> bool:
 def get_root_folder() -> Path:
     "Return the configured root folder or Airflow DAGs folder"
     return Path(
-        get_plugin_config('root_directory')
-        or cast(str, configuration.conf.get('core', 'dags_folder'))  # type: ignore
+        get_plugin_config('root_directory') or cast(str, configuration.conf.get('core', 'dags_folder'))  # type: ignore
     ).resolve()
 
 
@@ -141,17 +136,13 @@ def read_mount_points_config() -> Dict[str, MountPoint]:
         else:
             suffix = str(i)
         try:
-            if not configuration.conf.has_option(
-                PLUGIN_NAME, 'mount{}_name'.format(suffix)
-            ):
+            if not configuration.conf.has_option(PLUGIN_NAME, 'mount{}_name'.format(suffix)):
                 break
         except Exception:  # backports.configparser.NoSectionError and friends
             break
         name = configuration.conf.get(PLUGIN_NAME, 'mount{}_name'.format(suffix))
         path = configuration.conf.get(PLUGIN_NAME, 'mount{}_path'.format(suffix))
-        config[name] = MountPoint(
-            path=path, default=mount_conf['name'] == ROOT_MOUNTPOUNT
-        )
+        config[name] = MountPoint(path=path, default=mount_conf['name'] == ROOT_MOUNTPOUNT)
     return config
 
 

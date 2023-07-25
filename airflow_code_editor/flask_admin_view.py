@@ -76,15 +76,15 @@ try:
         def format(self, path=None):
             return self._load(path)
 
-        @expose("/tree", methods=["GET"])
+        @expose("/tree", methods=["GET", "HEAD"])
         @login_required
         def tree_base(self, path=None):
-            return self._tree(path, args=request.args)
+            return self._tree(path, args=request.args, method=request.method)
 
-        @expose("/tree/<path:path>", methods=["GET"])
+        @expose("/tree/<path:path>", methods=["GET", "HEAD"])
         @login_required
         def tree(self, path=None):
-            return self._tree(path, args=request.args)
+            return self._tree(path, args=request.args, method=request.method)
 
         @expose("/ping", methods=["GET"])
         @login_required

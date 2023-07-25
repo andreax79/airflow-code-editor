@@ -15,6 +15,7 @@
 #   limitations under the Licens
 
 import re
+import fs
 from datetime import datetime
 from typing import Any, Callable, Dict, List, NamedTuple, Optional
 from airflow_code_editor.commons import (
@@ -39,7 +40,7 @@ from airflow_code_editor.git import (
 )
 from airflow_code_editor.fs import RootFS
 
-__all__ = ['get_tree']
+__all__ = ['get_tree', 'get_stat']
 
 
 class NodeDef(NamedTuple):
@@ -78,9 +79,7 @@ def get_root_node(path: Optional[str], args: Args) -> TreeOutput:
         if id_ is None or not node.condition():
             continue
         # Add the node
-        result.append(
-            {'id': id_, 'label': node.label, 'leaf': node.leaf, 'icon': node.icon}
-        )
+        result.append({'id': id_, 'label': node.label, 'leaf': node.leaf, 'icon': node.icon})
         # If the node is files, add the mount points
         if id_ == 'files':
             mount_points = read_mount_points_config()
@@ -115,9 +114,7 @@ def get_files_node(path: Optional[str], args: Args) -> TreeOutput:
                     'leaf': leaf,
                     'size': size,
                     'mode': s.st_mode,
-                    'mtime': datetime.fromtimestamp(int(s.st_mtime)).isoformat()
-                    if s.st_mtime
-                    else None,
+                    'mtime': datetime.fromtimestamp(int(s.st_mtime)).isoformat() if s.st_mtime else None,
                 }
             )
         else:  # Short format
@@ -216,3 +213,17 @@ def get_tree(path: Optional[str] = None, args: Args = {}) -> TreeOutput:
         return []
     # Execute node function
     return TREE_NODES[root].get_children(path_argv, args)
+
+
+def get_stat(path: Optional[str] = None, args: Args = {}) -> TreeOutput:
+    "Get stat for the given path"
+    try:
+        if not path:
+            return {'id': path, 'leaf': False, 'exists': True}
+        path = normalize_path(path)
+        get_tree(path, args)
+        return {'id': path, 'leaf': False, 'exists': True}
+    except fs.errors.DirectoryExpected:
+        return {'id': path, 'leaf': True, 'exists': True}
+    except fs.errors.ResourceNotFound:
+        return {'id': path, 'leaf': None, 'exists': False}

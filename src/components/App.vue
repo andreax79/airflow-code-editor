@@ -8,7 +8,7 @@
     </pane>
     <pane key="2" :size="100 - sidebarSize" class="app-main">
         <div class="app-main-nav" v-show="activeTabs.length > 1 && !config.singleTab">
-            <ul class="nav nav-tabs">
+            <ul class="tabs">
               <li role="presentation" v-for="tab in tabs" :class="selectedTab == tab.uuid ? 'active': ''">
                 <a v-if="!tab.closed" href="#"
                     @click.stop="selectTab(tab)"
@@ -100,12 +100,13 @@ footer {
 .vue-universal-modal {
     z-index: 100;
 }
-.btn .material-icons {
-    margin-right: 0.5em;
-}
+/* Menu */
 .vue-simple-context-menu {
+    border-radius: 5px;
     background-color: #fff;
     font-size: 1em;
+}
+.vue-simple-context-menu .vue-simple-context-menu__item {
 }
 .vue-simple-context-menu .vue-simple-context-menu__item .material-icons {
     color: #666;
@@ -123,6 +124,9 @@ footer {
 import 'splitpanes/dist/splitpanes.css';
 import 'vue-universal-modal/dist/index.css';
 import 'vue-simple-context-menu/dist/vue-simple-context-menu.css';
+import '../css/dialogs.css';
+import '../css/tabs.css';
+import '../css/buttons.css';
 import '../css/material-icons.css';
 import { v4 as uuidv4 } from 'uuid';
 import { defineComponent, ref } from 'vue';
@@ -131,6 +135,7 @@ import VueSimpleContextMenu from 'vue-simple-context-menu';
 import Sidebar from './Sidebar.vue';
 import FilesEditorContainer from './FilesEditorContainer.vue';
 import HistoryView from './HistoryView.vue';
+import Search from './Search.vue';
 import Workspace from './Workspace.vue';
 import ErrorDialog from './dialogs/ErrorDialog.vue';
 import CloseTabDialog from './dialogs/CloseTabDialog.vue';
@@ -159,6 +164,7 @@ export default defineComponent({
         'container': FilesEditorContainer,
         'historyview': HistoryView,
         'workspace': Workspace,
+        'search': Search,
         'error-dialog': ErrorDialog,
         'close-tab-dialog': CloseTabDialog,
         'vue-simple-context-menu': VueSimpleContextMenu,
@@ -209,6 +215,15 @@ export default defineComponent({
                     this.$refs[tab.uuid][0].refresh();
                 } else {
                     tab = new TabState('Workspace', Workspace);
+                    this.tabs.push(tab);
+                }
+                this.selectedTab = tab.uuid;
+            } else if (target.id == 'search') {
+                let tab = this.tabs.find(tab => tab.target && tab.target.id == target.id && tab.target.query == target.query && !tab.closed);
+                if (tab) {
+                    this.$refs[tab.uuid][0].refresh();
+                } else {
+                    tab = new TabState(target.path, Search, target);
                     this.tabs.push(tab);
                 }
                 this.selectedTab = tab.uuid;

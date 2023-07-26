@@ -9,39 +9,14 @@
           <icon icon="check_box" :state="amend" @click="toggleamend" />
           Amend amend previous commit
       </label>
-      <div class="commit-dialog-buttons">
+      <div class="dialog-buttons">
         <button @click="cancel" class="btn btn-default">Cancel</button>
         <button @click="ok" class="btn btn-primary"
-          :disabled="message == ''">Ok</button>
+          :disabled="message == ''">Commit</button>
       </div>
     </div>
   </modal>
 </template>
-<style>
-.airflow-code-editor-modal.airflow-code-editor-modal-commit {
-    padding: 1em;
-    font-size: 1em;
-}
-.airflow-code-editor-modal-commit h1 {
-    font-size: 1.5em;
-    text-align: left;
-    margin-top: 0;
-    margin-bottom: 1em;
-}
-.airflow-code-editor-modal-commit label {
-    display: block;
-    text-align: left;
-    margin-bottom: 1em;
-    margin-top: 1em;
-}
-.airflow-code-editor-modal-commit .commit-dialog-buttons {
-    margin-top: 1em;
-    text-align: right;
-}
-.airflow-code-editor-modal-commit .commit-dialog-buttons .btn {
-    margin-left: 1em;
-}
-</style>
 <script>
 import { defineComponent } from 'vue';
 import Icon from '../Icon.vue';

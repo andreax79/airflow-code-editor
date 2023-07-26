@@ -108,8 +108,20 @@
 .tree-view .tree-item-symlink {
     font-style: italic;
 }
+.tree-view-tree-content .btn {
+    padding-left: 0 !important;
+    padding-right: 0.2rem !important;
+    border: 0px solid #fff !important;
+    color: #017cee;
+    background: transparent;
+}
+.tree-view-tree-content .btn:hover {
+    color: #0cb6ff;
+    background: transparent;
+}
 .tree-view-tree-content .btn .material-icons {
     margin-right: 0;
+    margin-left: 0.5rem;
 }
 </style>
 <script>

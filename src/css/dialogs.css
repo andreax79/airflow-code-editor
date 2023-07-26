@@ -1,0 +1,27 @@
+.airflow-code-editor-modal {
+    background-color: #fff;
+    border-radius: 1.5rem;
+    box-sizing: border-box;
+    font-size: 1em;
+    padding: 1.5em;
+    text-align: center;
+    width: 400px;
+}
+.airflow-code-editor-modal h1 {
+    font-family: "Roboto Flex", roboto, system-ui, -apple-system, blinkmacsystemfont, "Segoe UI", helvetica, arial, ubuntu, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 1.4em;
+    font-weight: 600;
+    text-align: left;
+    margin-top: 0;
+    margin-bottom: 1em;
+}
+.airflow-code-editor-modal label {
+    display: block;
+    text-align: left;
+    margin-bottom: 1em;
+    font-weight: 500;
+}
+.airflow-code-editor-modal .dialog-buttons {
+    margin-top: 2em;
+    text-align: right;
+}

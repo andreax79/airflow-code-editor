@@ -39,9 +39,6 @@
     -webkit-flex: 1 1 0;
     width: 100%;
 }
-.tree-view-blob-content .btn {
-    margin-right: 0.5em;
-}
 </style>
 <script>
 import axios from 'axios';
@@ -290,6 +287,12 @@ export default defineComponent({
                 }
             }
         },
+        // handleKeydown(event) {
+        //     if (event.ctrlKey && event.keyCode === 83) {
+        //       event.preventDefault();
+        //       async () => this.saveAction(); // save file command
+        //     }
+        // }
     },
     mounted() {
         console.log('Editor.mounted');
@@ -298,6 +301,12 @@ export default defineComponent({
         this.refresh();
         window._editor = this.editor;
         window._e = this;
+        // Add an event listener
+        // document.addEventListener("keydown", this.handleKeydown);
+    },
+    beforeDestroy() {
+      // Remove the event listener
+      //document.removeEventListener("keydown", this.handleKeydown);
     }
 })
 </script>

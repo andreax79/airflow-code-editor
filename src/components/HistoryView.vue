@@ -5,7 +5,7 @@
         <log ref="log" @updateCommit="updateCommit" />
     </pane>
     <pane key="2" :size="50" class="commit-view">
-        <ul class="nav nav-tabs">
+        <ul class="tabs">
           <li role="presentation" :class="tab == 'commit' ? 'active' : ''" ><a href="#" @click.prevent="tab = 'commit'" >Commit</a></li>
           <li role="presentation" :class="tab == 'tree' ? 'active' : ''" ><a href="#" @click.prevent="tab = 'tree'">Tree</a></li>
         </ul>

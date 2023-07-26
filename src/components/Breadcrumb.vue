@@ -4,6 +4,11 @@
     <span class="active" v-if="index == stack.stack.length-1">{{ item.name }}</span>
   </li>
 </template>
+<style>
+.breadcrumb-item a {
+    color: #017cee;
+}
+</style>
 <script>
 import { defineComponent } from 'vue';
 

@@ -1,0 +1,31 @@
+/* Tabs */
+.tabs {
+    background-color: #fff;
+    border-bottom: 1px solid #dddddd;
+    height: 4rem;
+    margin: 0;
+    padding: 0;
+}
+.tabs > li {
+    float: left;
+    height: 4rem;
+    list-style: none;
+    padding: 0;
+}
+.tabs > li > a {
+    padding: 1.3rem 2rem 0;
+    height: 4rem;
+    color: #333;
+    display: block;
+}
+.tabs > li > a:hover {
+    background-color: #017cee0f;
+    color: #333;
+}
+.tabs > li > a > i.fa-close {
+    margin-left: 0.5rem;
+}
+.tabs > li.active {
+    font-weight: bold;
+    border-bottom: 4px solid #017cee;
+}

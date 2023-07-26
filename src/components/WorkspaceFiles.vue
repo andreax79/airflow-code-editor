@@ -5,29 +5,37 @@
     </span>
     <h1>{{ kind == 'unstaged' ? 'Unstaged files' : 'Staged files' }}</h1>
     <div class="header-buttons">
-      <!-- <div class="btn-group" role="group"> -->
-      <!--   <button type="button" class="btn btn-default" @click="selectAll">Select All</button> -->
-      <!--   <button type="button" class="btn btn-default" @click="deselectAll">Deselect All</button> -->
-      <!-- </div> -->
+      <button @click="showRevertDialog"
+              type="button"
+              :disabled="selected.length == 0 ? 'disabled' : null"
+              class="btn btn-default"
+              v-if="kind == 'unstaged'">
+              <icon icon="rotate_left"/>
+              Revert
+      </button>
       <button @click="process"
+              v-if="kind == 'unstaged'"
+              type="button"
+              :disabled="selected.length == 0 ? 'disabled' : null"
+              class="btn btn-primary">
+              <icon icon="add"/>
+              Stage
+      </button>
+      <button @click="process"
+              v-if="kind != 'unstaged'"
               type="button"
               :disabled="selected.length == 0 ? 'disabled' : null"
               class="btn btn-default">
-              {{ kind == 'unstaged' ? 'Stage' : 'Unstage' }} <span class="badge">{{ selected.length }}</span>
+              <icon icon="remove"/>
+              Unstage
       </button>
       <button @click="showCommitDialog"
               type="button"
               :disabled="items.length == 0 ? 'disabled' : null"
               class="btn btn-primary"
               v-if="kind == 'staged'">
+              <icon icon="approval"/>
               Commit
-      </button>
-      <button @click="showRevertDialog"
-              type="button"
-              :disabled="selected.length == 0 ? 'disabled' : null"
-              class="btn btn-warning"
-              v-if="kind == 'unstaged'">
-              Revert <span class="badge">{{ selected.length }}</span>
       </button>
     </div>
   </div>

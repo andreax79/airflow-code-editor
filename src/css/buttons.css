@@ -1,0 +1,36 @@
+/* Buttons */
+.btn .material-icons {
+    margin-right: 0.5em;
+}
+.app-main .btn,
+.airflow-code-editor-modal .btn {
+    -webkit-tap-highlight-color: transparent;
+    align-items: center;
+    border-radius: 1.25rem;
+    border: 0;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: "Roboto Flex", roboto, system-ui, -apple-system, blinkmacsystemfont, "Segoe UI", helvetica, arial, ubuntu, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    font-size: 0.875rem;
+    font-weight: 700;
+    gap: 0.5em;
+    height: 2.5rem;
+    justify-content: center;
+    letter-spacing: 0.00625rem;
+    line-height: 1.25rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.app-main .btn-default,
+.airflow-code-editor-modal .btn-default {
+    color: #017cee !important;
+    background: transparent !important;
+    border: 0px solid #fff !important;
+}
+.app-main .btn-default:hover,
+.airflow-code-editor-modal .btn-default:hover {
+    background-color: #017cee0f !important;
+    color: #0cb6ff !important;
+}

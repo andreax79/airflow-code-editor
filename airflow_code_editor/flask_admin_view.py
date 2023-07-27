@@ -86,6 +86,11 @@ try:
         def tree(self, path=None):
             return self._tree(path, args=request.args, method=request.method)
 
+        @expose("/search", methods=["GET"])
+        @login_required
+        def search(self):
+            return self._search(args=request.args)
+
         @expose("/ping", methods=["GET"])
         @login_required
         def ping(self):

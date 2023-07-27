@@ -20,6 +20,8 @@ from typing import cast, Dict, List, Optional
 from collections import namedtuple
 from fs.errors import FSError
 from flask import jsonify
+from pygments.lexer import RegexLexer
+from pygments.token import Text
 from airflow import configuration
 from airflow_code_editor.commons import (
     PLUGIN_NAME,
@@ -29,15 +31,16 @@ from airflow_code_editor.commons import (
 
 
 __all__ = [
-    'normalize_path',
-    'get_plugin_config',
-    'get_plugin_boolean_config',
-    'get_plugin_int_config',
-    'is_enabled',
-    'get_root_folder',
-    'error_message',
-    'prepare_api_response',
+    'DummyLexer',
     'always',
+    'error_message',
+    'get_plugin_boolean_config',
+    'get_plugin_config',
+    'get_plugin_int_config',
+    'get_root_folder',
+    'is_enabled',
+    'normalize_path',
+    'prepare_api_response',
 ]
 
 
@@ -171,3 +174,15 @@ def prepare_api_response(error_message=None, **kargs):
 def always() -> bool:
     "Always return True"
     return True
+
+
+class DummyLexer(RegexLexer):
+    name = "Dummy"
+    aliases = ["dummy"]
+    filenames = []
+    mimetypes = []
+    tokens = {
+        'root': [
+            (r'.*\n', Text),
+        ]
+    }

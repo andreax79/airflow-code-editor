@@ -34,3 +34,14 @@
     background-color: #017cee0f !important;
     color: #0cb6ff !important;
 }
+.app-main .btn-outlined,
+.airflow-code-editor-modal .btn-outlined {
+    color: #017cee !important;
+    background: transparent !important;
+    border: 1px solid #017cee !important;
+}
+.app-main .btn-outlined:hover,
+.airflow-code-editor-modal .btn-outlined:hover {
+    background-color: #017cee0f !important;
+    color: #0cb6ff !important;
+}

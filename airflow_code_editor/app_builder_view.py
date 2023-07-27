@@ -83,6 +83,11 @@ try:
         def tree(self, path=None):
             return self._tree(path, args=request.args, method=request.method)
 
+        @expose("/search", methods=["GET"])
+        @auth.has_access(PERMISSIONS)
+        def search(self):
+            return self._search(args=request.args)
+
         @expose("/ping", methods=["GET"])
         @auth.has_access(PERMISSIONS)
         def ping(self):
@@ -149,6 +154,15 @@ except (ImportError, ModuleNotFoundError):
         @has_dag_access(can_dag_edit=True)
         def tree(self, path=None):
             return self._tree(path, args=request.args, method=request.method)
+
+        @expose("/search", methods=["GET"])
+        @has_dag_access(can_dag_edit=True)
+        def search(self):
+            return self._search(args=request.args)
+
+        @expose("/ping", methods=["GET"])
+        def ping(self):
+            return self._ping()
 
         def _render(self, template, *args, **kargs):
             return self.render_template(

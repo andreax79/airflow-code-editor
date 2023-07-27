@@ -3,8 +3,12 @@
         <ol class="breadcrumb">
           <breadcrumb @changePath="changePath" :stack="stack" :isGit="isGit" v-if="showBreadcrumb"></breadcrumb>
           <div class="breadcrumb-buttons">
-              <button v-on:click="newAction()" v-if="!isGit" type="button" class="btn btn-primary"><icon icon="add_circle"/> New</button>
-              <button v-on:click="uploadAction()" v-if="!isGit" type="button" class="btn btn-primary"><icon icon="file_upload"/> Upload</button>
+              <div class="search-input-container">
+                  <input type="text" class="form-control search-input" placeholder="Search here" v-model="query" @keyup.enter="searchAction" />
+                  <i class="material-icons">search</i>
+              </div>
+              <button v-on:click="newAction()" v-if="!isGit" type="button" class="btn btn-outlined"><icon icon="add"/> New</button>
+              <button v-on:click="uploadAction()" v-if="!isGit" type="button" class="btn btn-outlined"><icon icon="file_upload"/> Upload</button>
               <input type="file" multiple="multiple" style="display: none" ref="file" @change="handleUploadButton" />
           </div>
         </ol>
@@ -123,6 +127,29 @@
     margin-right: 0;
     margin-left: 0.5rem;
 }
+.tree-view .search-input-container {
+    display: inline-flex;
+    position: relative;
+    vertical-align: middle;
+}
+.tree-view .search-input {
+    font-family: "Roboto Flex", roboto, system-ui, -apple-system, blinkmacsystemfont, "Segoe UI", helvetica, arial, ubuntu, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    border-radius: 1.25rem;
+    border: 0;
+    /* (background-color: #017cee0f; */
+    width: 200px;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    height: 30px;
+    vertical-align: middle;
+    padding-left: 32px;
+}
+.tree-view .search-input-container i {
+    position: absolute;
+    left: 10px;
+    top: 6px;
+    color: #999;
+}
 </style>
 <script>
 import axios from 'axios';
@@ -194,6 +221,7 @@ export default defineComponent({
                 }
             ],
             options: [],
+            query: "",
         }
     },
     methods: {
@@ -226,6 +254,11 @@ export default defineComponent({
         uploadAction() {
             // Upload button action
             this.$refs.file.click();
+        },
+        searchAction() {
+            // Search action
+            this.$emit('show', { id: "search", path: this.query, query: this.query });
+            this.query = "";
         },
         changePath(item) {
             // Change File/directory

@@ -3,12 +3,15 @@ import { ref } from "vue";
 const STACK_ROOT = { name: 'root', object: undefined, type: 'tree' };
 
 export class Stack {
-    constructor() {
+    constructor(path, type, line) {
         this.stack = [ { ... STACK_ROOT } ];
+        if (typeof path != 'undefined') {
+            this.updateStack(path, type, line);
+        }
     }
 
-    updateStack(path, type) {
-        console.log('Stack.updateStack path:' + path + ' type: ' + type);
+    updateStack(path, type, line) {
+        // console.log('Stack.updateStack path:' + path + ' type: ' + type + ' line: ' + line);
         // path: absolute path (local file) or ref/path (git)
         // type: last item type (tree or blob)
         this.stack.length = 0;
@@ -40,6 +43,9 @@ export class Stack {
         });
         if (type == 'blob') {
             this.stack[this.stack.length - 1].type = 'blob';
+        }
+        if (typeof line != 'undefined') {
+            this.stack[this.stack.length - 1].line = line;
         }
     }
 

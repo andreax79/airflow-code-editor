@@ -10,6 +10,7 @@
             @changePath="changePath"
             @updateLocation="updateLocation"
             @loaded="loaded"
+            @show="show"
             v-show="!isEditorOpen"></files>
         <editor ref="editor"
             :uuid="uuid"
@@ -56,7 +57,7 @@ export default defineComponent({
         },
         update(target) {
             if (target) {
-                this.updateStack(target.path, target.type);
+                this.updateStack(target.path, target.type, target.line);
             }
         },
         updateLocation() {
@@ -68,10 +69,10 @@ export default defineComponent({
                 document.location.hash = normalize(section + object);
             }
         },
-        updateStack(path, type) {
+        updateStack(path, type, line) {
             this.loading = true;
             // Update current file/directory
-            this.stack.updateStack(path, type);
+            this.stack.updateStack(path, type, line);
             // Refresh files/editor
             this.refresh();
         },
@@ -93,13 +94,16 @@ export default defineComponent({
                 // Refresh files/editor
                 this.refresh();
             } if (this.config.singleTab) { // Files - single tab
-                this.updateStack(item.object, item.type);
+                this.updateStack(item.object, item.type, item.line);
                 this.loading = true;
                 // Refresh files/editor
                 this.refresh();
             } else { // Files - multi tab
                 this.$emit("show", { id: 'files', path: item.object, type: item.type });
             }
+        },
+        show(item) {
+            this.$emit("show", item);
         },
         refresh() {
             // Refresh files/editor

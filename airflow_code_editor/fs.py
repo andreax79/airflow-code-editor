@@ -17,16 +17,20 @@
 import os
 import errno
 import fs
+from fs.walk import Walker
 from fnmatch import fnmatch
 from fs.mountfs import MountFS, MountError
 from fs.multifs import MultiFS
 from fs.path import abspath, forcedir, normpath
-from typing import Any, List, Optional, Union
+from psslib.contentmatcher import ContentMatcher
+from psslib.utils import istextfile
+from psslib.driver import _build_match_context_dict, LINE_MATCH, LINE_CONTEXT
+from typing import Any, List, Optional, Union, Tuple
 from flask import send_file, stream_with_context, Response
-from airflow_code_editor.utils import read_mount_points_config, get_plugin_config
+from airflow_code_editor.utils import read_mount_points_config, get_plugin_config, get_plugin_int_config
 
 __all__ = [
-    'RootFS',
+    "RootFS",
 ]
 
 STAT_FIELDS = [
@@ -64,9 +68,9 @@ class RootFS(MountFS):
         # Set default fs (root)
         self.default_fs = MultiFS()
         self.tmp_fs = fs.open_fs("mem://")
-        self.default_fs.add_fs('tmp', self.tmp_fs, write=False, priority=0)
+        self.default_fs.add_fs("tmp", self.tmp_fs, write=False, priority=0)
         self.root_fs = [fs.open_fs(v.path) for v in mounts.values() if v.default][0]
-        self.default_fs.add_fs('root', self.root_fs, write=True, priority=1)
+        self.default_fs.add_fs("root", self.root_fs, write=True, priority=1)
         # Mount other fs
         for k, v in mounts.items():
             if not v.default:
@@ -88,13 +92,120 @@ class RootFS(MountFS):
         "Return a FSPath instance for the given path"
         return FSPath(*parts, root_fs=self)
 
+    def find_files(
+        self,
+        path: str = "/",
+        filter: Optional[List[str]] = None,
+        exclude: Optional[List[str]] = None,
+        max_depth: Optional[int] = None,
+    ):
+        "Walk a filesystem, yielding FSPAth"
+        walker = Walker(
+            ignore_errors=True,
+            filter=filter,
+            exclude=exclude,
+            max_depth=max_depth,
+        )
+        fs = self.root_fs
+        for filename in walker.files(fs=fs, path=path):
+            yield self.path(filename)
+
+    def search(
+        self,
+        query: str,
+        search_context: Optional[int] = None,
+        path: str = "/",
+        filter: Optional[List[str]] = None,
+        exclude: Optional[List[str]] = None,
+        max_depth: Optional[int] = None,
+    ):
+        "Search for pattern in files"
+        if search_context is None:
+            search_context = get_plugin_int_config("search_context")
+        if exclude is None:
+            exclude = get_plugin_config("ignored_entries").split(",")
+
+        result = []
+        matcher = ContentMatcher(pattern=query.encode("utf-8"))
+        for path in self.find_files(filter=filter, exclude=exclude, max_depth=max_depth):
+            try:
+                with path.open("rb") as f:
+                    if istextfile(f):
+                        f.seek(0)
+                        matches = list(matcher.match_file(f))
+                        if not search_context:
+                            for match in matches:
+                                context = match[0].decode("utf-8")
+                                row_number = match[1]
+                                result.append(
+                                    {
+                                        "row_number": row_number,  # matching row number
+                                        "context_first_row": row_number,  # context first row number
+                                        "context": context,  # context (matching row)
+                                        "path": path.path,  # file path
+                                    }
+                                )
+                        else:
+                            for row, context, context_first_row in prepare_search_context(f, matches, search_context):
+                                result.append(
+                                    {
+                                        "row_number": row,  # matching row number
+                                        "context_first_row": context_first_row,  # context first row number
+                                        "context": context,  # context
+                                        "path": path.path,  # file path
+                                    }
+                                )
+            except (OSError, IOError):
+                pass
+
+        return result
+
+
+def prepare_search_context(f, matches, search_context) -> Tuple[int, str, int]:
+    f.seek(0)
+    match_context_dict = _build_match_context_dict(matches, search_context, search_context)
+    lines = []
+    context_first_row = 0
+    row_number = 0
+
+    prev_was_blank = False
+    had_context = False
+    for current_row_number, current_line in enumerate(f, 1):
+        current_line = current_line.decode("utf-8")
+        result, match = match_context_dict.get(current_row_number, (None, None))
+        if result is None:
+            prev_was_blank = True
+            continue
+
+        elif result == LINE_MATCH:
+            row_number = current_row_number
+            if current_row_number < context_first_row or context_first_row == 0:
+                context_first_row = current_row_number
+            lines.append(current_line)
+
+        elif result == LINE_CONTEXT:
+            if prev_was_blank and had_context:
+                context = "".join(lines)
+                yield row_number, context, context_first_row
+                lines = []
+                context_first_row = current_row_number
+            if context_first_row < context_first_row or context_first_row == 0:
+                context_first_row = current_row_number
+            lines.append(current_line)
+            had_context = True
+        prev_was_blank = False
+
+    if lines:
+        context = "".join(lines)
+        yield row_number, context, context_first_row
+
 
 class FSPath(object):
     def __init__(self, *parts: List[str], root_fs: RootFS) -> None:
         self.root_fs = root_fs
         self.path = os.path.join("/", *parts)
 
-    def open(self, mode='r', buffering=-1, encoding=None, errors=None, newline=None):
+    def open(self, mode="r", buffering=-1, encoding=None, errors=None, newline=None):
         "Open the file pointed by this path and return a file object"
         return self.root_fs.open(
             self.path,
@@ -162,8 +273,8 @@ class FSPath(object):
 
     def iterdir(self, show_ignored_entries=False):
         "Iterate over the files in this directory"
-        ignored_entries = get_plugin_config('ignored_entries').split(',')
-        mount_points = [x[0].rstrip('/') for x in self.root_fs.mounts]
+        ignored_entries = get_plugin_config("ignored_entries").split(",")
+        mount_points = [x[0].rstrip("/") for x in self.root_fs.mounts]
         for name in sorted(self.root_fs.listdir(self.path)):
             skip = False
             if not show_ignored_entries:
@@ -173,7 +284,7 @@ class FSPath(object):
                     skip = True
                 # Ship hidden files
                 for patter in ignored_entries:
-                    if fnmatch(fullpath if patter.startswith('/') else name, patter.strip()):
+                    if fnmatch(fullpath if patter.startswith("/") else name, patter.strip()):
                         skip = True
             if not skip:
                 yield self.root_fs.path(self.path, name)
@@ -209,7 +320,7 @@ class FSPath(object):
     def send_file(self, as_attachment: bool):
         "Send the contents of a file to the client"
         if not self.exists():
-            raise FileNotFoundError(errno.ENOENT, 'File not found', self.path)
+            raise FileNotFoundError(errno.ENOENT, "File not found", self.path)
         elif self.root_fs.hassyspath(self.path):
             # Local filesystem
             if as_attachment:
@@ -232,8 +343,8 @@ class FSPath(object):
             # Other filesystems
             response = Response(stream_with_context(self.read_file_chunks()))
             if as_attachment:
-                content_disposition = 'attachment;filename={}'.format(self.name)
-                response.headers['Content-Disposition'] = content_disposition
+                content_disposition = "attachment;filename={}".format(self.name)
+                response.headers["Content-Disposition"] = content_disposition
             return response
 
     def write_file(self, data: Union[str, bytes], is_text: bool) -> None:

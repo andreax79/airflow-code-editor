@@ -85,6 +85,7 @@ PLUGIN_DEFAULT_CONFIG = {
     'line_length': 88,
     'string_normalization': False,
     'ignored_entries': '.*,__pycache__',
+    'search_context': 2,
 }
 ROOT_MOUNTPOUNT = 'root'
 JS_FILES = [

@@ -284,6 +284,10 @@ export default defineComponent({
                 } else {
                     // Load the file
                     this.editorLoad(this.editorPath);
+                    // Move cursor to line
+                    if (typeof last.line != 'undefined') {
+                        this.editor.setCursor({line: last.line - 1, ch: 0, sticky: "after"});
+                    }
                 }
             }
         },

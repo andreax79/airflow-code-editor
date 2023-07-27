@@ -17,15 +17,19 @@
 
 import logging
 import mimetypes
+from pygments import highlight
+from pygments.lexers import get_lexer_for_filename
+from pygments.formatters import HtmlFormatter
 from flask import request, make_response
 from flask_wtf.csrf import generate_csrf
 from airflow.version import version
 from airflow_code_editor.commons import HTTP_200_OK, HTTP_404_NOT_FOUND
 from airflow_code_editor.tree import get_tree, get_stat
 from airflow_code_editor.utils import (
+    DummyLexer,
+    error_message,
     get_plugin_boolean_config,
     get_plugin_int_config,
-    error_message,
     normalize_path,
     prepare_api_response,
 )
@@ -76,7 +80,7 @@ class AbstractCodeEditorView(object):
         "Get a file from GIT (invoked by the HTTP GET method)"
         try:
             # Download git blob - path = '<hash>/<name>'
-            path, attachment_filename = path.split('/', 1)
+            path, attachment_filename = path.split("/", 1)
         except Exception:
             # No attachment filename
             attachment_filename = None
@@ -94,7 +98,7 @@ class AbstractCodeEditorView(object):
 
     def _git_repo_post(self, path):
         "Execute a GIT command (invoked by the HTTP POST method)"
-        git_args = request.json.get('args', [])
+        git_args = request.json.get("args", [])
         return execute_git_command(git_args).prepare_git_response()
 
     def _load(self, path):
@@ -111,8 +115,8 @@ class AbstractCodeEditorView(object):
                 return root_fs.path(path).send_file(as_attachment=True)
         except Exception as ex:
             logging.error(ex)
-            strerror = getattr(ex, 'strerror', str(ex))
-            errno = getattr(ex, 'errno', 0)
+            strerror = getattr(ex, "strerror", str(ex))
+            errno = getattr(ex, "errno", 0)
             message = prepare_api_response(error_message=strerror, errno=errno)
             return make_response(message, HTTP_404_NOT_FOUND)
 
@@ -156,5 +160,29 @@ class AbstractCodeEditorView(object):
                 error_message="Error: {message}".format(message=error_message(ex)),
             )
 
+    def _search(self, args={}):
+        "File search"
+        query = args.get("query")
+        root_fs = RootFS()
+        result = []
+        for match in root_fs.search(query=query):
+            formatter = HtmlFormatter(
+                linenos=True,
+                cssclass="source",
+                nobackground=True,
+                linenostart=match["context_first_row"],
+                hl_lines=[match["row_number"] - match["context_first_row"] + 1],
+            )
+            try:
+                lexer = get_lexer_for_filename(match["path"])
+            except Exception:
+                lexer = DummyLexer()
+            try:
+                context = highlight(match["context"], lexer, formatter)
+            except Exception:
+                context = match["context"]
+            result.append({"row_number": match["row_number"], "context": context, "path": match["path"]})
+        return result
+
     def _ping(self):
-        return {'value': generate_csrf()}
+        return {"value": generate_csrf()}

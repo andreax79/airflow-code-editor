@@ -35,7 +35,5 @@ window.show = async function(path) {
 }
 
 window.search = async function(query) {
-    // const response = await axios.get(prepareHref('search'), { 'query': query });
-    // console.log(response);
-    window.app.show({ id: "search", path: "TODO", query: query });
+    window.app.show({ id: "search", path: query, query: query });
 }

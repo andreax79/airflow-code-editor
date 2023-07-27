@@ -188,6 +188,7 @@ Example:
 * [Codemirror, In-browser code editor](https://github.com/codemirror/codemirror)
 * [Git WebUI, A standalone local web based user interface for git repositories](https://github.com/alberthier/git-webui)
 * [Black, The Uncompromising Code Formatter](https://github.com/psf/black)
+* [pss, power-tool for searching source files](https://github.com/eliben/pss)
 * [Vue.js](https://github.com/vuejs/vue)
 * [Vue-good-table, data table for VueJS](https://github.com/xaksis/vue-good-table)
 * [Vue-tree, TreeView control for VueJS](https://github.com/grapoza/vue-tree)

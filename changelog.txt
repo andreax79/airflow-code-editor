@@ -1,80 +1,60 @@
-# airflow-code-editor changelog
+# Changelog
 
-## 1.0.0
-
-2019-08-06
+## [1.0.0] - 2019-08-06
 
 ### Added
 
 - initial version
 
-## 1.0.1
-
-2019-08-07
+## [1.0.1] - 2019-08-07
 
 ### Fix
 
 - change static folder
 
-## 2.0.0
-
-2019-08-30
+## [2.0.0] - 2019-08-30
 
 ### Added
 
 - git gui
 
-## 2.0.1
-
-2019-09-04
+## [2.0.1] - 2019-09-04
 
 ### Added
 
 - configuration options
 
-## 2.0.2
-
-2019-09-05
+## [2.0.2] - 2019-09-05
 
 ### Added
 
 - show tree files with CodeMirror
 
-## 2.1.0
-
-2019-10-15
+## [2.1.0] - 2019-10-15
 
 ### Fixed
 
 - fix newline (cr+lf vs lf)
 
-## 2.1.1
-
-2019-11-19
+## [2.1.1] - 2019-11-19
 
 ### Fixed
 
 - fix missing icons
 
-## 2.2.0
-
-2020-09-04
+## [2.2.0] - 2020-09-04
 
 ### Added
 
 - configurable root folder and download link
 
-## 2.2.1
-
-2020-09-04
+## [2.2.1] - 2020-09-04
 
 ### Fixed
 
 - fixed format file size
 
-## 2.2.2
-
-2020-09-07
+## [2.2.2] - 2020-09-07
 
 ### Added
 
@@ -83,30 +63,26 @@
 - add link for downloading from git
 - tests added
 
-## 2.2.3
-
-2020-09-11
+## [2.2.3] - 2020-09-11
 
 ### Added
+
 - save as
 - auto detect file mode
 
 ### Changed
+
 - CodeMirror upgrade
 - editor layout
 
-## 2.2.4
-
-2020-09-17
+## [2.2.4] - 2020-09-17
 
 ### Fixed
 
 - mount points config parsing
 - always show Files section
 
-## 2.3.0
-
-2020-10-05
+## [2.3.0] - 2020-10-05
 
 ### Changed
 
@@ -114,28 +90,24 @@
 - CodeMirror upgrade
 
 ### Added
+
 - search/replace
 
-## 2.4.0
-
-2020-10-22
+## [2.4.0] - 2020-10-22
 
 ### Added
+
 - url hash navigation
 - open in a new window button
 - search and replace buttons
 
-## 3.0.0
-
-2020-11-19
+## [3.0.0] - 2020-11-19
 
 ### Added
 
 - Airflow 2.0 compatibility
 
-## 3.1.0
-
-2020-12-08
+## [3.1.0] - 2020-12-08
 
 ### Added
 
@@ -146,9 +118,7 @@
 
 - fix git revert (checkout)
 
-## 3.2.0
-
-2021-01-01
+## [3.2.0] - 2021-01-01
 
 ### Changed
 
@@ -158,17 +128,13 @@
 
 - New file button added
 
-## 3.2.1
-
-2021-01-05
+## [3.2.1] - 2021-01-05
 
 ### Fix
 
 - keep cursor position after save
 
-## 3.3.0
-
-2021-03-18
+## [3.3.0] - 2021-03-18
 
 ### Added
 
@@ -176,18 +142,14 @@
 - Move/rename button added
 - Show number of files in a directory
 
-## 3.3.1
-
-2021-03-29
+## [3.3.1] - 2021-03-29
 
 ### Fix
 
 - Support different base URL
 - Fix buttons wrap
 
-## 3.3.2
-
-2021-04-25
+## [3.3.2] - 2021-04-25
 
 ### Changed
 
@@ -197,34 +159,26 @@
 
 - Fix missing font awesome css for Airflow v1 without RBAC
 
-## 3.3.3
-
-2021-05-01
+## [3.3.3] - 2021-05-01
 
 ### Changed
 
 - Fix missing font awesome font files
 
-## 3.3.4
-
-2021-05-02
+## [3.3.4] - 2021-05-02
 
 ### Changed
 
 - Fix missing font awesome font files
 
-## 4.0.0
-
-2021-05-09
+## [4.0.0] - 2021-05-09
 
 ### Changed
 
 - Replace left pane section/subsections with a tree
 - Git support can be disabled (git is optional)
 
-## 4.0.1
-
-2021-05-12
+## [4.0.1] - 2021-05-12
 
 ### Added
 
@@ -235,9 +189,7 @@
 - Fix init git repository
 - Add missing horizontal scroll to the sidebar
 
-## 4.1.0
-
-2021-05-21
+## [4.1.0] - 2021-05-21
 
 ### Added
 
@@ -248,9 +200,7 @@
 
 - Unify file view and tree api
 
-## 5.0.0
-
-2021-08-01
+## [5.0.0] - 2021-08-01
 
 ### Added
 
@@ -261,33 +211,26 @@
 - Webpack module bundler
 - Replace jQuery get/post with Axios
 
-## 5.0.1
-
-2021-09-11
+## [5.0.1] - 2021-09-11
 
 ### Changed
 
 - Axios upgrade
 - CodeMirror upgrade
 
-## 5.1.0
-
-2021-09-16
+## [5.1.0] - 2021-09-16
 
 ### Changed
 
 - Vue-Good-Table file list (sortable&searchable)
 
-## 5.1.1
-
-2021-10-17
+## [5.1.1] - 2021-10-17
 
 ### Changed
+
 - CodeMirror upgrade
 
-## 5.1.2
-
-2021-10-23
+## [5.1.2] - 2021-10-23
 
 ### Changed
 
@@ -297,9 +240,7 @@
 
 - Fix directories items number
 
-## 5.1.3
-
-2021-12-04
+## [5.1.3] - 2021-12-04
 
 ### Changed
 
@@ -309,17 +250,13 @@
 
 - Fix empty files list
 
-## 5.1.4
-
-2022-01-08
+## [5.1.4] - 2022-01-08
 
 ### Changed
 
 - CodeMirror upgrade
 
-## 5.1.5
-
-2022-02-09
+## [5.1.5] - 2022-02-09
 
 ### Changed
 
@@ -329,20 +266,17 @@
 
 - CodeMirror upgrade
 
-## 5.1.6
-
-2022-03-07
+## [5.1.6] - 2022-03-07
 
 ### Changed
 
 - axios upgrade
 
 ### Changed
+
 - CodeMirror upgrade
 
-## 5.2.0
-
-2022-03-23
+## [5.2.0] - 2022-03-23
 
 ### Added
 
@@ -352,18 +286,14 @@
 
 - splitpanes upgrade
 
-## 5.2.1
-
-2022-04-16
+## [5.2.1] - 2022-04-16
 
 ### Changed
 
 - upgrade axios from 0.26.0 to 0.26.1
 - upgrade minimist from 1.2.5 to 1.2.6
 
-## 5.2.2
-
-2022-05-27
+## [5.2.2] - 2022-05-27
 
 ### Changed
 
@@ -372,9 +302,7 @@
 - replace nose with pytest
 - Replace test configuration with environment variables
 
-## 6.0.0
-
-2022-07-23
+## [6.0.0] - 2022-07-23
 
 ### Added
 
@@ -387,9 +315,7 @@
 - node packages upgrade
 - CodeMirror upgrade
 
-## 7.0.0
-
-2022-08-12
+## [7.0.0] - 2022-08-12
 
 ### Changed
 
@@ -406,19 +332,16 @@
 - Raise the correct exception at file loading and show the error in the editor
 - Fix exception related to https://github.com/axios/axios/issues/811
 
-## 7.0.1
-
-2022-08-25
+## [7.0.1] - 2022-08-25
 
 ### Fix
 
 - Fix "send_file() got an unexpected keyword argument 'attachment_filename'" exception for new version of Flask
 
-## 7.1.0
-
-2022-10-28
+## [7.1.0] - 2022-10-28
 
 ### Added
+
 - Allow root mountpoint overriding
 - Add spinner to files list/editor
 
@@ -427,17 +350,13 @@
 - Send git api result in JSON format
 - CodeMirror upgrade
 
-## 7.1.1
-
-2022-10-29
+## [7.1.1] - 2022-10-29
 
 ### Fix
 
 - Fix theme settings
 
-## 7.2.0
-
-2022-11-30
+## [7.2.0] - 2022-11-30
 
 ### Added
 
@@ -448,21 +367,30 @@
 
 - JavaScript dependencies update
 
-## 7.2.1
-
-2023-01-30
+## [7.2.1] - 2023-01-30
 
 ### Fix
 
 - Fix "Permission denied" error renaming/removing files when git is not installed
 
-## 7.3.0
-
-2023-06-30
+## [7.3.0] - 2023-06-30
 
 ### Added
 
 - Show/hide hidden files
 
 ### Changed
+
 - CodeMirror upgrade
+
+## [7.4.0] - 2023-07-29
+
+### Added
+
+- File search
+- New Material Design style
+
+### Changed
+
+- Run test on docker
+- update tests airflow and python versions

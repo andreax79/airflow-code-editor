@@ -58,6 +58,9 @@
 .search-view .search-context pre {
     background-color: #fff;
 }
+.search-view .search-context .linenodiv {
+    width: 5rem;
+}
 </style>
 <script>
 import axios from 'axios';

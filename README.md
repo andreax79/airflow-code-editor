@@ -20,19 +20,24 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 
 #### File Manager
 
-![File Manager](https://user-images.githubusercontent.com/1288154/204994880-5a879cb4-e3f2-4939-a86b-81d9fe967500.png)
+![File Manager](https://github.com/andreax79/airflow-code-editor/assets/1288154/6d9b09df-4503-45d9-94d4-ff013a86985a)
 
 #### Editor
 
-![Editor](https://user-images.githubusercontent.com/1288154/186698576-4fd8be33-169a-48a0-9c48-8ab942c5bc89.png)
+![Editor](https://github.com/andreax79/airflow-code-editor/assets/1288154/4ffaed29-390f-4134-bcb4-0b8fb8c59060)
+
+#### Search
+
+![Search](https://github.com/andreax79/airflow-code-editor/assets/1288154/9ba81166-3823-40ae-8820-116e4e5d2588)
 
 #### Git History
 
-![Git History - Tags](https://user-images.githubusercontent.com/1288154/186698589-f9342845-c819-4a7f-b1e0-92228016c1cd.png)
+![Git History](https://github.com/andreax79/airflow-code-editor/assets/1288154/2d6ec31f-3c1c-4d38-8fc6-99d18096cc64)
 
 #### Git Workspace
 
-![Git Workspace](https://user-images.githubusercontent.com/1288154/186698602-bf82b405-5df0-4a9d-ad49-03e3b22e20e6.png)
+![Git Workspace](https://github.com/andreax79/airflow-code-editor/assets/1288154/0e0a20f3-5013-4447-80d9-e918bdde4e18)
+
 
 ### Install Instructions
 

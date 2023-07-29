@@ -95,15 +95,20 @@ class RootFS(MountFS):
     def find_files(
         self,
         path: str = "/",
-        filter: Optional[List[str]] = None,
+        filter: Union[List[str], str, None] = None,
         exclude: Optional[List[str]] = None,
         max_depth: Optional[int] = None,
     ):
         "Walk a filesystem, yielding FSPAth"
+        if exclude == []:
+            exclude = None
+        if isinstance(filter, str):
+            filter = [filter]
         walker = Walker(
             ignore_errors=True,
             filter=filter,
             exclude=exclude,
+            exclude_dirs=exclude,
             max_depth=max_depth,
         )
         fs = self.root_fs
@@ -364,6 +369,9 @@ class FSPath(object):
         return self.root_fs.readbytes(self.path)
 
     def __str__(self) -> str:
+        return self.path
+
+    def __repr__(self) -> str:
         return self.path
 
     def __truediv__(self, key):

@@ -58,7 +58,7 @@ class TestTree(TestCase):
             assert len([x.get("id") for x in t if x.get("id") == "folder"]) == 1
             folder = [x for x in t if x.get("id") == "folder"][0]
             assert not folder["leaf"]
-            assert folder["size"] == 3
+            assert folder["size"] == 5
             assert stat.S_ISDIR(folder["mode"])
 
             self.assertEqual(len([x.get("id") for x in t if x.get("id") == "test_utils.py"]), 1)

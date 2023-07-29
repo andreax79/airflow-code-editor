@@ -74,3 +74,26 @@ def test_mem():
     root_fs.mount("/~mem", "mem://")
     root_fs.path("/~mem/f.txt").write_file("data", is_text=True)
     root_fs.path("/~mem/f.bin").write_file(b"data", is_text=False)
+
+
+def test_find():
+    root_dir = "/tmp/tests"
+    shutil.rmtree(root_dir, ignore_errors=True)
+    shutil.copytree(Path(__file__).parent, root_dir)
+    configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
+    configuration.conf.set(PLUGIN_NAME, 'root_directory', str(root_dir))
+    configuration.conf.set(PLUGIN_NAME, 'git_enabled', 'True')
+
+    root_fs = RootFS()
+    name = "/folder/root_fs_test_1"
+    t = list(root_fs.find_files())
+    assert [path for path in t if path.name.startswith(".")]
+    t = list(root_fs.find_files(exclude=[]))
+    assert [path for path in t if path.name.startswith(".")]
+    exclude = [".*", "__pycache__"]
+    t = list(root_fs.find_files(exclude=exclude))
+    assert not [path for path in t if path.name.startswith(".")]
+    t = list(root_fs.find_files(path="/folder", exclude=exclude))
+    assert len(t) == 3
+    t = list(root_fs.find_files(path="/folder", filter="3*", exclude=exclude))
+    assert len(t) == 1

@@ -23,7 +23,7 @@ black:
 	black -S airflow_code_editor tests
 
 tag:
-	@grep -q "## $$(cat airflow_code_editor/VERSION)" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)
+	@grep -q "[$$(cat airflow_code_editor/VERSION)]" changelog.txt || (echo "Missing changelog !!! Update changelog.txt"; exit 1)
 	@git tag -a "v$$(cat airflow_code_editor/VERSION)" -m "version v$$(cat airflow_code_editor/VERSION)"
 
 dev-image:

@@ -21,15 +21,17 @@ var csrfToken = null;
 var vueApp = null;
 var themesPath = null;
 
-export function showError(message) {
+export function showError(message, options) {
     if (vueApp) {
-        vueApp.showError(message);
+        vueApp.showError(message, options);
     }
 }
 
-export function showWarning(message) {
+export function showWarning(message, options) {
     if (vueApp) {
-        vueApp.showWarning(message);
+        options = (options !== undefined) ? options : {};
+        options['type'] = options.type || 'warning';
+        vueApp.showError(message, options);
     }
 }
 
@@ -85,22 +87,23 @@ export function initCsrfToken(csrfTokenParam) {
     setTimeout(refreshCsrfToken, CSRF_REFRESH);
 }
 
-export async function git_async(args) {
+export async function git_async(args, options) {
+    options = (options !== undefined) ? options : {};
     const payload = { args: [].concat.apply([], args.filter(x => x != null)) };  // flat the array
+    const pre = (options.type == 'terminal') ? '$ git ' + payload.args.join(' ') + '\n' : '';
     try {
         const response = await axios.post(prepareHref('repo'), payload);
         if (response.data.returncode != 0) {
-            showError(response.data.error.message);
+            showError(pre + response.data.error.message, options);
             return null;
         }
         // Return code is 0 but there is stderr output: this is a warning message
         if (response.data.error) {
-            showWarning(response.data.error.message);
+            showWarning(pre + response.data.error.message, options);
         }
         return response.data.data
     } catch(error) {
-        console.log(error);
-        showError(error.response ? error.response.data.message : error);
+        showError(error.response ? error.response.data.message : error, options);
         return null;
     }
 }

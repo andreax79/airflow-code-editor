@@ -238,13 +238,14 @@ export default defineComponent({
                 this.selectedTab = tab.uuid;
             }
         },
-        showError(message) {
-            // Show error in modal message window
-            this.$refs.errorDialog.showDialog({ message: message, type: 'error' });
-        },
-        showWarning(message) {
-            // Show warning in modal message window
-            this.$refs.errorDialog.showDialog({ message: message, type: 'warning' });
+        showError(message, options) {
+            console.log(options);
+            // Show modal message window
+            options = (options !== undefined) ? options : {};
+            options['message'] = message;
+            options['type'] = options.type || 'error';
+            console.log(options);
+            this.$refs.errorDialog.showDialog(options);
         },
         showMenu(event, tab) {
             // Show tab menu

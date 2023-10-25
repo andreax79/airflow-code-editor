@@ -36,7 +36,7 @@ If git support is enabled, the DAGs are stored in a Git repository. You may use 
 
 #### Git Workspace
 
-![Git Workspace](https://github.com/andreax79/airflow-code-editor/assets/1288154/0e0a20f3-5013-4447-80d9-e918bdde4e18)
+![Git Workspace](https://github.com/andreax79/airflow-code-editor/assets/1288154/eb041a02-3f1e-47a1-b179-072d66e4662d)
 
 
 ### Install Instructions
@@ -49,7 +49,7 @@ The image is based on the reference images for Apache Airflow.
 You can find the following images there:
 * andreax79/airflow-code-editor:**latest** - the latest released Airflow Code Editor image with the latest Apache Airflow version
 * andreax79/airflow-code-editor:**2.7.0** - the latest released Airflow Code Editor with specific Airflow version
-* andreax79/airflow-code-editor:**2.7.0-7.4.1** - specific version of Airflow and Airflow Code Editor
+* andreax79/airflow-code-editor:**2.7.0-7.5.0** - specific version of Airflow and Airflow Code Editor
 
 #### Installing from PyPI
 

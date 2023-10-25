@@ -400,3 +400,9 @@
 ### Fix
 
 - fix requirements (pss)
+
+## [7.5.0] - 2023-10-25
+
+### Added
+
+- Git push and git pull

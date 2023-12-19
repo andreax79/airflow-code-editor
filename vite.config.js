@@ -38,7 +38,7 @@ export default defineConfig({
             output: {
                 entryFileNames: 'airflow_code_editor.js',
                 assetFileNames: (assetInfo) => {
-                    if (assetInfo.name == 'src/index.css') {
+                    if ((assetInfo.name == 'app.css') || (assetInfo.name == 'src/index.css')) {
                         return 'css/style.css';
                     }
                     return assetInfo.name;

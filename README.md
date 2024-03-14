@@ -48,8 +48,8 @@ The image is based on the reference images for Apache Airflow.
 
 You can find the following images there:
 * andreax79/airflow-code-editor:**latest** - the latest released Airflow Code Editor image with the latest Apache Airflow version
-* andreax79/airflow-code-editor:**2.7.0** - the latest released Airflow Code Editor with specific Airflow version
-* andreax79/airflow-code-editor:**2.7.0-7.5.0** - specific version of Airflow and Airflow Code Editor
+* andreax79/airflow-code-editor:**2.8.3** - the latest released Airflow Code Editor with specific Airflow version
+* andreax79/airflow-code-editor:**2.8.3-7.5.0** - specific version of Airflow and Airflow Code Editor
 
 #### Installing from PyPI
 

@@ -15,17 +15,19 @@
 #   limitations under the Licens
 
 import itertools
+import json
 from collections import namedtuple
 from pathlib import Path
 from typing import Dict, List, Optional, cast
 
 from airflow import configuration
-from flask import jsonify
+from flask import Response
 from fs.errors import FSError
 from pygments.lexer import RegexLexer
 from pygments.token import Text
 
 from airflow_code_editor.commons import (
+    HTTP_200_OK,
     PLUGIN_DEFAULT_CONFIG,
     PLUGIN_NAME,
     ROOT_MOUNTPOUNT,
@@ -164,12 +166,20 @@ def error_message(ex: Exception) -> str:
         return str(ex)
 
 
-def prepare_api_response(error_message=None, **kargs):
+def prepare_api_response(
+    error_message: Optional[str] = None,
+    http_status_code: int = HTTP_200_OK,
+    **kargs,
+) -> Response:
     "Prepare API response (JSON)"
-    result = dict(kargs)
+    data = dict(kargs)
     if error_message is not None:
-        result['error'] = {'message': error_message}
-    return jsonify(result)
+        data['error'] = {'message': error_message}
+    return Response(
+        response=json.dumps(data),
+        mimetype="application/json",
+        status=http_status_code,
+    )
 
 
 def always() -> bool:

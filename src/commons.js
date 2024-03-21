@@ -103,7 +103,7 @@ export async function git_async(args, options) {
         }
         return response.data.data
     } catch(error) {
-        showError(error.response ? error.response.data.message : error, options);
+        showError(error.response && error.response.data.error ? error.response.data.error.message : error);
         return null;
     }
 }

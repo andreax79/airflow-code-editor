@@ -62,12 +62,13 @@ You can find the following images there:
 2. Install optional dependencies
 
 * black - Black Python code formatter
+* isort - A Python utility/library to sort imports
 * fs-s3fs - S3FS Amazon S3 Filesystem
 * fs-gcsfs - Google Cloud Storage Filesystem
 * ... other filesystems supported by PyFilesystem - see https://www.pyfilesystem.org/page/index-of-filesystems/
 
   ```bash
-    pip install black fs-s3fs fs-gcsfs
+    pip install black isort fs-s3fs fs-gcsfs
   ```
 
 3. Restart the Airflow Web Server

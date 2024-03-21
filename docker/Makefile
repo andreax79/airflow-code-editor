@@ -2,9 +2,11 @@ IMAGE_NAME=airflow-code-editor
 DEV_IMAGE_NAME=${IMAGE_NAME}-dev
 OWNER=andreax79
 AIRFLOW_VERSION=2.8.3
+DEV_IMAGE_PYTHON_VERSION=3.8
 AIRFLOW_PORT=8080
 PLUGIN_VERSION=`cat ../airflow_code_editor/VERSION`
 VERSION=${AIRFLOW_VERSION}-${PLUGIN_VERSION}
+DEV_IMAGE_PACKAGE_DIR=/home/airflow/.local/lib/python${DEV_IMAGE_PYTHON_VERSION}/site-packages/airflow_code_editor/
 
 .PHONY: help build test format image push all
 
@@ -89,7 +91,7 @@ dev-shell: dags
 		-v ${makeFileDir}/.bash_history:/home/airflow/.bash_history \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
-		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
@@ -101,7 +103,7 @@ dev-shell: dags
 webserver: dags
 	@docker run --rm -it \
 		-h airflow \
-		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
@@ -115,7 +117,7 @@ webserver: dags
 standalone: dags
 	@docker run --rm -it \
 		-h airflow \
-		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
@@ -129,7 +131,7 @@ standalone: dags
 scheduler: dags
 	@docker run --rm -it \
 		-h airflow \
-		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
@@ -143,7 +145,7 @@ scheduler: dags
 test: dags
 	@docker run --rm -it \
 		-h airflow \
-		-v ${makeFileDir}/../airflow_code_editor:/home/airflow/.local/lib/python3.7/site-packages/airflow_code_editor/ \
+		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \

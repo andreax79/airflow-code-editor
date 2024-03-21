@@ -25,7 +25,12 @@ from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_for_filename
 
-from airflow_code_editor.commons import HTTP_200_OK, HTTP_404_NOT_FOUND
+from airflow_code_editor.commons import (
+    HTTP_200_OK,
+    HTTP_400_BAD_REQUEST,
+    HTTP_404_NOT_FOUND,
+    HTTP_500_SERVER_ERROR,
+)
 from airflow_code_editor.fs import RootFS
 from airflow_code_editor.git import execute_git_command
 from airflow_code_editor.tree import get_stat, get_tree
@@ -66,6 +71,7 @@ class AbstractCodeEditorView(object):
             logging.error(ex)
             return prepare_api_response(
                 path=normalize_path(path),
+                http_status_code=HTTP_400_BAD_REQUEST,
                 error_message="Error saving {path}: {message}".format(path=path, message=error_message(ex)),
             )
 
@@ -120,26 +126,42 @@ class AbstractCodeEditorView(object):
             return make_response(message, HTTP_404_NOT_FOUND)
 
     def _format(self):
-        "Format code"
+        "Sort imports and format code"
         try:
             import black
-
+        except ImportError:
+            black = None
+        try:
+            import isort
+        except ImportError:
+            isort = None
+        if black is None and isort is None:
+            return prepare_api_response(
+                http_status_code=HTTP_500_SERVER_ERROR,
+                error_message="black and isort dependencies are not installed."
+                + "To install black and isort, use the following command: `pip install black isort`",
+            )
+        try:
             data = request.get_data(as_text=True)
             # Newline fix (remove cr)
             data = data.replace("\r", "").rstrip()
-            mode = black.Mode(
-                string_normalization=get_plugin_boolean_config("string_normalization"),
-                line_length=get_plugin_int_config("line_length"),
-            )
-            data = black.format_str(src_contents=data, mode=mode)
+            # Sort imports
+            if isort is not None:
+                data = isort.code(data, profile="black")
+            # Format
+            if black is not None:
+                mode = black.Mode(
+                    string_normalization=get_plugin_boolean_config("string_normalization"),
+                    line_length=get_plugin_int_config("line_length"),
+                )
+                data = black.format_str(src_contents=data, mode=mode)
             return prepare_api_response(data=data)
-        except ImportError:
-            return prepare_api_response(
-                error_message="black dependency is not installed: to install black `pip install black`"
-            )
         except Exception as ex:
             logging.error(ex)
-            return prepare_api_response(error_message="Error formatting: {message}".format(message=error_message(ex)))
+            return prepare_api_response(
+                error_message="Error formatting: {message}".format(message=error_message(ex)),
+                http_status_code=HTTP_400_BAD_REQUEST,
+            )
 
     def _tree(self, path, args={}, method="GET"):
         try:
@@ -156,6 +178,7 @@ class AbstractCodeEditorView(object):
             logging.error(ex)
             return prepare_api_response(
                 value=[],
+                http_status_code=HTTP_500_SERVER_ERROR,
                 error_message="Error: {message}".format(message=error_message(ex)),
             )
 

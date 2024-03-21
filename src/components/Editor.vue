@@ -157,7 +157,7 @@ export default defineComponent({
                     this.generation = this.editor.changeGeneration();
                 }
             } catch(error) {
-                showError(error.response ? error.response.data.message : error);
+                showError(error.response && error.response.data.error ? error.response.data.error.message : error);
             }
         },
         async editorSaveAs(path) {
@@ -182,7 +182,7 @@ export default defineComponent({
                 const response = await axios.post(prepareHref('format'), payload, options);
                 this.editor.setValue(response.data.data);
             } catch(error) {
-                showError(error.response ? error.response.data.message : error);
+                showError(error.response && error.response.data.error ? error.response.data.error.message : error);
             }
         },
         setOption(option, value) {

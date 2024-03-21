@@ -15,12 +15,13 @@
 #   limitations under the Licens
 #
 
-from flask import Blueprint
 from airflow.plugins_manager import AirflowPlugin
-from airflow_code_editor.commons import STATIC, VERSION
-from airflow_code_editor.utils import is_enabled
-from airflow_code_editor.flask_admin_view import admin_view
+from flask import Blueprint
+
 from airflow_code_editor.app_builder_view import appbuilder_view
+from airflow_code_editor.commons import STATIC, VERSION
+from airflow_code_editor.flask_admin_view import admin_view
+from airflow_code_editor.utils import is_enabled
 
 __author__ = 'Andrea Bonomi <andrea.bonomi@gmail.com>'
 __version__ = VERSION

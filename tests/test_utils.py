@@ -1,26 +1,25 @@
 #!/usr/bin/env python
 
+import contextlib
 import os
 import os.path
 import shutil
 import tempfile
-import contextlib
+from pathlib import Path
+from unittest import TestCase
+
 import airflow
 import airflow.plugins_manager
 from airflow import configuration
-from pathlib import Path
 from flask import Flask
-from unittest import TestCase
-from airflow_code_editor.commons import PLUGIN_NAME, PLUGIN_DEFAULT_CONFIG
+
+from airflow_code_editor.commons import PLUGIN_DEFAULT_CONFIG, PLUGIN_NAME
+from airflow_code_editor.git import execute_git_command, git_enabled
 from airflow_code_editor.utils import (
     get_plugin_config,
     get_root_folder,
-    read_mount_points_config,
     normalize_path,
-)
-from airflow_code_editor.git import (
-    git_enabled,
-    execute_git_command,
+    read_mount_points_config,
 )
 
 assert airflow.plugins_manager

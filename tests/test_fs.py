@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
-import fs
 import shutil
 from pathlib import Path
-from flask import Flask
-from airflow_code_editor.commons import PLUGIN_NAME
-from airflow_code_editor.fs import split, RootFS
+
+import fs
 from airflow import configuration
+from flask import Flask
+
+from airflow_code_editor.commons import PLUGIN_NAME
+from airflow_code_editor.fs import RootFS, split
 
 app = Flask(__name__)
 

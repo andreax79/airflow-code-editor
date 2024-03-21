@@ -14,16 +14,18 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the Licens
 
-import os
 import logging
+import os
+import shlex
 import subprocess
 import threading
-import shlex
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
-from datetime import datetime
-from flask import make_response, Response
+
+from flask import Response, make_response
 from flask_login import current_user  # type: ignore
+
 from airflow_code_editor.commons import (
     DEFAULT_GIT_BRANCH,
     HTTP_200_OK,
@@ -31,15 +33,15 @@ from airflow_code_editor.commons import (
     SUPPORTED_GIT_COMMANDS,
     GitOutput,
 )
-from airflow_code_editor.utils import (
-    normalize_path,
-    get_plugin_config,
-    get_plugin_boolean_config,
-    get_root_folder,
-    read_mount_points_config,
-    prepare_api_response,
-)
 from airflow_code_editor.fs import RootFS
+from airflow_code_editor.utils import (
+    get_plugin_boolean_config,
+    get_plugin_config,
+    get_root_folder,
+    normalize_path,
+    prepare_api_response,
+    read_mount_points_config,
+)
 
 __all__ = [
     'git_enabled',

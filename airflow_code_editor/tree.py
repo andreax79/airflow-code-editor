@@ -15,30 +15,25 @@
 #   limitations under the Licens
 
 import re
-import fs
 from datetime import datetime
 from typing import Any, Callable, Dict, List, NamedTuple, Optional
+
+import fs
+
 from airflow_code_editor.commons import (
+    FOLDER_ICON,
+    ICON_GIT,
+    ICON_HOME,
+    ICON_LOCAL_BRANCHES,
+    ICON_REMOTE_BRANCHES,
+    ICON_TAGS,
     Args,
     TreeFunc,
     TreeOutput,
-    ICON_HOME,
-    ICON_GIT,
-    ICON_TAGS,
-    FOLDER_ICON,
-    ICON_LOCAL_BRANCHES,
-    ICON_REMOTE_BRANCHES,
-)
-from airflow_code_editor.utils import (
-    always,
-    normalize_path,
-    read_mount_points_config,
-)
-from airflow_code_editor.git import (
-    git_enabled,
-    execute_git_command,
 )
 from airflow_code_editor.fs import RootFS
+from airflow_code_editor.git import execute_git_command, git_enabled
+from airflow_code_editor.utils import always, normalize_path, read_mount_points_config
 
 __all__ = ['get_tree', 'get_stat']
 

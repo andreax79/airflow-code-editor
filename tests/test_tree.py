@@ -2,17 +2,16 @@
 
 import os
 import stat
+from pathlib import Path
+from unittest import TestCase
+
 import airflow
 import airflow.plugins_manager
-from pathlib import Path
 from airflow import configuration
 from flask import Flask
-from unittest import TestCase
+
 from airflow_code_editor.commons import PLUGIN_NAME
-from airflow_code_editor.tree import (
-    get_tree,
-    get_stat,
-)
+from airflow_code_editor.tree import get_stat, get_tree
 
 assert airflow.plugins_manager
 app = Flask(__name__)

@@ -3,6 +3,7 @@ pytest-cov
 flake8
 mypy
 black
+isort
 twine
 pytest
 build

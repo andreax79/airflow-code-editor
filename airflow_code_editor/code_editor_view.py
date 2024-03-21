@@ -17,14 +17,18 @@
 
 import logging
 import mimetypes
-from pygments import highlight
-from pygments.lexers import get_lexer_for_filename
-from pygments.formatters import HtmlFormatter
-from flask import request, make_response
-from flask_wtf.csrf import generate_csrf
+
 from airflow.version import version
+from flask import make_response, request
+from flask_wtf.csrf import generate_csrf
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_for_filename
+
 from airflow_code_editor.commons import HTTP_200_OK, HTTP_404_NOT_FOUND
-from airflow_code_editor.tree import get_tree, get_stat
+from airflow_code_editor.fs import RootFS
+from airflow_code_editor.git import execute_git_command
+from airflow_code_editor.tree import get_stat, get_tree
 from airflow_code_editor.utils import (
     DummyLexer,
     error_message,
@@ -33,11 +37,6 @@ from airflow_code_editor.utils import (
     normalize_path,
     prepare_api_response,
 )
-from airflow_code_editor.git import (
-    execute_git_command,
-)
-from airflow_code_editor.fs import RootFS
-
 
 __all__ = ["AbstractCodeEditorView"]
 

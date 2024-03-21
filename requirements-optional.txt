@@ -1,3 +1,5 @@
 black
+isort
 fs-s3fs
 fs-gcsfs
+connexion[swagger-ui]

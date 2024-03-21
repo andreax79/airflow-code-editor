@@ -15,15 +15,17 @@
 #   limitations under the Licens
 #
 
-from flask import request
-import airflow
 from functools import wraps
+
+import airflow
+from flask import request
+
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
 from airflow_code_editor.commons import (
-    ROUTE,
+    JS_FILES,
     MENU_CATEGORY,
     MENU_LABEL,
-    JS_FILES,
+    ROUTE,
     VERSION,
 )
 

@@ -17,20 +17,21 @@
 
 from flask import request
 from flask_appbuilder import BaseView, expose
+
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
 from airflow_code_editor.commons import (
-    ROUTE,
+    JS_FILES,
     MENU_CATEGORY,
     MENU_LABEL,
-    JS_FILES,
+    ROUTE,
     VERSION,
 )
 
 __all__ = ["appbuilder_view"]
 
 try:
-    from airflow.www import auth
     from airflow.security import permissions
+    from airflow.www import auth
 
     PERMISSIONS = [
         (permissions.ACTION_CAN_READ, permissions.RESOURCE_WEBSITE),
@@ -104,8 +105,9 @@ try:
             )
 
 except (ImportError, ModuleNotFoundError):
-    from airflow_code_editor.auth import has_access
     from airflow.www_rbac.decorators import has_dag_access
+
+    from airflow_code_editor.auth import has_access
 
     # ############################################################################
     # AppBuilder (Airflow >= 1.10 < 2.0 and rbac = True)

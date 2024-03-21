@@ -15,20 +15,21 @@
 #   limitations under the Licens
 
 import itertools
-from pathlib import Path
-from typing import cast, Dict, List, Optional
 from collections import namedtuple
-from fs.errors import FSError
+from pathlib import Path
+from typing import Dict, List, Optional, cast
+
+from airflow import configuration
 from flask import jsonify
+from fs.errors import FSError
 from pygments.lexer import RegexLexer
 from pygments.token import Text
-from airflow import configuration
+
 from airflow_code_editor.commons import (
-    PLUGIN_NAME,
     PLUGIN_DEFAULT_CONFIG,
+    PLUGIN_NAME,
     ROOT_MOUNTPOUNT,
 )
-
 
 __all__ = [
     'DummyLexer',

@@ -14,20 +14,26 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the Licens
 
-import os
 import errno
-import fs
-from fs.walk import Walker
+import os
 from fnmatch import fnmatch
-from fs.mountfs import MountFS, MountError
+from typing import Any, List, Optional, Tuple, Union
+
+import fs
+from flask import Response, send_file, stream_with_context
+from fs.mountfs import MountError, MountFS
 from fs.multifs import MultiFS
 from fs.path import abspath, forcedir, normpath
+from fs.walk import Walker
 from psslib.contentmatcher import ContentMatcher
+from psslib.driver import LINE_CONTEXT, LINE_MATCH, _build_match_context_dict
 from psslib.utils import istextfile
-from psslib.driver import _build_match_context_dict, LINE_MATCH, LINE_CONTEXT
-from typing import Any, List, Optional, Union, Tuple
-from flask import send_file, stream_with_context, Response
-from airflow_code_editor.utils import read_mount_points_config, get_plugin_config, get_plugin_int_config
+
+from airflow_code_editor.utils import (
+    get_plugin_config,
+    get_plugin_int_config,
+    read_mount_points_config,
+)
 
 __all__ = [
     "RootFS",

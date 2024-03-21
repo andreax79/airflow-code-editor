@@ -19,7 +19,10 @@ help:
 lint:
 	flake8 airflow_code_editor tests
 
-black:
+isort:
+	isort --profile black airflow_code_editor tests
+
+black: isort
 	black -S airflow_code_editor tests
 
 tag:

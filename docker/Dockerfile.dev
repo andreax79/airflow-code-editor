@@ -16,7 +16,11 @@ USER airflow
 
 # Install Airflow
 COPY requirements-optional.txt .
-RUN pip install pytest --no-cache-dir airflow-code-editor==${PLUGIN_VERSION} -r requirements-optional.txt pss && rm requirements-optional.txt
+RUN pip install \
+    pytest \
+    coverage[toml] \
+    pytest-cov \
+    --no-cache-dir airflow-code-editor==${PLUGIN_VERSION} -r requirements-optional.txt pss && rm requirements-optional.txt
 # Init airflow db
 RUN airflow db init
 # Create user 'admin' with password 'admin'

@@ -22,6 +22,8 @@ help:
 	@echo "- make standalone   Run an all-in-one copy of Airflow"
 	@echo "- make webserver    Start a Airflow webserver instance"
 	@echo "- make scheduler    Start a scheduler instance"
+	@echo "- make tests        Run tests on dev image"
+	@echo "- make coverage     Run tests coverage on dev image"
 
 
 .DEFAULT_GOAL := help
@@ -156,5 +158,21 @@ test: dags
 		--entrypoint pytest \
 		${DEV_IMAGE_NAME} \
 		tests
+
+coverage: dags
+	@docker run --rm -it \
+		-h airflow \
+		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
+		-v ${makeFileDir}/dags:/opt/airflow/dags \
+		-v ${makeFileDir}/../tests:/opt/airflow/tests \
+		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
+		-e AIRFLOW_UID=$$(id -u) \
+		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \
+		-e AIRFLOW__CODE_EDITOR__MOUNT1="name=logs,path=/opt/airflow/logs" \
+		--entrypoint pytest \
+		${DEV_IMAGE_NAME} \
+		tests \
+		--cov=${DEV_IMAGE_PACKAGE_DIR} --cov-report=term-missing
 
 all: help

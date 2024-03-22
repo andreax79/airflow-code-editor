@@ -56,7 +56,7 @@ test:
 	$(MAKE) -C docker test
 
 coverage:
-	@./scripts/coverage.sh
+	$(MAKE) -C docker coverage
 
 codemirror:
 	@rm -rf codemirror_src codemirror.zip

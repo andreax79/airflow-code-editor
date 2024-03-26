@@ -15,7 +15,7 @@
 #   limitations under the Licens
 #
 
-from flask import request
+from flask import redirect, request
 from flask_appbuilder import BaseView, expose
 
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
@@ -49,15 +49,15 @@ try:
         def list(self):
             return self._index()
 
+        @expose("/api/")
+        @auth.has_access(PERMISSIONS)
+        def api(self):
+            return redirect(request.path + "/ui")
+
         @expose("/repo", methods=["POST"])
         @auth.has_access(PERMISSIONS)
-        def repo_base(self, path=None):
-            return self._git_repo(path)
-
-        @expose("/repo/<path:path>", methods=["GET", "HEAD", "POST"])
-        @auth.has_access(PERMISSIONS)
-        def repo(self, path=None):
-            return self._git_repo(path)
+        def repo_base(self):
+            return self._execute_git_command()
 
         @expose("/files/<path:path>", methods=["POST"])
         @auth.has_access(PERMISSIONS)
@@ -68,6 +68,11 @@ try:
         @auth.has_access(PERMISSIONS)
         def load(self, path=None):
             return self._load(path)
+
+        @expose("/files/<path:path>", methods=["DELETE"])
+        @auth.has_access(PERMISSIONS)
+        def delete(self, path=None):
+            return self._delete(path)
 
         @expose("/format", methods=["POST"])
         @auth.has_access(PERMISSIONS)
@@ -124,13 +129,8 @@ except (ImportError, ModuleNotFoundError):
 
         @expose("/repo", methods=["POST"])
         @has_dag_access(can_dag_edit=True)
-        def repo_base(self, path=None):
-            return self._git_repo(path)
-
-        @expose("/repo/<path:path>", methods=["GET", "HEAD", "POST"])
-        @has_dag_access(can_dag_edit=True)
-        def repo(self, path=None):
-            return self._git_repo(path)
+        def repo_base(self):
+            return self._execute_git_command()
 
         @expose("/files/<path:path>", methods=["POST"])
         @has_dag_access(can_dag_edit=True)
@@ -141,6 +141,11 @@ except (ImportError, ModuleNotFoundError):
         @has_dag_access(can_dag_edit=True)
         def load(self, path=None):
             return self._load(path)
+
+        @expose("/files/<path:path>", methods=["DELETE"])
+        @has_dag_access(can_dag_edit=True)
+        def delete(self, path=None):
+            return self._delete(path)
 
         @expose("/format", methods=["POST"])
         @has_dag_access(can_dag_edit=True)

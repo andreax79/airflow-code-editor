@@ -55,13 +55,8 @@ try:
 
         @expose("/repo", methods=["POST"])
         @login_required
-        def repo_base(self, path=None):
-            return self._git_repo(path)
-
-        @expose("/repo/<path:path>", methods=["GET", "HEAD", "POST"])
-        @login_required
-        def repo(self, path=None):
-            return self._git_repo(path)
+        def repo_base(self):
+            return self._execute_git_command()
 
         @expose("/files/<path:path>", methods=["POST"])
         @login_required
@@ -72,6 +67,11 @@ try:
         @login_required
         def load(self, path=None):
             return self._load(path)
+
+        @expose("/files/<path:path>", methods=["DELETE"])
+        @login_required
+        def delete(self, path=None):
+            return self._delete(path)
 
         @expose("/format", methods=["POST"])
         @login_required

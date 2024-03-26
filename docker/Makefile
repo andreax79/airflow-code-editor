@@ -150,7 +150,6 @@ test: dags
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
-		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
 		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \
@@ -165,7 +164,6 @@ coverage: dags
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
-		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
 		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \

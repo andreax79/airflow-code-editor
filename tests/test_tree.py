@@ -53,7 +53,7 @@ class TestTree(TestCase):
 
     def test_files_long(self):
         with app.app_context():
-            t = get_tree("files", ["long"])
+            t = get_tree("files", {"long": "true"})
             assert len([x.get("id") for x in t if x.get("id") == "folder"]) == 1
             folder = [x for x in t if x.get("id") == "folder"][0]
             assert not folder["leaf"]
@@ -65,7 +65,7 @@ class TestTree(TestCase):
             assert test_utils["leaf"]
             assert not stat.S_ISDIR(test_utils["mode"])
 
-            t = get_tree("files/folder", ["long"])
+            t = get_tree("files/folder", {"long": "true"})
             assert len([x.get("id") for x in t if x.get("id") == "1"]) == 1
             one = [x for x in t if x.get("id") == "1"][0]
             assert one["leaf"]

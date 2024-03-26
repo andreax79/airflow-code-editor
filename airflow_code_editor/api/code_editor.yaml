@@ -1,0 +1,344 @@
+openapi: "3.0.3"
+info:
+  title: "Airflow Code Editor API"
+  version: "1.0.0"
+  description: |
+    # Overview
+
+    Airflow Code Editor provides a REST API. Through this API, users can interact with the application
+    programmatically, enabling automation, data retrieval, and integration with other software.
+
+    Most of the endpoints accept `JSON` as input and return `JSON` responses.
+    This means that you must usually add the following headers to your request:
+    ```
+    Content-type: application/json
+    Accept: application/json
+    ```
+
+    # Authentication
+
+    The API authentication is inherited from the Apache Airflow.
+
+    If you want to check which auth backend is currently set, you can use
+    `airflow config get-value api auth_backends` command as in the example below.
+    ```bash
+    $ airflow config get-value api auth_backends
+    airflow.api.auth.backend.basic_auth
+    ```
+
+    For details on configuring the authentication, see
+    [API Authorization](https://airflow.apache.org/docs/apache-airflow/stable/security/api.html).
+
+servers:
+  - url: /code_editor/api
+    description: "Airflow Code Editor API"
+
+paths:
+  /files/{path}:
+    get:
+      summary: "Get file content"
+      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      operationId: get_files
+      tags: [Files]
+      parameters:
+        - name: path
+          in: path
+          description: "File path"
+          required: true
+          allowReserved: true
+          schema:
+            type: string
+            format: path
+      responses:
+        '200':
+          description: "Success"
+        '403':
+          description: "Client does not have sufficient permission"
+        '401':
+          description: "Not authenticated"
+        '404':
+          description: "File not found"
+    post:
+      summary: "Write file content"
+      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      operationId: post_files
+      tags: [Files]
+      requestBody:
+        description: "File content"
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      parameters:
+        - name: path
+          in: path
+          description: "File path"
+          required: true
+          allowReserved: true
+          schema:
+            type: string
+            format: path
+      responses:
+        '200':
+          description: "Success"
+        '400':
+          description: "Error saving file"
+        '401':
+          description: "Not authenticated"
+        '403':
+          description: "Client does not have sufficient permission"
+    delete:
+      summary: "Delete a file"
+      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      operationId: delete_files
+      tags: [Files]
+      parameters:
+        - name: path
+          in: path
+          description: "File path"
+          required: true
+          allowReserved: true
+          schema:
+            type: string
+            format: path
+      responses:
+        '200':
+          description: "Success"
+        '400':
+          description: "Error deleting file"
+        '401':
+          description: "Not authenticated"
+        '403':
+          description: "Client does not have sufficient permission"
+        '404':
+          description: "File not found"
+
+  /tree:
+    get:
+      summary: "List root tree entries"
+      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      operationId: get_tree_root
+      tags: [Tree]
+      parameters:
+        - $ref: "#/components/parameters/All"
+        - $ref: "#/components/parameters/Long"
+      responses:
+        '200':
+          description: "Success"
+          $ref: '#/components/responses/TreeResponse'
+        '401':
+          description: "Not authenticated"
+        '403':
+          description: "Client does not have sufficient permission"
+
+  /tree/{path}:
+    get:
+      summary: "List tree entries"
+      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      operationId: get_tree
+      tags: [Tree]
+      parameters:
+        - $ref: "#/components/parameters/All"
+        - $ref: "#/components/parameters/Long"
+        - $ref: "#/components/parameters/Path"
+      responses:
+        '200':
+          description: "Success"
+          $ref: '#/components/responses/TreeResponse'
+        '401':
+          description: "Not authenticated"
+        '403':
+          description: "Client does not have sufficient permission"
+
+  /search:
+    get:
+      summary: "Search files"
+      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      operationId: search
+      tags: [Files]
+      parameters:
+        - name: query
+          in: query
+          description: "Search string"
+          required: true
+          schema:
+            type: string
+        - name: context
+          in: query
+          description: "Include search context"
+          schema:
+            type: boolean
+          required: false
+
+      responses:
+        '200':
+          description: "Success"
+          $ref: '#/components/responses/SearchResponse'
+        '401':
+          description: "Not authenticated"
+        '403':
+          description: "Client does not have sufficient permission"
+
+  /git:
+    post:
+      summary: "Execute a GIT command"
+      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      operationId: post_git
+      tags: [GIT]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                args:
+                  type: array
+                  description: "GIT arguments"
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: "Success"
+          $ref: '#/components/responses/GitResponse'
+        '401':
+          description: "Not authenticated"
+        '403':
+          description: "Client does not have sufficient permission"
+
+components:
+  schemas:
+    TreeEntity:
+      type: object
+      description: "Tree entry"
+      properties:
+        id:
+          type: string
+          description: Identifier for the entity
+        label:
+          type: string
+          description: Label for the entity
+        leaf:
+          type: boolean
+          description: Indicates whether the entity is a leaf node
+        icon:
+          type: string
+          description: Icon associated with the entity
+        size:
+          type: integer
+          description: Size in bytes
+        mode:
+          type: integer
+          description: File mode
+        mtime:
+          type: string
+          format: date-time
+          description: Modified timestamp
+      required:
+        - id
+        - leaf
+
+    SearchResultEntity:
+      type: object
+      description: "Search result entry"
+      properties:
+        path:
+          type: string
+          description: File path
+        row_number:
+          type: integer
+          description: Line number
+        context:
+          type: string
+          description: Result context as HTML
+      required:
+        - path
+        - row_number
+
+  responses:
+    TreeResponse:
+      description: Tree response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TreeEntity'
+
+    SearchResponse:
+      description: Search response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResultEntity'
+
+    GitResponse:
+      description: GIT response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+                description: GIT command output
+              returncode:
+                type: integer
+                description: GIT return code
+            required:
+              - data
+              - returncode
+
+  parameters:
+    All:
+      in: query
+      name: all
+      description: Include ignored entries
+      schema:
+        type: boolean
+      required: false
+
+    Long:
+      in: query
+      name: long
+      description: Use long listing format
+      schema:
+        type: boolean
+      required: false
+
+    Path:
+      in: path
+      name: path
+      description: Tree entry path
+      schema:
+        type: string
+        format: path
+      allowReserved: true
+      required: true
+
+  securitySchemes:
+    Basic:
+      type: http
+      scheme: basic
+    GoogleOpenId:
+      type: openIdConnect
+      openIdConnectUrl: https://accounts.google.com/.well-known/openid-configuration
+    Kerberos:
+      type: http
+      scheme: negotiate
+
+tags:
+  - name: Files
+  - name: GIT
+  - name: Tree
+
+security: []

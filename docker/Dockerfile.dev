@@ -5,10 +5,11 @@ FROM apache/airflow:${AIRFLOW_VERSION}
 ARG PLUGIN_VERSION
 
 USER root
-# Install git
+# Install git and vim
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
          git \
+         vim \
   && apt-get autoremove -yqq --purge \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
@@ -26,7 +27,9 @@ RUN airflow db init
 # Create user 'admin' with password 'admin'
 RUN airflow users create -r Admin -u admin -e admin@example.com -f admin -l admin -p admin
 RUN airflow sync-perm
-# Git config
+# Set API Authentication
+RUN sed -i 's/auth_backends = .*/auth_backends = airflow.api.auth.backend.basic_auth/' /opt/airflow/airflow.cfg
+# Configure GIT
 RUN git config --global --add safe.directory /opt/airflow/dags
 RUN git config --global user.email "dev@example.com"
 RUN git config --global user.name "Test"

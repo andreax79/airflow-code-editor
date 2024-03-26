@@ -303,7 +303,9 @@ export default defineComponent({
                     this.items = trees.concat(blobs);
                     this.$emit('loaded', false); // close the spinner
                 } catch(error) {
+                    this.items = [];
                     this.$emit('loaded', false); // close the spinner
+                    showError(error.response && error.response.data.error ? error.response.data.error.message : error);
                     console.log(error);
                 }
             }

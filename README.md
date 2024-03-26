@@ -143,6 +143,28 @@ Example:
    export AIRFLOW__CODE_EDITOR__MOUNT2='name=tmp,path=/tmp'
 ```
 
+### REST API
+
+Airflow Code Editor provides a REST API. Through this API, users can interact with the application
+programmatically, enabling automation, data retrieval, and integration with other software.
+
+For detailed information on how to use each endpoint, refer to the
+[API documentation](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/andreax79/airflow-code-editor/main/airflow_code_editor/api/code_editor.yaml).
+
+### REST API Authentication
+
+The API authentication is inherited from the Apache Airflow.
+
+If you want to check which auth backend is currently set, you can use
+`airflow config get-value api auth_backends` command as in the example below.
+```bash
+$ airflow config get-value api auth_backends
+airflow.api.auth.backend.basic_auth
+```
+
+For details on configuring the authentication, see
+[API Authorization](https://airflow.apache.org/docs/apache-airflow/stable/security/api.html).
+
 ### Development Instructions
 
 1. Fork the repo

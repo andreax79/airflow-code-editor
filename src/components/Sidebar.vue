@@ -58,7 +58,7 @@ import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import { TreeView } from '@grapoza/vue-tree';
 import VueSimpleContextMenu from 'vue-simple-context-menu';
-import { prepareHref, splitPath } from '../commons';
+import { prepareHref, splitPath, showError } from '../commons';
 import { getIcon } from '../tree_entry';
 import Icon from './Icon.vue';
 
@@ -164,8 +164,13 @@ export default defineComponent({
             const self = this;
             const path = 'tree/' + parent.id;
             const params = this.config.showHiddenFiles ? { all: true } : {};
-            const response = await axios.get(prepareHref(path), { params: params });
-            return response.data.value.map((node) => self.prepareTreeNode(node, parent));
+            try {
+                const response = await axios.get(prepareHref(path), { params: params });
+                return response.data.value.map((node) => self.prepareTreeNode(node, parent));
+            } catch(error) {
+                showError(error.response && error.response.data.error ? error.response.data.error.message : error);
+                return [];
+            }
         },
         async showMenu(event, item) {
             // Show sidebar menu

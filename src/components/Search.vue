@@ -92,8 +92,8 @@ export default defineComponent({
         async refresh() {
             console.log("Search.refresh");
             this.loading = true;
-            const response = await axios.get(prepareHref('search'), { 'params': { 'query': this.target.query }});
-            this.items = response.data.map(e => {
+            const response = await axios.get(prepareHref('search'), { 'params': { 'query': this.target.query, 'context': true }});
+            this.items = response.data.value.map(e => {
                 e.stack = new Stack(e.path, 'blob', e.row_number);
                 return e;
             });

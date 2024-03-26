@@ -18,6 +18,11 @@
 from airflow.plugins_manager import AirflowPlugin
 from flask import Blueprint
 
+try:
+    from airflow_code_editor.api import api_blueprint
+except Exception:
+    api_blueprint = None
+
 from airflow_code_editor.app_builder_view import appbuilder_view
 from airflow_code_editor.commons import STATIC, VERSION
 from airflow_code_editor.flask_admin_view import admin_view
@@ -29,7 +34,7 @@ __version__ = VERSION
 __all__ = ['CodeEditorPlugin']
 
 
-# Blueprint
+# Blueprints
 code_editor_plugin_blueprint = Blueprint(
     'code_editor_plugin_blueprint',
     __name__,
@@ -37,13 +42,16 @@ code_editor_plugin_blueprint = Blueprint(
     static_folder='static',
     static_url_path=STATIC,
 )
+flask_blueprints = [code_editor_plugin_blueprint]
+if api_blueprint is not None:
+    flask_blueprints.append(api_blueprint)
 
 
 # Plugin
 class CodeEditorPlugin(AirflowPlugin):
     name = 'editor_plugin'
     operators = []
-    flask_blueprints = [code_editor_plugin_blueprint]
+    flask_blueprints = flask_blueprints
     hooks = []
     executors = []
     admin_views = [admin_view] if (is_enabled() and admin_view is not None) else []

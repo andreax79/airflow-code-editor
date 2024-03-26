@@ -54,7 +54,8 @@ class AbstractCodeEditorView(object):
     def _index(self):
         return self._render("index")
 
-    def _save(self, path=None):
+    @classmethod
+    def _save(cls, path=None):
         try:
             mime_type = request.headers.get("Content-Type", "text/plain")
             is_text = mime_type.startswith("text/")
@@ -75,13 +76,8 @@ class AbstractCodeEditorView(object):
                 error_message="Error saving {path}: {message}".format(path=path, message=error_message(ex)),
             )
 
-    def _git_repo(self, path):
-        if request.method == "POST":
-            return self._git_repo_post(path)
-        else:
-            return self._git_repo_get(path)
-
-    def _git_repo_get(self, path):
+    @classmethod
+    def _git_repo_get(cls, path):
         "Get a file from GIT (invoked by the HTTP GET method)"
         try:
             # Download git blob - path = '<hash>/<name>'
@@ -101,19 +97,21 @@ class AbstractCodeEditorView(object):
                 pass
         return response
 
-    def _git_repo_post(self, path):
+    @classmethod
+    def _execute_git_command(cls):
         "Execute a GIT command (invoked by the HTTP POST method)"
         git_args = request.json.get("args", [])
         return execute_git_command(git_args).prepare_git_response()
 
-    def _load(self, path):
+    @classmethod
+    def _load(cls, path):
         "Send the contents of a file to the client"
         try:
             path = normalize_path(path)
             if path.startswith("~git/"):
                 # Download git blob - path = '~git/<hash>/<name>'
                 _, path = path.split("/", 1)
-                return self._git_repo_get(path)
+                return cls._git_repo_get(path)
             else:
                 # Download file
                 root_fs = RootFS()
@@ -122,10 +120,40 @@ class AbstractCodeEditorView(object):
             logging.error(ex)
             strerror = getattr(ex, "strerror", str(ex))
             errno = getattr(ex, "errno", 0)
-            message = prepare_api_response(error_message=strerror, errno=errno)
-            return make_response(message, HTTP_404_NOT_FOUND)
+            return prepare_api_response(
+                error_message=strerror,
+                errno=errno,
+                http_status_code=HTTP_404_NOT_FOUND,
+            )
 
-    def _format(self):
+    @classmethod
+    def _delete(cls, path):
+        "Delete a file"
+        path = normalize_path(path)
+        if path.startswith("~git/"):
+            # Git files cannot be deleted
+            return prepare_api_response(
+                error_message="Permission denied",
+                http_status_code=HTTP_400_BAD_REQUEST,
+            )
+        try:
+            # Delete the file
+            root_fs = RootFS()
+            root_fs.path(path).delete()
+            return prepare_api_response(message="File deleted")
+        except FileNotFoundError:
+            return prepare_api_response(
+                error_message="File not found",
+                http_status_code=HTTP_404_NOT_FOUND,
+            )
+        except Exception as ex:
+            return prepare_api_response(
+                error_message=str(ex),
+                http_status_code=HTTP_400_BAD_REQUEST,
+            )
+
+    @classmethod
+    def _format(cls):
         "Sort imports and format code"
         try:
             import black
@@ -163,7 +191,8 @@ class AbstractCodeEditorView(object):
                 http_status_code=HTTP_400_BAD_REQUEST,
             )
 
-    def _tree(self, path, args={}, method="GET"):
+    @classmethod
+    def _tree(cls, path, args={}, method="GET"):
         try:
             if method == "HEAD":
                 stat = get_stat(path)
@@ -182,29 +211,35 @@ class AbstractCodeEditorView(object):
                 error_message="Error: {message}".format(message=error_message(ex)),
             )
 
-    def _search(self, args={}):
+    @classmethod
+    def _search(cls, args={}):
         "File search"
         query = args.get("query")
         root_fs = RootFS()
         result = []
+        context_ = args.get('context') == 'true'  # include context in results
         for match in root_fs.search(query=query):
-            formatter = HtmlFormatter(
-                linenos=True,
-                cssclass="source",
-                nobackground=True,
-                linenostart=match["context_first_row"],
-                hl_lines=[match["row_number"] - match["context_first_row"] + 1],
-            )
-            try:
-                lexer = get_lexer_for_filename(match["path"])
-            except Exception:
-                lexer = DummyLexer()
-            try:
-                context = highlight(match["context"], lexer, formatter)
-            except Exception:
-                context = match["context"]
-            result.append({"row_number": match["row_number"], "context": context, "path": match["path"]})
-        return result
+            if context_:
+                formatter = HtmlFormatter(
+                    linenos=True,
+                    cssclass="source",
+                    nobackground=True,
+                    linenostart=match["context_first_row"],
+                    hl_lines=[match["row_number"] - match["context_first_row"] + 1],
+                )
+                try:
+                    lexer = get_lexer_for_filename(match["path"])
+                except Exception:
+                    lexer = DummyLexer()
+                try:
+                    context = highlight(match["context"], lexer, formatter)
+                except Exception:
+                    context = match["context"]
+                result.append({"row_number": match["row_number"], "context": context, "path": match["path"]})
+            else:
+                result.append({"row_number": match["row_number"], "path": match["path"]})
+        return prepare_api_response(value=result)
 
-    def _ping(self):
+    @classmethod
+    def _ping(cls):
         return {"value": generate_csrf()}

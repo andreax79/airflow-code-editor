@@ -407,7 +407,7 @@
 
 - Git push and git pull
 
-## [7.6.0] - 2024-XX-XX
+## [7.6.0] - 2024-03-28
 
 ### Added
 
@@ -416,3 +416,4 @@
 ### Changed
 
 - Format action now sorts import with isort
+- Improve error messages

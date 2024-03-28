@@ -242,7 +242,12 @@ export default defineComponent({
             // Show Delete file dialog
             const target = await this.$refs.deleteDialog.showDialog(item.object);
             if (target) {
-                await git_async([ 'rm-local', target ]);
+                try {
+                    const path = normalize('files/' + target);
+                    await axios.delete(prepareHref(path));
+                } catch(error) {
+                    showError(error.response && error.response.data.error ? error.response.data.error.message : error);
+                }
                 this.refresh();
             }
         },

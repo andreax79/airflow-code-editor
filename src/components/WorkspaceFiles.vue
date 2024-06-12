@@ -196,8 +196,14 @@ export default defineComponent({
             const status = line[statusColumn];
             if ((this.kind == 'staged' && status != " " && status != "?") ||
                 (this.kind == 'unstaged' && status != " ")) {
+                // Extract the name
                 let name = line.substring(3);
-                if (name.indexOf(' -> ') != -1) {  // Renamed item
+                if (name.startsWith('"')) {
+                    // Remove quotes and unescape special characters
+                    name = JSON.parse(name);
+                }
+                // Handle renamed items
+                if (name.indexOf(' -> ') != -1) {
                     name = name.split(' -> ')[1];
                 }
                 const type = (name[name.length - 1] == '/') ? 'tree' : 'blob';

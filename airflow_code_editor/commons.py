@@ -22,6 +22,8 @@ __all__ = [
     'PLUGIN_NAME',
     'MENU_CATEGORY',
     'MENU_LABEL',
+    'API_REFERENCE_MENU_CATEGORY',
+    'API_REFERENCE_LABEL',
     'ROUTE',
     'STATIC',
     'CONFIG_SECTION',
@@ -52,6 +54,8 @@ __all__ = [
 PLUGIN_NAME = 'code_editor'
 MENU_CATEGORY = 'Admin'
 MENU_LABEL = 'DAGs Code Editor'
+API_REFERENCE_MENU_CATEGORY = 'Docs'
+API_REFERENCE_LABEL = 'Airflow Code Editor REST API Reference'
 ROUTE = '/' + PLUGIN_NAME
 STATIC = '/static/' + PLUGIN_NAME
 CONFIG_SECTION = PLUGIN_NAME + '_plugin'
@@ -67,6 +71,7 @@ SUPPORTED_GIT_COMMANDS = [
     'checkout',
     'commit',
     'diff',
+    'for-each-ref',
     'log',
     'ls-tree',
     'pull',

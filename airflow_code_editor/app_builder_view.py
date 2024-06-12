@@ -20,6 +20,8 @@ from flask_appbuilder import BaseView, expose
 
 from airflow_code_editor.code_editor_view import AbstractCodeEditorView
 from airflow_code_editor.commons import (
+    API_REFERENCE_LABEL,
+    API_REFERENCE_MENU_CATEGORY,
     JS_FILES,
     MENU_CATEGORY,
     MENU_LABEL,
@@ -27,7 +29,7 @@ from airflow_code_editor.commons import (
     VERSION,
 )
 
-__all__ = ["appbuilder_view"]
+__all__ = ["appbuilder_view", "api_reference_menu"]
 
 try:
     from airflow.security import permissions
@@ -187,4 +189,9 @@ appbuilder_view = {
     "category": MENU_CATEGORY,
     "name": MENU_LABEL,
     "view": appbuilder_code_editor_view,
+}
+api_reference_menu = {
+    "name": API_REFERENCE_LABEL,
+    "category": API_REFERENCE_MENU_CATEGORY,
+    "href": ROUTE + "/api/",
 }

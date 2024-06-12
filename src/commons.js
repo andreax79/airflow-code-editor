@@ -48,7 +48,10 @@ export function basename(path) {
 
 export function prepareHref(path) {
     // Return the full path of the URL
-    return document.location.pathname + path;
+    let pathname = document.location.pathname;
+    pathname = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+    path = path.startsWith('/') ? path.slice(1) : path;
+    return pathname + '/' + path;
 }
 
 export function splitPath(path) {

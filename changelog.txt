@@ -417,3 +417,15 @@
 
 - Format action now sorts import with isort
 - Improve error messages
+
+## [7.6.1] - 2024-06-12
+
+### Changed
+
+- update tests airflow and python versions
+- make prepareHref more robust
+- add menu link to REST API reference
+
+### Fix
+
+- files containing spaces in the Git Workspace view

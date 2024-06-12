@@ -1,7 +1,10 @@
 # Airflow Code Editor Plugin
-A plugin for [Apache Airflow](https://github.com/apache/airflow) that allows you to edit DAGs in browser.
-It provides a file managing interface within specified directories and it can be used to edit, upload, and download your files.
-If git support is enabled, the DAGs are stored in a Git repository. You may use it to view Git history, review local changes and commit.
+
+This plugin for [Apache Airflow](https://github.com/apache/airflow) allows you to edit DAGs directly within your browser,
+providing a seamless and efficient workflow for managing your pipelines.
+Offering a user-friendly file management interface within designated directories, it facilitates effortless editing,
+uploading, and downloading of files.
+With Git support enabled, DAGs are stored in a Git repository, enabling users to explore Git history, review local modifications, and commit changes.
 
 [![Build Status](https://github.com/andreax79/airflow-code-editor/workflows/Tests/badge.svg)](https://github.com/andreax79/airflow-code-editor/actions)
 [![PyPI version](https://badge.fury.io/py/airflow-code-editor.svg)](https://badge.fury.io/py/airflow-code-editor)
@@ -48,8 +51,8 @@ The image is based on the reference images for Apache Airflow.
 
 You can find the following images there:
 * andreax79/airflow-code-editor:**latest** - the latest released Airflow Code Editor image with the latest Apache Airflow version
-* andreax79/airflow-code-editor:**2.8.3** - the latest released Airflow Code Editor with specific Airflow version
-* andreax79/airflow-code-editor:**2.8.3-7.5.0** - specific version of Airflow and Airflow Code Editor
+* andreax79/airflow-code-editor:**2.9.1** - the latest released Airflow Code Editor with specific Airflow version
+* andreax79/airflow-code-editor:**2.9.1-7.6.0** - specific version of Airflow and Airflow Code Editor
 
 #### Installing from PyPI
 

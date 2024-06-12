@@ -1,8 +1,9 @@
 IMAGE_NAME=airflow-code-editor
 DEV_IMAGE_NAME=${IMAGE_NAME}-dev
 OWNER=andreax79
-AIRFLOW_VERSION=2.8.3
-DEV_IMAGE_PYTHON_VERSION=3.8
+AIRFLOW_VERSION=2.9.1
+# Must match the Airflow image Python version
+DEV_IMAGE_PYTHON_VERSION=3.12
 AIRFLOW_PORT=8080
 PLUGIN_VERSION=`cat ../airflow_code_editor/VERSION`
 VERSION=${AIRFLOW_VERSION}-${PLUGIN_VERSION}
@@ -94,6 +95,7 @@ dev-shell: dags
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
+		-v ${makeFileDir}/../sh.py:/opt/airflow/sh.py \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \

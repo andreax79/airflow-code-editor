@@ -1,0 +1,214 @@
+.dark-theme .splitpanes.default-theme .splitpanes__pane {
+  background-color: #444 !important;
+  color: #ddd;
+}
+
+.dark-theme .table-striped > tbody > tr:nth-child(2n) {
+  background-color: #444;
+  color: #ddd;
+}
+
+.dark-theme .table-striped > tbody > tr:nth-child(2n+1) {
+  background-color: #333;
+  color: #ddd;
+}
+
+.dark-theme .panel {
+    background-color: #333;
+}
+
+.dark-theme .cm-footer {
+    background-color: #333;
+}
+
+/*
+ * Button
+ */
+.dark-theme .app-main .btn-default,
+.dark-theme .airflow-code-editor-modal .btn-default {
+    background: transparent !important;
+}
+
+.dark-theme .app-main .btn-default,
+.dark-theme .airflow-code-editor-modal .btn-default {
+    color: #d5eb2c !important;
+}
+
+.dark-theme .app-main .btn-default:hover,
+.dark-theme .airflow-code-editor-modal .btn-default:hover {
+}
+
+.dark-theme .app-main .btn-outlined,
+.dark-theme .airflow-code-editor-modal .btn-outlined {
+    color: #d5eb2c !important;
+    background: transparent !important;
+    border: 1px solid #d5eb2c !important;
+}
+
+.dark-theme .app-main .btn-outlined:hover,
+.dark-theme .airflow-code-editor-modal .btn-outlined:hover {
+    background-color: #d5eb2c0f !important;
+    color: #d5eb2c !important;
+}
+
+.dark-theme .app-main .btn.btn-primary,
+.dark-theme .dialog-buttons .btn.btn-primary {
+    background-color: #d5eb2c;
+    color: #000;
+}
+
+/*
+ * Tab
+ */
+.dark-theme .tabs > li.active {
+  border-bottom: 4px solid #d5eb2c;
+}
+
+/*
+ * Breadcrumb
+ */
+.dark-theme .breadcrumb {
+    background-color: #333;
+}
+
+.dark-theme .breadcrumb-item a {
+    color: #d5eb2c;
+}
+
+/*
+ * Dialog
+ */
+
+.dark-theme .airflow-code-editor-modal {
+    background-color: #555;
+    color: #fff;
+}
+
+/*
+ * Tabs
+ */
+
+.dark-theme .tabs {
+    background-color: #333;
+}
+
+.dark-theme .tabs > li> a {
+    color: #eee;
+}
+
+.dark-theme .tabs > li > a:hover {
+    background-color: transparent;
+    color: #eee;
+}
+
+/*
+ * Input
+ */
+.dark-theme .form-control {
+    background-color: #333;
+    border: 1px solid #ccc;
+    color: #fff;
+}
+
+/*
+ * Table
+ */
+.dark-theme .vgt-table thead th {
+    background-color: #333;
+}
+
+.dark-theme .vgt-input {
+    background-color: #333;
+}
+
+.dark-theme table.vgt-table{
+    background-color:#444;
+}
+
+.dark-theme .vgt-table tbody tr:nth-of-type(even){
+    background-color: #555;
+}
+
+.dark-theme .tree-view-tree-content {
+    background-color: #333;
+}
+
+.dark-theme .tree-view-tree-content .btn {
+    color: #d5eb2c;
+}
+
+/*
+ * Search
+ */
+
+.dark-theme .search-view,
+.dark-theme .search-view .search-context,
+.dark-theme .search-view .search-context pre {
+    background-color: #333;
+}
+
+.dark-theme .search-view .breadcrumb {
+    background-color: #444;
+}
+
+/*
+ * Log view
+ */
+.dark-theme .log-view {
+    background-color: #444;
+}
+
+.dark-theme .log-view .log-entry header h6 {
+    color: #ccc;
+}
+
+.dark-theme .log-view .log-entry .list-group-item-text {
+    color: #fff;
+}
+
+.dark-theme .log-view .log-entry header .log-entry-date {
+    color: #ccc;
+}
+
+.dark-theme .log-view .log-entry:hover {
+    background-color: #77777777;
+}
+
+.dark-theme .log-view .log-entry.active {
+    background-color: #77777777;
+    border-color: #ccc;
+    color: #fff;
+}
+
+/*
+ * Diff/commit
+ */
+.dark-theme .show-diff-container {
+    background-color: #333;
+}
+.dark-theme .log-view .log-entry.active .list-group-item-text,
+.dark-theme .log-view .log-entry.active .list-group-item-text:hover {
+    color: #fff !important;
+}
+
+.dark-theme .show-commit .diff-line-del,
+.dark-theme .show-diff .diff-line-del {
+    background-color: #8c320f;
+}
+
+.dark-theme .show-commit .diff-line-add,
+.dark-theme .show-diff .diff-line-add {
+    background-color: #647105;
+}
+
+.dark-theme .show-commit .diff-line-offset,
+.dark-theme .show-diff .diff-line-offset {
+    background-color: #333;
+    line-height: 4em;
+    font-weight: bold;
+}
+
+.dark-theme .show-commit .diff-file-header,
+.dark-theme .show-diff .diff-file-header {
+    background-color: #333;
+}

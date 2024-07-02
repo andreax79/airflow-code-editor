@@ -127,10 +127,12 @@ import 'vue-simple-context-menu/dist/vue-simple-context-menu.css';
 import '../css/dialogs.css';
 import '../css/tabs.css';
 import '../css/buttons.css';
+import '../css/dark-theme.css';
 import '../css/material-icons.css';
 import { v4 as uuidv4 } from 'uuid';
 import { defineComponent, ref } from 'vue';
 import { Splitpanes, Pane } from 'splitpanes';
+import { setColor } from "../commons";
 import VueSimpleContextMenu from 'vue-simple-context-menu';
 import Sidebar from './Sidebar.vue';
 import FilesEditorContainer from './FilesEditorContainer.vue';
@@ -176,10 +178,11 @@ export default defineComponent({
             config: {
                 theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
                 mode: localStorage.getItem('airflow_code_editor_mode') || 'default', // edit mode (default, vim, etc...)
+                color: localStorage.getItem('airflow_code_editor_color') || 'Light', // light/dark mode
                 showHiddenFiles: localStorage.getItem('airflow_code_editor_show_hidden_files') == 'true',
                 singleTab: false,
             },
-            sidebarSize: 190 * 100 / jQuery(document).width(), // sidebar size (percentage)
+            sidebarSize: 190 * 100 / document.documentElement.clientWidth, // sidebar size (percentage)
             options: [
                 {
                   name: '<span class="material-icons">close</span> Close',
@@ -195,6 +198,7 @@ export default defineComponent({
     methods: {
         initViews() {
             // Init views
+            setColor(this.config.color);
         },
         show(target) {
             if (target.id == 'files') {

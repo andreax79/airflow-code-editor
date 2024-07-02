@@ -123,6 +123,17 @@ export function importTheme(theme) {
     });
 }
 
+export function setColor(color) {
+    // Set light/dark mode
+    if (color == 'Dark') {
+        document.querySelector('#global-container').classList.add("dark-theme");
+        document.querySelector('#airflow-code-editor-modals').classList.add("dark-theme");
+    } else {
+        document.querySelector('#global-container').classList.remove("dark-theme");
+        document.querySelector('#airflow-code-editor-modals').classList.remove("dark-theme");
+    }
+}
+
 export function initApp(app, target, teleportTarget, csrfTokenParam, themesPathParam) {
     themesPath = themesPathParam;
     // CSRF Token setup

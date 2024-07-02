@@ -23,10 +23,10 @@
   },
   "dependencies": {
     "@grapoza/vue-tree": "^5.0.0",
-    "axios": "^1.6.0",
+    "axios": "^1.7.2",
     "splitpanes": "^3.1.1",
-    "uuid": "^9.0.0",
-    "vue": "^3.3.4",
+    "uuid": "^10.0.0",
+    "vue": "^3.4.29",
     "vue-good-table-next": "^0.2.1",
     "vue-simple-context-menu": "^4.0.4",
     "vue-universal-modal": "^1.1.4"
@@ -35,7 +35,6 @@
     "@rushstack/eslint-patch": "^1.6.0",
     "@vitejs/plugin-vue": "^4.5.0",
     "@vue/eslint-config-prettier": "^7.0.0",
-    "@vue/test-utils": "^2.4.2",
     "eslint": "^8.54.0",
     "eslint-plugin-vue": "^9.18.1",
     "jsdom": "^22.1.0",

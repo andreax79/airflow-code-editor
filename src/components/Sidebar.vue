@@ -109,7 +109,7 @@ export default defineComponent({
         },
         async showContainer() {
             // Show global container
-            jQuery('#global-container').show();
+            document.querySelector('#global-container').style.display='block';
         },
         async fetchTree() {
             // Load tree nodes
@@ -138,7 +138,7 @@ export default defineComponent({
                     this.$emit("show", { id: section, name: name });
                 } else {
                     // Open tree node
-                    jQuery('#sidebar-tree-' + section + '-exp').click();
+                    document.getElementById(`sidebar-tree-${section}-exp`).click();
                 }
             }
             return false;

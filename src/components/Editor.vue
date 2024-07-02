@@ -203,11 +203,9 @@ export default defineComponent({
         async updateSettings(config) {
             this.config.theme = config.theme;
             this.config.mode = config.mode;
+            this.config.color = config.color;
             this.setTheme(this.config.theme); // Set theme
             this.setOption('keyMap', this.config.mode); // Set editor mode
-            // Save setting on the local storage
-            localStorage.setItem('airflow_code_editor_theme', config.theme);
-            localStorage.setItem('airflow_code_editor_mode', config.mode);
         },
         async saveAction() {
             // Save button action

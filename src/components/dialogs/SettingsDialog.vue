@@ -2,14 +2,20 @@
   <modal v-model="show" :close="close">
     <div class="airflow-code-editor-modal airflow-code-editor-modal-settings">
       <h1>Settings</h1>
-      <label>Theme:</label>
+      <label>Color:</label>
+      <select class="form-control" v-model="config.color">
+          <option>Light</option>
+          <option>Dark</option>
+      </select>
+      <br/>
+      <label>Editor Theme:</label>
       <select class="form-control" v-model="config.theme">
           <option v-for="theme in themes">
           {{ theme }}
           </option>
       </select>
       <br/>
-      <label>Mode:</label>
+      <label>Editor Mode:</label>
       <select class="form-control" v-model="config.mode">
           <option selected>default</option>
           <option>emacs</option>
@@ -25,6 +31,7 @@
 </template>
 <script>
 import { defineComponent } from 'vue';
+import { setColor } from "../../commons";
 import themes from "../../themes";
 
 export default defineComponent({
@@ -45,6 +52,13 @@ export default defineComponent({
             });
         },
         ok() {
+            // Save setting on the local storage
+            localStorage.setItem('airflow_code_editor_theme', this.config.theme);
+            localStorage.setItem('airflow_code_editor_mode', this.config.mode);
+            localStorage.setItem('airflow_code_editor_color', this.config.color);
+            // Apply light/dark mode
+            setColor(this.config.color);
+            // Close the dialog
             this.close(this.config);
         },
         cancel() {

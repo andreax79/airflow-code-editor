@@ -14,8 +14,9 @@ jobs:
         - "3.9"
         - "3.10"
         - "3.11"
+        - "3.12"
         airflow:
-        - "2.8.3"
+        - "2.10.0"
 
     runs-on: ubuntu-latest
 

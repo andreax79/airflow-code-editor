@@ -69,3 +69,10 @@ def search(*, query: str):
 def post_git():
     "Execute a GIT command"
     return AbstractCodeEditorView._execute_git_command()
+
+
+@security.requires_access_dag("GET")
+@csrf.exempt
+def get_version():
+    "Get version information"
+    return AbstractCodeEditorView._get_version()

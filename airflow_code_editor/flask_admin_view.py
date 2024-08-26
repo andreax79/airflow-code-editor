@@ -93,6 +93,11 @@ try:
         def search(self):
             return self._search(args=request.args)
 
+        @expose("/version", methods=["GET"])
+        @login_required
+        def get_version(self):
+            return self._get_version()
+
         @expose("/ping", methods=["GET"])
         @login_required
         def ping(self):

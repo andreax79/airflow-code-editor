@@ -18,7 +18,7 @@
 import logging
 import mimetypes
 
-from airflow.version import version
+from airflow.version import version as airflow_version
 from flask import make_response, request
 from flask_wtf.csrf import generate_csrf
 from pygments import highlight
@@ -30,6 +30,7 @@ from airflow_code_editor.commons import (
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
     HTTP_500_SERVER_ERROR,
+    VERSION,
 )
 from airflow_code_editor.fs import RootFS
 from airflow_code_editor.git import execute_git_command
@@ -45,7 +46,7 @@ from airflow_code_editor.utils import (
 
 __all__ = ["AbstractCodeEditorView"]
 
-AIRFLOW_MAJOR_VERSION = int(version.split(".")[0])
+AIRFLOW_MAJOR_VERSION = int(airflow_version.split(".")[0])
 
 
 class AbstractCodeEditorView(object):
@@ -243,3 +244,11 @@ class AbstractCodeEditorView(object):
     @classmethod
     def _ping(cls):
         return {"value": generate_csrf()}
+
+    @classmethod
+    def _get_version(cls):
+        "Get version information"
+        return {
+            "version": VERSION,
+            "airflow_version": airflow_version,
+        }

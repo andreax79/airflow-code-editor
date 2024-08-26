@@ -207,6 +207,17 @@ paths:
         '403':
           description: "Client does not have sufficient permission"
 
+  /version:
+    get:
+      summary: Get version information
+      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      operationId: get_version
+      tags: [Misc]
+      responses:
+        '200':
+          description: "Success"
+          $ref: '#/components/responses/VersionInfo'
+
 components:
   schemas:
     TreeEntity:
@@ -298,6 +309,25 @@ components:
               - data
               - returncode
 
+    VersionInfo:
+      description: Version information
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              version:
+                type: string
+                description: Airflow Code Editor version
+                example: "7.7.0"
+              airflow_version:
+                type: string
+                description: Apache Airflow version
+                example: "2.10.0"
+            required:
+              - version
+              - airflow_version
+
   parameters:
     All:
       in: query
@@ -340,5 +370,6 @@ tags:
   - name: Files
   - name: GIT
   - name: Tree
+  - name: Misc
 
 security: []

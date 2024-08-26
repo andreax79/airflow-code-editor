@@ -96,6 +96,11 @@ try:
         def search(self):
             return self._search(args=request.args)
 
+        @expose("/version", methods=["GET"])
+        @auth.has_access(PERMISSIONS)
+        def get_version(self):
+            return self._get_version()
+
         @expose("/ping", methods=["GET"])
         @auth.has_access(PERMISSIONS)
         def ping(self):
@@ -168,6 +173,10 @@ except (ImportError, ModuleNotFoundError):
         @has_dag_access(can_dag_edit=True)
         def search(self):
             return self._search(args=request.args)
+
+        @expose("/version", methods=["GET"])
+        def get_version(self):
+            return self._get_version()
 
         @expose("/ping", methods=["GET"])
         def ping(self):

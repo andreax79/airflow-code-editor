@@ -429,3 +429,15 @@
 ### Fix
 
 - files containing spaces in the Git Workspace view
+
+## [7.7.0] - 2024-08-26
+
+### Added
+
+- dark mode
+- get version API
+
+### Changed
+
+- CodeMirror upgrade
+- update node version

@@ -31,7 +31,10 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version:
+        - "3.12"
+        airflow:
+        - "2.10.0"
 
     env:
       AIRFLOW_HOME: ./scripts/airflow

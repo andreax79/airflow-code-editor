@@ -25,7 +25,6 @@ except Exception:
 
 from airflow_code_editor.app_builder_view import api_reference_menu, appbuilder_view
 from airflow_code_editor.commons import STATIC, VERSION
-from airflow_code_editor.flask_admin_view import admin_view
 from airflow_code_editor.utils import is_enabled
 
 __author__ = 'Andrea Bonomi <andrea.bonomi@gmail.com>'
@@ -54,7 +53,7 @@ class CodeEditorPlugin(AirflowPlugin):
     flask_blueprints = flask_blueprints
     hooks = []
     executors = []
-    admin_views = [admin_view] if (is_enabled() and admin_view is not None) else []
+    admin_views = []
     menu_links = []
     appbuilder_menu_items = [api_reference_menu] if (is_enabled() and api_blueprint is not None) else []
     appbuilder_views = [appbuilder_view] if is_enabled() else []

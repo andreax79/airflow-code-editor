@@ -15,7 +15,7 @@ With Git support enabled, DAGs are stored in a Git repository, enabling users to
 ### System Requirements
 
 * Airflow Versions
-    * 1.10.3 or newer
+    * 2.0.0 or newer
 * git Versions (git is not required if git support is disabled)
     * 2.0 or newer
 

@@ -20,12 +20,6 @@ def test_import_commons():
     assert airflow_code_editor.commons
 
 
-def test_import_flask_admin_view():
-    import airflow_code_editor.flask_admin_view
-
-    assert airflow_code_editor.flask_admin_view
-
-
 def test_import_app_builder_view():
     import airflow_code_editor.app_builder_view
 

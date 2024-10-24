@@ -117,17 +117,18 @@ def execute_git_command(git_args: List[str]) -> CompletedGitCommand:
                 stdout = None
                 stderr = 'Command not supported: git {0}'.format(' '.join(git_args))
                 returncode = 1
+            return CompletedGitCommand(git_args, returncode, stdout, stderr)
         except OSError as ex:
             logging.error(ex)
             stdout = None
             stderr = ex.strerror
             returncode = ex.errno
+            return CompletedGitCommand(git_args, returncode, stdout, stderr)
         except Exception as ex:
             logging.error(ex)
             stdout = None
             stderr = ex.message if hasattr(ex, 'message') else str(ex)
             returncode = 1
-        finally:
             return CompletedGitCommand(git_args, returncode, stdout, stderr)
 
 

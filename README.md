@@ -217,6 +217,9 @@ For details on configuring the authentication, see
 
 * [Apache Airflow](https://github.com/apache/airflow)
 * [Codemirror, In-browser code editor](https://github.com/codemirror/codemirror)
+* [codemirror-theme-bundle, custom themes for CodeMirror 6](https://github.com/fsegurai/codemirror-themes)
+* [codemirror-vim, Vim keybindings for CodeMirror 6](https://github.com/replit/codemirror-vim)
+* [codemirror-emacs, Emacs keybindings for CodeMirror 6](https://github.com/replit/codemirror-emacs)
 * [Git WebUI, A standalone local web based user interface for git repositories](https://github.com/alberthier/git-webui)
 * [Black, The Uncompromising Code Formatter](https://github.com/psf/black)
 * [isort, A Python utility/library to sort imports](https://github.com/psf/black)
@@ -226,6 +229,7 @@ For details on configuring the authentication, see
 * [Vue-tree, TreeView control for VueJS](https://github.com/grapoza/vue-tree)
 * [Vue-universal-modal Universal modal plugin for Vue@3](https://github.com/hoiheart/vue-universal-modal)
 * [Vue-simple-context-menu](https://github.com/johndatserakis/vue-simple-context-menu)
+* [vue3-notification, Vue.js notifications](https://github.com/kyvg/vue3-notification)
 * [Splitpanes](https://github.com/antoniandre/splitpanes)
 * [Axios, Promise based HTTP client for the browser and node.js](https://github.com/axios/axios)
 * [PyFilesystem2, Python's Filesystem abstraction layer](https://github.com/PyFilesystem/pyfilesystem2)

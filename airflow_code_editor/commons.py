@@ -100,23 +100,6 @@ PLUGIN_DEFAULT_CONFIG = {
 }
 ROOT_MOUNTPOUNT = 'root'
 JS_FILES = [
-    'codemirror.js',
-    'mode/python/python.js',
-    'addon/fold/foldcode.js',
-    'addon/fold/foldgutter.js',
-    'addon/fold/indent-fold.js',
-    'addon/fold/comment-fold.js',
-    'addon/mode/loadmode.js',
-    'addon/mode/simple.js',
-    'addon/mode/overlay.js',
-    'addon/dialog/dialog.js',
-    'addon/search/searchcursor.js',
-    'addon/search/search.js',
-    'addon/search/jump-to-line.js',
-    'mode/meta.js',
-    'vim.js',
-    'emacs.js',
-    'sublime.js',
     'airflow_code_editor.js',
 ]
 

@@ -157,7 +157,7 @@ import { defineComponent } from 'vue';
 import { VueGoodTable } from 'vue-good-table-next';
 // import 'vue-good-table-next/dist/vue-good-table-next.css';
 import VueSimpleContextMenu from 'vue-simple-context-menu';
-import { basename, normalize, prepareHref, git_async, showError } from '../commons';
+import { basename, normalize, prepareHref, git_async, showNotification, parseErrorResponse } from '../commons';
 import { TreeEntry, prepareMenuOptions } from '../tree_entry';
 import Icon from './Icon.vue';
 import Breadcrumb from './Breadcrumb.vue';
@@ -231,7 +231,7 @@ export default defineComponent({
             if (target) {
                 target = normalize(target);
                 if (target == "/") {
-                    showError('Invalid filename');
+                    showNotification({ message: 'Invalid filename', title: 'Rename' });
                 } else if (this.source != target) {
                     await git_async([ 'mv-local', item.object, target ]);
                     this.refresh();
@@ -246,7 +246,8 @@ export default defineComponent({
                     const path = normalize('files/' + target);
                     await axios.delete(prepareHref(path));
                 } catch(error) {
-                    showError(error.response && error.response.data.error ? error.response.data.error.message : error);
+                    const message = parseErrorResponse(error, 'Error deleting file');
+                    showNotification({ message: message, title: 'Delete' });
                 }
                 this.refresh();
             }
@@ -310,8 +311,8 @@ export default defineComponent({
                 } catch(error) {
                     this.items = [];
                     this.$emit('loaded', false); // close the spinner
-                    showError(error.response && error.response.data.error ? error.response.data.error.message : error);
-                    console.log(error);
+                    const message = parseErrorResponse(error, 'Loading error');
+                    showNotification({ message: message, title: 'Load' });
                 }
             }
         },

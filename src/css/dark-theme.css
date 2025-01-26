@@ -19,6 +19,7 @@
 
 .dark-theme .cm-footer {
     background-color: #333;
+    border-top: 0 solid #333;
 }
 
 /*

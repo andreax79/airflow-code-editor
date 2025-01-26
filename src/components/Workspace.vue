@@ -50,7 +50,7 @@
 </style>
 <script>
 import { defineComponent, ref } from 'vue';
-import { git_async } from '../commons';
+import { git_async, showNotification } from '../commons';
 import { Splitpanes, Pane } from 'splitpanes';
 import Icon from './Icon.vue';
 import WorkspaceFiles from './WorkspaceFiles.vue';
@@ -106,7 +106,10 @@ export default defineComponent({
             const cmd = [
                 'pull', '--no-rebase', '--ff-only'
             ];
-            await git_async(cmd, { type: 'terminal', 'title': 'Git Pull' });
+            const message = await git_async(cmd, { type: 'terminal', 'title': 'Git Pull' });
+            if (message != null) {
+                showNotification({ 'title': 'Git Pull', 'text': message, type: 'success' });
+            }
             this.refresh();
         },
         async push(item) {
@@ -114,7 +117,10 @@ export default defineComponent({
             const cmd = [
                 'push'
             ];
-            await git_async(cmd, { type: 'terminal', 'title': 'Git Push' });
+            const message = await git_async(cmd, { type: 'terminal', 'title': 'Git Push' });
+            if (message != null) {
+                showNotification({ 'title': 'Git Push', 'text': message, type: 'success' });
+            }
             this.refresh();
         },
     },

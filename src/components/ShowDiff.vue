@@ -46,7 +46,7 @@
 <script>
 import axios from 'axios';
 import { defineComponent, ref } from 'vue';
-import { prepareHref, showError } from '../commons';
+import { prepareHref, showNotification, parseErrorResponse } from '../commons';
 import { git_async } from "../commons";
 
 export default defineComponent({
@@ -137,12 +137,8 @@ export default defineComponent({
                 return this.parseUntrackedFileResponse(response);
             } catch(error) {
                 this.$emit('loaded', false); // close the spinner
-                try {
-                const data = JSON.parse(error.response.data);
-                        showError(data.error.message);
-                } catch (ex) {
-                    showError('Error loading file');
-                }
+                const message = parseErrorResponse(error, 'Error loading file');
+                showNotification({ message: message, title: 'Load' });
             };
         },
         async refresh(target) {

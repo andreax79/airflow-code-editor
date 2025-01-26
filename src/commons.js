@@ -1,8 +1,12 @@
 import { createApp, ref } from 'vue';
 import axios from 'axios';
 import VueUniversalModal from 'vue-universal-modal';
+import { notify } from "@kyvg/vue3-notification";
 
 export const CSRF_REFRESH = 1000 * 60 * 10;
+export const SUCCESS_DURATION = 5 * 1000;
+export const WARN_DURATION = 5 * 1000;
+export const ERROR_DURATION = 10 * 1000;
 export const COLORS = [
     "#ffab1d", "#fd8c25", "#f36e4a", "#fc6148", "#d75ab6", "#b25ade", "#6575ff", "#7b77e9", "#4ea8ec", "#00d0f5", "#4eb94e", "#51af23", "#8b9f1c", "#d0b02f", "#d0853a", "#a4a4a4",
     "#ffc51f", "#fe982c", "#fd7854", "#ff705f", "#e467c3", "#bd65e9", "#7183ff", "#8985f7", "#55b6ff", "#10dcff", "#51cd51", "#5cba2e", "#9eb22f", "#debe3d", "#e19344", "#b8b8b8",
@@ -21,18 +25,34 @@ var csrfToken = null;
 var vueApp = null;
 var themesPath = null;
 
-export function showError(message, options) {
-    if (vueApp) {
-        vueApp.showError(message, options);
+export function parseErrorResponse(error, defaultMessage) {
+    try {
+        const data = JSON.parse(error.response.data);
+        return data.error.message;
+    } catch (ex) {
+        return defaultMessage;
     }
 }
 
-export function showWarning(message, options) {
-    if (vueApp) {
-        options = (options !== undefined) ? options : {};
-        options['type'] = options.type || 'warning';
-        vueApp.showError(message, options);
+export function showNotification(options) {
+    let duration;
+    switch (options.type) {
+        case 'success':
+            duration = options.duration || SUCCESS_DURATION;
+            break;
+        case 'warn':
+            duration = options.duration || WARN_DURATION;
+            break;
+        default:
+            duration = options.duration || ERROR_DURATION;
+            break;
     }
+    notify({
+        title: options?.title || 'Error',
+        text: options.message,
+        type: options?.type || 'error',
+        duration: duration,
+    });
 }
 
 export function normalize(path) {
@@ -97,30 +117,21 @@ export async function git_async(args, options) {
     try {
         const response = await axios.post(prepareHref('repo'), payload);
         if (response.data.returncode != 0) {
-            showError(pre + response.data.error.message, options);
+            const message = pre + response.data.error.message;
+            showNotification({ title: options?.title || 'Git', message: message, type: 'error' });
             return null;
         }
         // Return code is 0 but there is stderr output: this is a warning message
         if (response.data.error) {
-            showWarning(pre + response.data.error.message, options);
+            const message = pre + response.data.error.message;
+            showNotification({ title: options?.title || 'Git', message: message, type: 'warn' });
         }
         return response.data.data
     } catch(error) {
-        showError(error.response && error.response.data.error ? error.response.data.error.message : error);
+        const message = error.response && error.response.data.error ? error.response.data.error.message : error;
+        showNotification({ title: options?.title || 'Git', message: message, type: 'error' });
         return null;
     }
-}
-
-export function importTheme(theme) {
-    // Import an editor theme
-    return new Promise((resolve, reject) => {
-        let link = document.createElement('link');
-        link.onload = () => resolve(true);
-        link.rel = 'stylesheet';
-        link.type = 'text/css';
-        link.href = themesPath + '/' + theme + '.css';
-        document.getElementsByTagName('head')[0].appendChild(link);
-    });
 }
 
 export function setColor(color) {

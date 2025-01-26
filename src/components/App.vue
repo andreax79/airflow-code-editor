@@ -1,4 +1,5 @@
 <template>
+  <notifications position="bottom right" />
   <splitpanes class="default-theme">
     <pane key="1" :size="sidebarSize">
         <sidebar class="app-sidebar"
@@ -243,7 +244,6 @@ export default defineComponent({
             }
         },
         showError(message, options) {
-            console.log(options);
             // Show modal message window
             options = (options !== undefined) ? options : {};
             options['message'] = message;

@@ -191,7 +191,7 @@ export default defineComponent({
             }
         },
         processLine(line) {
-            // Parge git status --porcelain line
+            // Parse git status --porcelain line
             const statusColumn = this.kind == 'staged' ? 0 : 1;
             const status = line[statusColumn];
             if ((this.kind == 'staged' && status != " " && status != "?") ||

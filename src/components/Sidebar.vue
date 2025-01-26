@@ -58,7 +58,7 @@ import { defineComponent, ref } from 'vue';
 import axios from 'axios';
 import { TreeView } from '@grapoza/vue-tree';
 import VueSimpleContextMenu from 'vue-simple-context-menu';
-import { prepareHref, splitPath, showError } from '../commons';
+import { prepareHref, splitPath, showNotification, parseErrorResponse } from '../commons';
 import { getIcon } from '../tree_entry';
 import Icon from './Icon.vue';
 
@@ -168,7 +168,8 @@ export default defineComponent({
                 const response = await axios.get(prepareHref(path), { params: params });
                 return response.data.value.map((node) => self.prepareTreeNode(node, parent));
             } catch(error) {
-                showError(error.response && error.response.data.error ? error.response.data.error.message : error);
+                const message = parseErrorResponse(error, 'Error loading tree');
+                showNotification({ message: message, title: 'Load' });
                 return [];
             }
         },

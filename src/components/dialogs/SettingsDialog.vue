@@ -19,7 +19,6 @@
       <select class="form-control" v-model="config.mode">
           <option selected>default</option>
           <option>emacs</option>
-          <option>sublime</option>
           <option>vim</option>
       </select>
       <div class="dialog-buttons">
@@ -38,7 +37,7 @@ export default defineComponent({
     props: [],
     data() {
         return {
-            themes: themes, // themes list from "themes.js"
+            themes: themes.map(theme => theme.name), // themes list from "themes.js"
             show: false,
         }
     },

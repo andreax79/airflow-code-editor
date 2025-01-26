@@ -12,7 +12,7 @@
 #   distributed under the License is distributed on an "AS IS" BASIS,
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
-#   limitations under the Licens
+#   limitations under the License
 
 import re
 from datetime import datetime
@@ -42,7 +42,7 @@ class NodeDef(NamedTuple):
     get_children: TreeFunc  # Get node children
     label: Optional[str] = None  # Optional node label
     leaf: bool = True  # is leaf?
-    icon: str = ''  # Optiona icon
+    icon: str = ''  # Optional icon
     condition: Callable[[], bool] = always  # Node enabled
 
 
@@ -128,13 +128,13 @@ def git_command_output(*args: str) -> List[str]:
 
 
 def prepare_git_output(line: str, icon: str) -> Dict[str, Any]:
-    "Prepate a result item for tag/local branches/remote branches"
+    "Prepare a result item for tag/local branches/remote branches"
     name = line.lstrip('* ').split('->')[0]
     return {'id': name, 'leaf': True, 'icon': icon}
 
 
 def prepare_ls_tree_output(line: str) -> Dict[str, Any]:
-    "Prepate a result item for ls-tre"
+    "Prepare a result item for ls-tree"
     mode, type_, hash_, size, name = re.split('[\t ]+', line, 4)
     leaf = type_ != 'tree'
     return {

@@ -12,7 +12,7 @@
 #   distributed under the License is distributed on an "AS IS" BASIS,
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
-#   limitations under the Licens
+#   limitations under the License
 
 import errno
 import os
@@ -294,8 +294,8 @@ class FSPath(object):
                 if fullpath in mount_points:
                     skip = True
                 # Ship hidden files
-                for patter in ignored_entries:
-                    if fnmatch(fullpath if patter.startswith("/") else name, patter.strip()):
+                for pattern in ignored_entries:
+                    if fnmatch(fullpath if pattern.startswith("/") else name, pattern.strip()):
                         skip = True
             if not skip:
                 yield self.root_fs.path(self.path, name)

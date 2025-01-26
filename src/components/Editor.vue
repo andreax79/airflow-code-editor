@@ -186,7 +186,7 @@ export default defineComponent({
             let transaction = this.editor.state.update({changes: {from: 0, to: this.editor.state.doc.length, insert: data}})
             this.editor.dispatch(transaction);
             // Update checksum
-            this.checksum != crc32(this.getValue());
+            this.checksum = crc32(this.getValue());
             // Clear history
             this.updateState();
         },

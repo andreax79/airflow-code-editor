@@ -133,8 +133,16 @@ import SettingsDialog from './dialogs/SettingsDialog.vue';
 import SaveAsDialog from './dialogs/SaveAsDialog.vue';
 import themes from "../themes";
 
+// Write the current file
 Vim.defineEx('write', 'w', function(cm) {
     cm.cm6.vue.saveAction();
+});
+
+// Open a file
+Vim.defineEx('edit', 'e', function(cm, options) {
+    if (options.args) {
+        window.show(options.args[0]);
+    }
 });
 
 const languages = [

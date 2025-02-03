@@ -18,20 +18,7 @@ window.init = function(csrfTokenParam, themesPath) {
 }
 
 window.show = async function(path) {
-    if (!path.startsWith('/')) {
-        path = '/' + path;
-    }
-    const response = await axios.head(prepareHref('tree/files' + path));
-    const exists = response.headers['x-exists'] == 'true';
-    const leaf = response.headers['x-leaf'] == 'true';
-    const sectionAndName = splitPath(response.headers['x-id']);
-    const section = sectionAndName[0];
-    const name = '/' + (sectionAndName[1] || '').trim();
-    if (leaf || !exists) {
-        window.app.show({ id: section, path: name, type: 'blob' });
-    } else {
-        window.app.show({ id: section, path: name, type: 'tree' });
-    }
+    window.app.open(path);
 }
 
 window.search = async function(query) {

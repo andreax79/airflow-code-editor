@@ -130,10 +130,11 @@ import '../css/tabs.css';
 import '../css/buttons.css';
 import '../css/dark-theme.css';
 import '../css/material-icons.css';
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { defineComponent, ref } from 'vue';
 import { Splitpanes, Pane } from 'splitpanes';
-import { setColor } from "../commons";
+import { setColor, prepareHref, splitPath } from "../commons";
 import VueSimpleContextMenu from 'vue-simple-context-menu';
 import Sidebar from './Sidebar.vue';
 import FilesEditorContainer from './FilesEditorContainer.vue';
@@ -200,6 +201,22 @@ export default defineComponent({
         initViews() {
             // Init views
             setColor(this.config.color);
+        },
+        async open(path) {
+            if (!path.startsWith('/')) {
+                path = '/' + path;
+            }
+            const response = await axios.head(prepareHref('tree/files' + path));
+            const exists = response.headers['x-exists'] == 'true';
+            const leaf = response.headers['x-leaf'] == 'true';
+            const sectionAndName = splitPath(response.headers['x-id']);
+            const section = sectionAndName[0];
+            const name = '/' + (sectionAndName[1] || '').trim();
+            if (leaf || !exists) {
+                this.show({ id: section, path: name, type: 'blob' });
+            } else {
+                this.show({ id: section, path: name, type: 'tree' });
+            }
         },
         show(target) {
             if (target.id == 'files') {

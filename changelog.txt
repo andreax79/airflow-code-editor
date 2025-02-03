@@ -441,3 +441,15 @@
 
 - CodeMirror upgrade
 - update node version
+
+## [7.8.0] - 2025-02-03
+
+### Added
+
+- Bookmarks
+- Notifications
+- VIM mode :e (edit) command
+
+### Changed
+
+- Upgrade to CodeMirror 6

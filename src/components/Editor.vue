@@ -44,6 +44,10 @@
     overflow: auto !important;
 }
 
+.cm-editor {
+    height: 100%;
+}
+
 .ͼ2 .cm-panels.cm-panels-bottom {
     border-top: 1px solid #ddd !important;
 }
@@ -172,7 +176,7 @@ export default defineComponent({
         return {
             editorPath: null, // path of the file open in editor
             editor: null, // CodeMirror instance
-            language: null, // CodeMirror language (Python, SQL, JSON, YAML) or null 
+            language: null, // CodeMirror language (Python, SQL, JSON, YAML) or null
             readOnly: false,
             checksum: 0,
         }

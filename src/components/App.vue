@@ -5,6 +5,8 @@
         <sidebar class="app-sidebar"
             @show="show"
             :config="config"
+            :bookmarks="bookmarks"
+            ref="sidebar"
             ></sidebar>
     </pane>
     <pane key="2" :size="100 - sidebarSize" class="app-main">
@@ -19,7 +21,7 @@
             </ul>
             <vue-simple-context-menu
                 element-id="app-main-nav-menu"
-                :options="options"
+                :options="menuOptions"
                 ref="appMainNavMenu"
                 @option-clicked="menuOptionClicked"
             />
@@ -134,7 +136,9 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { defineComponent, ref } from 'vue';
 import { Splitpanes, Pane } from 'splitpanes';
-import { setColor, prepareHref, splitPath } from "../commons";
+import { setColor, prepareHref, splitPath, EDITOR_THEME_KEY, EDITOR_MODE_KEY, EDITOR_COLOR_KEY, SHOW_HIDDEN_FILES_KEY, BOOKMARKS_KEY, WORKSPACE_UUID } from "../commons";
+import { TabState } from '../tabs.js';
+
 import VueSimpleContextMenu from 'vue-simple-context-menu';
 import Sidebar from './Sidebar.vue';
 import FilesEditorContainer from './FilesEditorContainer.vue';
@@ -143,22 +147,6 @@ import Search from './Search.vue';
 import Workspace from './Workspace.vue';
 import ErrorDialog from './dialogs/ErrorDialog.vue';
 import CloseTabDialog from './dialogs/CloseTabDialog.vue';
-
-const WORKSPACE_UUID = 'd15216ca-854d-4705-bff5-1887e8bf1180';
-
-class TabState {
-    constructor(name, component, target) {
-        if (component == Workspace) {
-            this.uuid = WORKSPACE_UUID;
-        } else {
-            this.uuid = uuidv4();
-        }
-        this.name = name;
-        this.component = component;
-        this.target = target;
-        this.closed = false;
-    }
-}
 
 export default defineComponent({
     components: {
@@ -178,23 +166,14 @@ export default defineComponent({
             tabs: [],
             selectedTab: null, // selected tab
             config: {
-                theme: localStorage.getItem('airflow_code_editor_theme') || 'default', // editor theme
-                mode: localStorage.getItem('airflow_code_editor_mode') || 'default', // edit mode (default, vim, etc...)
-                color: localStorage.getItem('airflow_code_editor_color') || 'Light', // light/dark mode
-                showHiddenFiles: localStorage.getItem('airflow_code_editor_show_hidden_files') == 'true',
+                theme: localStorage.getItem(EDITOR_THEME_KEY) || 'default', // editor theme
+                mode: localStorage.getItem(EDITOR_MODE_KEY) || 'default', // edit mode (default, vim, etc...)
+                color: localStorage.getItem(EDITOR_COLOR_KEY) || 'Light', // light/dark mode
+                showHiddenFiles: localStorage.getItem(SHOW_HIDDEN_FILES_KEY) == 'true',
                 singleTab: false,
             },
             sidebarSize: 190 * 100 / document.documentElement.clientWidth, // sidebar size (percentage)
-            options: [
-                {
-                  name: '<span class="material-icons">close</span> Close',
-                  slug: 'close',
-                },
-                {
-                  name: '<span class="material-icons">cancel</span> Close other tabs',
-                  slug: 'close_others',
-                },
-            ],
+            menuOptions: [],
         };
     },
     methods: {
@@ -227,7 +206,7 @@ export default defineComponent({
                         this.$refs[tab.uuid][0].refresh();
                     }
                 } else {
-                    tab = new TabState(target.path, FilesEditorContainer, target);
+                    tab = new TabState(target.path, FilesEditorContainer, target, uuidv4());
                     this.tabs.push(tab);
                 }
                 this.selectedTab = tab.uuid;
@@ -236,7 +215,7 @@ export default defineComponent({
                 if (tab) {
                     this.$refs[tab.uuid][0].refresh();
                 } else {
-                    tab = new TabState('Workspace', Workspace);
+                    tab = new TabState('Workspace', Workspace, target, WORKSPACE_UUID);
                     this.tabs.push(tab);
                 }
                 this.selectedTab = tab.uuid;
@@ -245,7 +224,7 @@ export default defineComponent({
                 if (tab) {
                     this.$refs[tab.uuid][0].refresh();
                 } else {
-                    tab = new TabState(target.path, Search, target);
+                    tab = new TabState(target.path, Search, target, uuidv4());
                     this.tabs.push(tab);
                 }
                 this.selectedTab = tab.uuid;
@@ -254,7 +233,7 @@ export default defineComponent({
                 if (tab) {
                     this.$refs[tab.uuid][0].refresh();
                 } else {
-                    tab = new TabState(target.name, HistoryView, target);
+                    tab = new TabState(target.name, HistoryView, target, uuidv4());
                     this.tabs.push(tab);
                 }
                 this.selectedTab = tab.uuid;
@@ -271,17 +250,51 @@ export default defineComponent({
         showMenu(event, tab) {
             // Show tab menu
             if (tab) {
+                this.menuOptions = this.prepareMenuOptions(tab);
                 this.$refs.appMainNavMenu.showMenu(event, tab);
             }
         },
+        prepareMenuOptions(tab) {
+            // Prepare tab menu options
+            const label = tab.isBookmarked() ? 'Remove bookmark' : 'Bookmark tab';
+            return [
+                {
+                    name: '<span class="material-icons">bookmark</span> ' + label,
+                    slug: 'bookmark',
+                },
+                {
+                    type: 'divider'
+                },
+                {
+                    name: '<span class="material-icons">close</span> Close',
+                    slug: 'close',
+                },
+                {
+                    name: '<span class="material-icons">cancel</span> Close other tabs',
+                    slug: 'close_others',
+                },
+            ];
+        },
         async menuOptionClicked(event) {
             // Menu click
-            if (event.option.slug == 'close_others') {
-                for (const tab of this.tabs.filter(x => x != event.item && !x.closed)) {
-                    await this.closeTab(tab);
-                }
-            } else if (event.option.slug == 'close') {
-                await this.closeTab(event.item);
+            switch (event.option.slug) {
+                case 'bookmark':
+                    if (event.item.isBookmarked()) {
+                        event.item.removeBookmark();
+                    } else {
+                        event.item.addBookmark();
+                    }
+                    // Refresh bookmarks in the sidebar
+                    this.$refs.sidebar.refreshBookmarks();
+                    break;
+                case 'close_others':
+                    for (const tab of this.tabs.filter(x => x != event.item && !x.closed)) {
+                        await this.closeTab(tab);
+                    }
+                    break;
+                case 'close':
+                    await this.closeTab(event.item);
+                    break
             }
         },
         selectTab(tab) {

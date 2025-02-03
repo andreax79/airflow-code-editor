@@ -30,7 +30,7 @@
 </template>
 <script>
 import { defineComponent } from 'vue';
-import { setColor } from "../../commons";
+import { setColor, EDITOR_THEME_KEY, EDITOR_MODE_KEY, EDITOR_COLOR_KEY } from "../../commons";
 import themes from "../../themes";
 
 export default defineComponent({
@@ -52,9 +52,9 @@ export default defineComponent({
         },
         ok() {
             // Save setting on the local storage
-            localStorage.setItem('airflow_code_editor_theme', this.config.theme);
-            localStorage.setItem('airflow_code_editor_mode', this.config.mode);
-            localStorage.setItem('airflow_code_editor_color', this.config.color);
+            localStorage.setItem(EDITOR_THEME_KEY, this.config.theme);
+            localStorage.setItem(EDITOR_MODE_KEY, this.config.mode);
+            localStorage.setItem(EDITOR_COLOR_KEY, this.config.color);
             // Apply light/dark mode
             setColor(this.config.color);
             // Close the dialog

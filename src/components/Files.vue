@@ -157,7 +157,7 @@ import { defineComponent } from 'vue';
 import { VueGoodTable } from 'vue-good-table-next';
 // import 'vue-good-table-next/dist/vue-good-table-next.css';
 import VueSimpleContextMenu from 'vue-simple-context-menu';
-import { basename, normalize, prepareHref, git_async, showNotification, parseErrorResponse } from '../commons';
+import { basename, normalize, prepareHref, git_async, showNotification, parseErrorResponse, SHOW_HIDDEN_FILES_KEY } from '../commons';
 import { TreeEntry, prepareMenuOptions } from '../tree_entry';
 import Icon from './Icon.vue';
 import Breadcrumb from './Breadcrumb.vue';
@@ -372,7 +372,7 @@ export default defineComponent({
             } else if (event.option.slug == 'show_hidden') {
                 // Save setting on the local storage
                 this.config.showHiddenFiles = !this.config.showHiddenFiles;
-                localStorage.setItem('airflow_code_editor_show_hidden_files', this.config.showHiddenFiles);
+                localStorage.setItem(SHOW_HIDDEN_FILES_KEY, this.config.showHiddenFiles);
                 this.refresh();
             } else if (event.option.slug == 'new') {
                 this.newAction();

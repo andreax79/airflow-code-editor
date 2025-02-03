@@ -60,6 +60,7 @@ import { TreeView } from '@grapoza/vue-tree';
 import VueSimpleContextMenu from 'vue-simple-context-menu';
 import { prepareHref, splitPath, showNotification, parseErrorResponse } from '../commons';
 import { getIcon } from '../tree_entry';
+import { getBookmarks } from '../bookmarks.js';
 import Icon from './Icon.vue';
 
 export default defineComponent({
@@ -119,27 +120,47 @@ export default defineComponent({
                 node = this.prepareTreeNode(node);
                 this.model.push(node);
             });
+            // Add the bookmarks node
+            let bookmarksNode = {
+                "id": "bookmarks",
+                "label": "Bookmarks",
+                "leaf": false,
+                "icon": "bookmark",
+                "type": "tree",
+                "treeNodeSpec": {
+                    "expandable": true,
+                }
+            };
+            this.model.push(bookmarksNode);
         },
         click(model) {
             const sectionAndName = splitPath(model.id);
             const section = sectionAndName[0];
             const name = (sectionAndName[1] || '').trim();
             console.log('Sidebar.click section: ' + section + ' name: ' + name);
-            if (section == 'workspace' || section == 'git') { // Workspace
-                this.$emit("show", { id: 'workspace', name: name });
 
-            } else if (section == 'files') { // Files
-                this.$emit("show", { id: 'files', path: '/' + name, type: model.leaf ? 'blob' : 'tree' });
-
-            } else if (section == 'tags' ||
-                       section == 'remote-branches' ||
-                       section == 'local-branches') { // Git tags/branches
-                if (name) {
-                    this.$emit("show", { id: section, name: name });
-                } else {
+            switch (section) {
+                case 'workspace': // Workspace
+                case 'git':
+                    this.$emit("show", { id: 'workspace', name: name });
+                    break;
+                case 'files': // Files
+                    this.$emit("show", { id: 'files', path: '/' + name, type: model.leaf ? 'blob' : 'tree' });
+                    break;
+                case 'tags': // Git tags
+                case 'remote-branches': // Git remote branches
+                case 'local-branches': // Git local branches
+                    if (name) {
+                        this.$emit("show", { id: section, name: name });
+                    } else {
+                        // Open tree node
+                        document.getElementById(`sidebar-tree-${section}-exp`).click();
+                    }
+                    break;
+                case 'bookmarks':
                     // Open tree node
                     document.getElementById(`sidebar-tree-${section}-exp`).click();
-                }
+                    break;
             }
             return false;
         },
@@ -161,16 +182,65 @@ export default defineComponent({
             return node;
         },
         async loadChildrenAsync(parent) {
-            const self = this;
-            const path = 'tree/' + parent.id;
-            const params = this.config.showHiddenFiles ? { all: true } : {};
-            try {
-                const response = await axios.get(prepareHref(path), { params: params });
-                return response.data.value.map((node) => self.prepareTreeNode(node, parent));
-            } catch(error) {
-                const message = parseErrorResponse(error, 'Error loading tree');
-                showNotification({ message: message, title: 'Load' });
-                return [];
+            if (parent.id == 'bookmarks') {
+                // Populate bookmarks from local storage
+                const bookmarks = getBookmarks();
+                return bookmarks.filter(x => !!x).map((bookmark) => {
+                    let node = {
+                        "id": '',
+                        "leaf": true,
+                        "icon": "bookmark",
+                        "label": '',
+                        "type": "blob",
+                        "treeNodeSpec": {
+                            "expandable": false,
+                        }
+                    };
+                    switch (bookmark.id) {
+                        case 'workspace': // Workspace
+                        case 'git':
+                            node.id = 'workspace';
+                            node.label = 'Workspace';
+                            node.icon = 'work';
+                            break;
+                        case 'files': // Files
+                            node.id = 'files' + bookmark.path;
+                            node.type = bookmark.type;
+                            node.leaf = bookmark.type == 'blob';
+                            node.label = bookmark.path.split('/').pop() || '/';
+                            node.icon = (bookmark.type == 'blob') ? 'file' : 'folder';
+                            break;
+                        case 'tags': // Git tags
+                            node.id = bookmark.id + '/' + bookmark.name;
+                            node.label = bookmark.name;
+                            node.icon = 'style';
+                            break;
+                        case 'remote-branches': // Git remote branches
+                            node.id = bookmark.id + '/' + bookmark.name;
+                            node.label = bookmark.name;
+                            node.icon = 'public';
+                            break;
+                        case 'local-branches': // Git local branches
+                            node.id = bookmark.id + '/' + bookmark.name;
+                            node.label = bookmark.name;
+                            node.icon = 'fork_right';
+                            break;
+                    }
+                    return node;
+                });
+            } else {
+                // Load children from the server
+                const self = this;
+                const path = 'tree/' + parent.id;
+                const params = this.config.showHiddenFiles ? { all: true } : {};
+                try {
+                    const response = await axios.get(prepareHref(path), { params: params });
+                    return response.data.value.map((node) => self.prepareTreeNode(node, parent));
+                } catch(error) {
+                    const message = parseErrorResponse(error, 'Error loading tree');
+                    showNotification({ message: message, title: 'Load' });
+                    return [];
+                }
             }
         },
         async showMenu(event, item) {
@@ -209,6 +279,12 @@ export default defineComponent({
                 }
             }, 1);
         },
+        refreshBookmarks() {
+            // Refresh bookmarks
+            const bookmarks = this.model.at(-1);  // bookmarks node is the last one
+            const event = { item: bookmarks };
+            this.menuOptionRefresh(event);
+        }
     },
     async mounted() {
         // Init

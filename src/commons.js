@@ -21,6 +21,15 @@ export const COLORS = [
     "#e47b07", "#e36920", "#d34e2a", "#ec3b24", "#ba3d99", "#9d45c9", "#4f5aec", "#615dcf", "#3286cf", "#00abca", "#279227", "#3a980c", "#6c7f00", "#ab8b0a", "#b56427", "#757575",
     "#ff911a", "#fc8120", "#e7623e", "#fa5236", "#ca4da9", "#a74fd3", "#5a68ff", "#6d69db", "#489bd9", "#00bcde", "#36a436", "#47a519", "#798d0a", "#c1a120", "#bf7730", "#8e8e8e"]
 
+// LocalStorage keys
+export const EDITOR_THEME_KEY = 'airflow_code_editor_theme';
+export const EDITOR_MODE_KEY = 'airflow_code_editor_mode';
+export const EDITOR_COLOR_KEY = 'airflow_code_editor_color';
+export const SHOW_HIDDEN_FILES_KEY = 'airflow_code_editor_show_hidden_files';
+export const BOOKMARKS_KEY = 'airflow_code_editor_bookmarks';
+// Workspace UUID
+export const WORKSPACE_UUID = 'd15216ca-854d-4705-bff5-1887e8bf1180';
+
 var csrfToken = null;
 var vueApp = null;
 var themesPath = null;

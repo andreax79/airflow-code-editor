@@ -1,8 +1,8 @@
-ARG PLUGIN_VERSION
-ARG AIRFLOW_VERSION
+ARG AIRFLOW_VERSION=invalid_default
 
 FROM apache/airflow:${AIRFLOW_VERSION}
-ARG PLUGIN_VERSION
+ARG PLUGIN_VERSION=invalid_default
+
 LABEL org.opencontainers.image.source="https://github.com/andreax79/airflow-code-editor"
 LABEL org.opencontainers.image.url="https://github.com/andreax79/airflow-code-editor"
 LABEL org.opencontainers.image.documentation="https://github.com/andreax79/airflow-code-editor"

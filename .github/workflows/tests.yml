@@ -16,7 +16,7 @@ jobs:
         - "3.11"
         - "3.12"
         airflow:
-        - "2.10.0"
+        - "2.10.5"
 
     runs-on: ubuntu-latest
 

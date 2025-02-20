@@ -1,8 +1,7 @@
-ARG AIRFLOW_VERSION
-ARG AIRFLOW_VERSION
+ARG AIRFLOW_VERSION=invalid_default
 
 FROM apache/airflow:${AIRFLOW_VERSION}
-ARG PLUGIN_VERSION
+ARG PLUGIN_VERSION=invalid_default
 
 USER root
 # Install git and vim
@@ -34,4 +33,4 @@ RUN git config --global --add safe.directory /opt/airflow/dags
 RUN git config --global user.email "dev@example.com"
 RUN git config --global user.name "Test"
 
-ENV PYTHONPATH = /home/airflow
+ENV PYTHONPATH=/home/airflow

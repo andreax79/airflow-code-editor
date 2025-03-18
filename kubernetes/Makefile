@@ -1,52 +1,31 @@
-IMAGE_NAME=airflow-code-editor
-OWNER=andreax79
 NAMESPACE=airflow
-AIRFLOW_VERSION=2.4.1
-PLUGIN_VERSION=`cat ../airflow_code_editor/VERSION`
-VERSION=${AIRFLOW_VERSION}-${PLUGIN_VERSION}
-IMAGE=${OWNER}/${IMAGE_NAME}
-NODEPORT=airflow-webserver-nodeport
-HELM=helm
-KUBECTL=kubectl
-WEBSERVER_SECRET_NAME=my-webserver-secret
-.PHONY: help up down add_repo create_namespace
+SSH_KEY=ssh-keys/id_rsa
+WEB_SERVER_SECRET_KEY=.webserver_secret_key
 
+.PHONY: help
 help:
-	@echo "- make up           Start Airflow"
-	@echo "- make down         Stop Airflow"
+	@LC_ALL=C $(MAKE) -npq : 2> /dev/null | awk -v RS= -F: '$$1 ~ /^[^.#%]+$$/ { print "- " $$1 }' | sort
 
-.DEFAULT_GOAL := help
+$(SSH_KEY):
+	mkdir -p ssh-keys
+	ssh-keygen -t rsa -b 4096 -f $(SSH_KEY) -N ""
 
-
-.webserver_secret_key: create_namespace
+$(WEB_SERVER_SECRET_KEY):
 	@python3 -c 'import secrets; print(secrets.token_hex(16))' > .webserver_secret_key
 	# @openssl rand -hex 16 > .webserver_secret_key
-	@${KUBECTL} -n ${NAMESPACE} delete secret generic ${WEBSERVER_SECRET_NAME} 2>/dev/null || true
-	@${KUBECTL} -n ${NAMESPACE} create secret generic ${WEBSERVER_SECRET_NAME} --from-file=webserver-secret-key=.webserver_secret_key
 
-create_namespace:
-	@${KUBECTL} create namespace ${NAMESPACE} 2>/dev/null || true
+setup: $(SSH_KEY) $(WEB_SERVER_SECRET_KEY)
+	kubectl get namespace | grep -q "^${NAMESPACE} " || kubectl create namespace ${NAMESPACE}
+	# helm repo add apache-airflow https://airflow.apache.org
+	kubectl delete secret ssh-keys -n "${NAMESPACE}" 2>/dev/null || true
+	kubectl create secret generic ssh-keys -n "${NAMESPACE}" \
+	  --from-file=id_rsa=./ssh-keys/id_rsa \
+	  --from-file=id_rsa.pub=./ssh-keys/id_rsa.pub
+	kubectl delete secret generic webserver-secret -n ${NAMESPACE}  2>/dev/null || true
+	kubectl create secret generic webserver-secret --from-file=webserver-secret-key=${WEB_SERVER_SECRET_KEY} -n ${NAMESPACE}
 
-add_repo:
-	@${HELM} repo add apache-airflow https://airflow.apache.org
-
-up: .webserver_secret_key add_repo
-	@${HELM} upgrade --install airflow apache-airflow/airflow \
-		--namespace ${NAMESPACE} \
-		--create-namespace \
-		-f values.yaml \
-		--set images.airflow.repository=${IMAGE} \
-		--set images.airflow.tag=${VERSION} \
-		--debug
-	# Expose the Webserver
-	@${KUBECTL} --namespace ${NAMESPACE} \
-		expose deployment airflow-webserver \
-		--type=NodePort \
-		--name ${NODEPORT} 2>/dev/null || true
-	# Get port
-	@${KUBECTL} --namespace ${NAMESPACE} get service ${NODEPORT}
+up:
+	helm upgrade --install airflow apache-airflow/airflow --namespace "${NAMESPACE}" -f values.yaml
 
 down:
-	@${HELM} delete airflow --namespace ${NAMESPACE}
-
-all: help
+	helm uninstall airflow

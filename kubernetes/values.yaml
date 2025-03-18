@@ -1,25 +1,186 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+---
+# Default airflow repository -- overridden by all the specific images below
+defaultAirflowRepository: andreax79/airflow-code-editor
+
+# Default airflow tag to deploy
+defaultAirflowTag: "2.10.5"
+
+# Airflow version (Used to make some decisions based on Airflow Version being deployed)
+airflowVersion: "2.10.5"
+
+# Airflow executor
+executor: "CeleryExecutor"
+
+# Airflow database & redis config
+data:
+  metadataConnection:
+    user: postgres
+    pass: "change_me"
+    protocol: postgresql
+    host: ~
+    port: 5432
+    db: postgres
+    sslmode: disable
+
+# Fernet key settings
+fernetKey: "6RFdqkb3deSRD5VNJ9RVugD3Qf4X_DmZmuaYxuUMTyo="
+
+# Flask secret key for Airflow Webserver: `[webserver] secret_key` in airflow.cfg
+webserverSecretKey: "xb8tP7zz3Y6X%jNxnmg*cfd$EQ3O5W"
+
+# Airflow Worker Config
+workers:
+  # Number of airflow celery workers in StatefulSet
+  replicas: 1
+
+  persistence:
+    # Enable persistent volumes
+    enabled: true
+    # Volume size for worker StatefulSet
+    size: 5Gi
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:
+
+# Airflow scheduler settings
+scheduler:
+  enabled: true
+  replicas: 1
+
+  logGroomerSidecar:
+    # Whether to deploy the Airflow scheduler log groomer sidecar.
+    enabled: true
+    # Number of days to retain logs
+    retentionDays: 15
+
+# Airflow webserver settings
+webserver:
+  enabled: true
+
+  # Number of webservers
+  replicas: 1
+
+  # Create initial user.
+  defaultUser:
+    enabled: true
+    role: Admin
+    username: admin
+    email: admin@example.com
+    firstName: admin
+    lastName: user
+    password: admin
+
+  # Mount additional volumes into webserver
+  extraVolumes:
+    - name: ssh-keys-volume
+      secret:
+        secretName: ssh-keys
+        defaultMode: 0400
+    - name: airflow-dags
+      persistentVolumeClaim:
+        claimName: airflow-dags
+
+  extraVolumeMounts:
+    - name: ssh-keys-volume
+      mountPath: /home/airflow/.ssh
+    - name: airflow-dags
+      mountPath: /opt/airflow/dags
+
+
+# Airflow Triggerer Config
+triggerer:
+  enabled: true
+  # Number of airflow triggerers in the deployment
+  replicas: 1
+
+  persistence:
+    # Enable persistent volumes
+    enabled: true
+    # Volume size for triggerer StatefulSet
+    size: 5Gi
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:
+
+  logGroomerSidecar:
+    # Whether to deploy the Airflow triggerer log groomer sidecar.
+    enabled: true
+    # Number of days to retain logs
+    retentionDays: 15
+
+# Airflow Dag Processor Config
+dagProcessor:
+  enabled: false
+  # Number of airflow dag processors in the deployment
+  replicas: 1
+
+  logGroomerSidecar:
+    # Whether to deploy the Airflow dag processor log groomer sidecar.
+    enabled: true
+    # Number of days to retain logs
+    retentionDays: 15
+
+# Flower settings
+flower:
+  enabled: false
+
+# StatsD settings
+statsd:
+  enabled: true
+
+# Configuration for the redis provisioned by the chart
+redis:
+  enabled: true
+
+  persistence:
+    # Enable persistent volumes
+    enabled: true
+    # Volume size for worker StatefulSet
+    size: 1Gi
+    # If using a custom storageClass, pass name ref to all statefulSets here
+    storageClassName:
+
+# Configuration for postgresql subchart
+postgresql:
+  enabled: true
+  auth:
+    enablePostgresUser: true
+    postgresPassword: "change_me"
+
+# DAGs
 dags:
   persistence:
     # Enable persistent volume for storing dags
     enabled: true
-    # Access mode of the dags volume
+    # Volume size for dags
+    size: 1Gi
+    # If using a custom storageClass, pass name here
+    storageClassName:
+    # access mode of the persistent volume
     accessMode: ReadWriteMany
 
-webserverSecretKeySecretName: my-webserver-secret
+  gitSync:
+    enabled: false
 
-webserver:
-  # Dags volume
-  extraVolumes:
-    - name: dags
-      persistentVolumeClaim:
-        claimName: "airflow-dags"
-  extraVolumeMounts:
-    - name: dags
-      mountPath: "/opt/airflow/dags"
-      readOnly: false
-
-images:
-  # Airflow Code Editor image
-  airflow:
-    repository: "andreax79/airflow-code-editor"
-    tag: "2.4.1-7.2.1"
+logs:
+  persistence:
+    # Enable persistent volume for storing logs
+    enabled: false
+    # Volume size for logs
+    size: 5Gi
+    # If using a custom storageClass, pass name here
+    storageClassName:

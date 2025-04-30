@@ -1,0 +1,38 @@
+/* Airflow 3.x */
+body {
+  padding: 0;
+}
+.material-icons {
+  vertical-align: middle;
+}
+.cm-flex-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin: 0;
+  background-color: #eee;
+}
+.cm-flex-child-fixed {
+  flex: none;
+}
+.cm-flex-child-grow {
+  flex: auto;
+  overflow-y:hidden;
+}
+.cm-footer {
+  border-top: 1px solid #eee;
+  padding: 0.5em 0.5em;
+  background-color: #f5f5f5;
+}
+.CodeMirror {
+  border: 1px solid #eee;
+  height: 100%;
+}
+.cm-tab {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAMCAYAAAAkuj5RAAAAAXNSR0IArs4c6QAAAGFJREFUSMft1LsRQFAQheHPowAKoACx3IgEKtaEHujDjORSgWTH/ZOdnZOcM/sgk/kFFWY0qV8foQwS4MKBCS3qR6ixBJvElOobYAtivseIE120FaowJPN75GMu8j/LfMwNjh4HUpwg4LUAAAAASUVORK5CYII=);
+  background-position: right;
+  background-repeat: no-repeat;
+}
+.footer {
+  display: none !important;
+}

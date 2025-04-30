@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <base href="/code_editor/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Airflow Code Editor</title>
+    <script type="module" src="static/airflow_code_editor.js"></script>
+    <script src="static/jquery-3.7.1.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/fontawesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/regular.min.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/solid.min.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/brands.min.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/v4-font-face.min.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/airflowDefaultTheme.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/style.css">
+    <link rel="stylesheet" type="text/css" href="static/css/vue-tree.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/vue-good-table.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/editor_v3.css" />
+  </head>
+  <body>
+    <div id="global-container" style="display: block"></div>
+    <!-- teleport target -->
+    <div id="airflow-code-editor-modals"></div>
+
+    <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function(event) {
+        // Init
+        init(null);
+    });
+    </script>
+  </body>
+</html>

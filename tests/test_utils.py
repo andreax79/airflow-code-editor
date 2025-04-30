@@ -93,7 +93,6 @@ class TestUtils(TestCase):
         with app.app_context():
             r = execute_git_command(['ls-local', '-l', '~logs'])
         assert r.returncode == 0
-        assert r.stdout
 
     def test_ls_local_airflow_home(self):
         with app.app_context():

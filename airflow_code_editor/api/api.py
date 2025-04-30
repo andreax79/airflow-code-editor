@@ -18,9 +18,6 @@
 import logging
 import mimetypes
 
-from airflow.version import version as airflow_version
-from flask import make_response, request
-from flask_wtf.csrf import generate_csrf
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_for_filename
@@ -37,9 +34,12 @@ from airflow_code_editor.fs import RootFS
 from airflow_code_editor.tree import get_stat, get_tree
 from airflow_code_editor.utils import (
     DummyLexer,
+    airflow_version,
     error_message,
+    generate_csrf,
     get_plugin_boolean_config,
     get_plugin_int_config,
+    make_response,
     normalize_path,
     prepare_api_response,
 )
@@ -55,20 +55,15 @@ __all__ = [
     "get_version",
 ]
 
-AIRFLOW_MAJOR_VERSION = int(airflow_version.split(".")[0])
 
-
-def save(path=None):
+def save(path: str, data: bytes, mime_type: str):
     "Save a file (invoked by the HTTP POST method)"
     try:
-        mime_type = request.headers.get("Content-Type", "text/plain")
         is_text = mime_type.startswith("text/")
         if is_text:
-            data = request.get_data(as_text=True)
+            data = data.decode("utf-8", errors="ignore")
             # Newline fix (remove cr)
             data = data.replace("\r", "").rstrip() + "\n"
-        else:  # Binary file
-            data = request.get_data()
         root_fs = RootFS()
         root_fs.path(path).write_file(data=data, is_text=is_text)
         return prepare_api_response(path=normalize_path(path))
@@ -89,7 +84,7 @@ def git_repo_get(path):
     except Exception:
         # No attachment filename
         attachment_filename = None
-    response = git.execute_git_command(["cat-file", "-p", path]).prepare_git_response()
+    response = execute_git_command(["cat-file", "-p", path])
     if attachment_filename:
         content_disposition = 'attachment; filename="{0}"'.format(attachment_filename)
         response.headers["Content-Disposition"] = content_disposition
@@ -102,9 +97,8 @@ def git_repo_get(path):
     return response
 
 
-def execute_git_command():
+def execute_git_command(git_args):
     "Execute a GIT command (invoked by the HTTP POST method)"
-    git_args = request.json.get("args", [])
     return git.execute_git_command(git_args).prepare_git_response()
 
 
@@ -157,7 +151,7 @@ def delete(path):
         )
 
 
-def format():
+def format(data: str):
     "Sort imports and format code"
     try:
         import black
@@ -174,7 +168,6 @@ def format():
             + "To install black and isort, use the following command: `pip install black isort`",
         )
     try:
-        data = request.get_data(as_text=True)
         # Newline fix (remove cr)
         data = data.replace("\r", "").rstrip()
         # Sort imports
@@ -197,6 +190,7 @@ def format():
 
 
 def tree(path, args={}, method="GET"):
+    "Get tree entries"
     try:
         if method == "HEAD":
             stat = get_stat(path)
@@ -246,6 +240,7 @@ def search(args={}):
 
 
 def ping():
+    "Ping"
     return {"value": generate_csrf()}
 
 

@@ -32,14 +32,14 @@ export const WORKSPACE_UUID = 'd15216ca-854d-4705-bff5-1887e8bf1180';
 
 var csrfToken = null;
 var vueApp = null;
-var themesPath = null;
 
 export function parseErrorResponse(error, defaultMessage) {
+    const message = error?.response?.data?.error?.message || defaultMessage;
     try {
         const data = JSON.parse(error.response.data);
         return data.error.message;
     } catch (ex) {
-        return defaultMessage;
+        return message;
     }
 }
 
@@ -113,8 +113,15 @@ async function refreshCsrfToken() {
     }
 }
 
-export function initCsrfToken(csrfTokenParam) {
-    csrfToken = csrfTokenParam;
+export function initBearerToken() {
+    // Bearer Token Authorization setup
+    let tokenParam = localStorage.token;
+    axios.defaults.headers.common["Authorization"] = 'Bearer ' + tokenParam;
+}
+
+export function initCsrfToken(tokenParam) {
+    // CSRF Token Authorization setup
+    csrfToken = tokenParam;
     axios.defaults.headers.common["X-CSRFToken"] = csrfToken;
     setTimeout(refreshCsrfToken, CSRF_REFRESH);
 }
@@ -154,10 +161,14 @@ export function setColor(color) {
     }
 }
 
-export function initApp(app, target, teleportTarget, csrfTokenParam, themesPathParam) {
-    themesPath = themesPathParam;
-    // CSRF Token setup
-    initCsrfToken(csrfTokenParam);
+export function initApp(app, target, teleportTarget, tokenParam) {
+    if (tokenParam === null) {
+        // Bearer Token setup (for Airflow 3.x)
+        initBearerToken();
+    } else {
+        // CSRF Token setup (for Airflow 2.x)
+        initCsrfToken(tokenParam);
+    }
     // Add VueUniversalModal
     app.use(VueUniversalModal, {
         teleportTarget: teleportTarget

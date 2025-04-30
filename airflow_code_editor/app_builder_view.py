@@ -15,6 +15,7 @@
 #   limitations under the License
 #
 
+from airflow.plugins_manager import AirflowPlugin
 from airflow.security import permissions
 from airflow.www import auth
 from flask import Blueprint, redirect, request
@@ -32,12 +33,14 @@ from airflow_code_editor.commons import (
     STATIC,
     VERSION,
 )
+from airflow_code_editor.utils import is_enabled
 
 __all__ = [
     "appbuilder_view",
     "api_reference_menu",
     "api_blueprint",
     "flask_blueprints",
+    "CodeEditorPlugin",
 ]
 
 PERMISSIONS = [
@@ -70,12 +73,15 @@ class AppBuilderCodeEditorView(BaseView):
     @expose("/repo", methods=["POST"])
     @auth.has_access(PERMISSIONS)
     def repo_base(self):
-        return api.execute_git_command()
+        git_args = request.json.get("args", [])
+        return api.execute_git_command(git_args)
 
     @expose("/files/<path:path>", methods=["POST"])
     @auth.has_access(PERMISSIONS)
     def save(self, path=None):
-        return api.save(path)
+        mime_type = request.headers.get("Content-Type", "text/plain")
+        data = request.get_data()
+        return api.save(path=path, data=data, mime_type=mime_type)
 
     @expose("/files/<path:path>", methods=["GET"])
     @auth.has_access(PERMISSIONS)
@@ -90,7 +96,8 @@ class AppBuilderCodeEditorView(BaseView):
     @expose("/format", methods=["POST"])
     @auth.has_access(PERMISSIONS)
     def format(self):
-        return api.format()
+        data = request.get_data(as_text=True)
+        return api.format(data)
 
     @expose("/tree", methods=["GET", "HEAD"])
     @auth.has_access(PERMISSIONS)
@@ -137,3 +144,12 @@ code_editor_plugin_blueprint = Blueprint(
     static_url_path=STATIC,
 )
 flask_blueprints = [code_editor_plugin_blueprint, api_blueprint]
+
+
+# Plugin
+class CodeEditorPlugin(AirflowPlugin):
+    name = 'editor_plugin'
+    flask_blueprints = flask_blueprints
+    appbuilder_menu_items = [api_reference_menu] if (is_enabled() and api_blueprint is not None) else []
+    appbuilder_views = [appbuilder_view] if is_enabled() else []
+    fastapi_apps = []

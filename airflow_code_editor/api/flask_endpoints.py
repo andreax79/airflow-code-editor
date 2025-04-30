@@ -65,7 +65,9 @@ def get_files(*, path: str = None):
 @csrf.exempt
 def post_files(*, path: str = None):
     "Write file content"
-    return api.save(path)
+    mime_type = request.headers.get("Content-Type", "text/plain")
+    data = request.get_data()
+    return api.save(path=path, data=data, mime_type=mime_type)
 
 
 @security.requires_access_dag("PUT")
@@ -86,7 +88,8 @@ def search(*, query: str):
 @csrf.exempt
 def post_git():
     "Execute a GIT command"
-    return api.execute_git_command()
+    git_args = request.json.get("args", [])
+    return api.execute_git_command(git_args)
 
 
 @security.requires_access_dag("GET")

@@ -65,7 +65,7 @@
 <script>
 import axios from 'axios';
 import { defineComponent } from 'vue';
-import { basename, normalize, prepareHref } from '../commons';
+import { basename, normalize, prepareHref, showNotification, parseErrorResponse } from '../commons';
 import { Stack } from '../stack';
 import Icon from './Icon.vue';
 import Breadcrumb from './Breadcrumb.vue';
@@ -91,13 +91,19 @@ export default defineComponent({
         },
         async refresh() {
             console.log("Search.refresh");
-            this.loading = true;
-            const response = await axios.get(prepareHref('search'), { 'params': { 'query': this.target.query, 'context': true }});
-            this.items = response.data.value.map(e => {
-                e.stack = new Stack(e.path, 'blob', e.row_number);
-                return e;
-            });
-            this.loading = false;
+            try {
+                this.loading = true;
+                const response = await axios.get(prepareHref('search'), { 'params': { 'query': this.target.query, 'context': true }});
+                this.items = response.data.value.map(e => {
+                    e.stack = new Stack(e.path, 'blob', e.row_number);
+                    return e;
+                });
+                this.loading = false;
+            } catch(error) {
+                this.loading = false;
+                const message = parseErrorResponse(error, 'Search error');
+                showNotification({ message: message, title: 'Search' });
+            };
         },
         update(target) {
         },

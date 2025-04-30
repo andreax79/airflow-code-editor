@@ -20,7 +20,6 @@ from fnmatch import fnmatch
 from typing import Any, List, Optional, Tuple, Union
 
 import fs
-from flask import Response, send_file, stream_with_context
 from fs.mountfs import MountError, MountFS
 from fs.multifs import MultiFS
 from fs.path import abspath, forcedir, normpath
@@ -33,6 +32,7 @@ from airflow_code_editor.utils import (
     get_plugin_config,
     get_plugin_int_config,
     read_mount_points_config,
+    send_file,
 )
 
 __all__ = [
@@ -336,27 +336,21 @@ class FSPath(object):
             # Local filesystem
             if as_attachment:
                 # Send file as attachment (set Content-Disposition: attachment header)
-                try:
-                    # flask >= 2.0 -  download_name replaces the attachment_filename
-                    return send_file(
-                        self.root_fs.getsyspath(self.path),
-                        as_attachment=True,
-                        download_name=self.name,
-                    )
-                except TypeError:
-                    return send_file(
-                        self.root_fs.getsyspath(self.path),
-                        as_attachment=True,
-                    )
+                return send_file(
+                    self.root_fs.getsyspath(self.path),
+                    as_attachment=True,
+                    download_name=self.name,
+                )
             else:
                 return send_file(self.root_fs.getsyspath(self.path))
         else:
             # Other filesystems
-            response = Response(stream_with_context(self.read_file_chunks()))
-            if as_attachment:
-                content_disposition = "attachment;filename={}".format(self.name)
-                response.headers["Content-Disposition"] = content_disposition
-            return response
+            return send_file(
+                self.read_file_chunks(),
+                as_attachment=as_attachment,
+                download_name=self.name,
+                stream=True,
+            )
 
     def write_file(self, data: Union[str, bytes], is_text: bool) -> None:
         "Write data to a file"

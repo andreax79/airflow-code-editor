@@ -7,7 +7,7 @@
       </textarea>
       <label>
           <icon icon="check_box" :state="amend" @click="toggleamend" />
-          Amend amend previous commit
+          Amend previous commit
       </label>
       <div class="dialog-buttons">
         <button @click="cancel" class="btn btn-default">Cancel</button>

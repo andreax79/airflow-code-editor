@@ -21,10 +21,27 @@ from pathlib import Path
 from typing import Dict, List, Optional, cast
 
 from airflow import configuration
-from flask import Response
+from airflow.version import version as airflow_version
 from fs.errors import FSError
 from pygments.lexer import RegexLexer
 from pygments.token import Text
+
+try:
+    import fastapi
+    import fastapi.responses
+
+    Response = fastapi.Response
+    APIResponseType = fastapi.responses.JSONResponse
+    FileResponseType = fastapi.responses.FileResponse
+    FASTAPI = True
+except ImportError:
+    import flask
+    from flask_wtf import csrf
+
+    Response = flask.Response
+    APIResponseType = flask.Response
+    FileResponseType = flask.Response
+    FASTAPI = False
 
 from airflow_code_editor.commons import (
     HTTP_200_OK,
@@ -32,6 +49,8 @@ from airflow_code_editor.commons import (
     PLUGIN_NAME,
     ROOT_MOUNTPOUNT,
 )
+
+AIRFLOW_MAJOR_VERSION = int(airflow_version.split(".")[0])
 
 __all__ = [
     'DummyLexer',
@@ -44,6 +63,11 @@ __all__ = [
     'is_enabled',
     'normalize_path',
     'prepare_api_response',
+    'send_file',
+    'make_response',
+    'airflow_version',
+    'generate_csrf',
+    'AIRFLOW_MAJOR_VERSION',
 ]
 
 
@@ -166,22 +190,6 @@ def error_message(ex: Exception) -> str:
         return str(ex)
 
 
-def prepare_api_response(
-    error_message: Optional[str] = None,
-    http_status_code: int = HTTP_200_OK,
-    **kargs,
-) -> Response:
-    "Prepare API response (JSON)"
-    data = dict(kargs)
-    if error_message is not None:
-        data['error'] = {'message': error_message}
-    return Response(
-        response=json.dumps(data),
-        mimetype="application/json",
-        status=http_status_code,
-    )
-
-
 def always() -> bool:
     "Always return True"
     return True
@@ -197,3 +205,105 @@ class DummyLexer(RegexLexer):
             (r'.*\n', Text),
         ]
     }
+
+
+if FASTAPI:
+    # FastAPI JSONResponse (for Airflow 3.x)
+
+    def prepare_api_response(
+        error_message: Optional[str] = None,
+        http_status_code: int = HTTP_200_OK,
+        **kargs,
+    ) -> APIResponseType:
+        "Prepare API response (JSON)"
+        data = dict(kargs)
+        if error_message is not None:
+            data['error'] = {'message': error_message}
+        return fastapi.responses.JSONResponse(
+            content=data,
+            status_code=http_status_code,
+        )
+
+    def send_file(
+        path_file_or_iterator,
+        mimetype=None,
+        as_attachment=False,
+        download_name=None,
+        stream=False,
+    ) -> FileResponseType:
+        "Send the contents of a file to the client"
+        if stream:
+            response = fastapi.responses.StreamingResponse(
+                path_file_or_iterator,
+                media_type='application/octet-stream',
+            )
+
+            if as_attachment:
+                content_disposition = f'attachment; filename="{download_name}"'
+                response.headers["Content-Disposition"] = content_disposition
+
+            return response
+        else:
+            return fastapi.responses.FileResponse(
+                path=path_file_or_iterator,
+                filename=download_name,
+            )
+
+    def make_response(content, status, mimetype) -> fastapi.Response:
+        "Create a response object"
+        return fastapi.Response(content=content, status_code=status, media_type=mimetype or "text/plain")
+
+    def generate_csrf() -> str:
+        "Nothing to do"
+        return ""
+
+else:
+    # Fallback to Flask Response (for Airflow 2.x)
+
+    def prepare_api_response(
+        error_message: Optional[str] = None,
+        http_status_code: int = HTTP_200_OK,
+        **kargs,
+    ) -> APIResponseType:
+        "Prepare API response (JSON)"
+        data = dict(kargs)
+        if error_message is not None:
+            data['error'] = {'message': error_message}
+        return flask.Response(
+            response=json.dumps(data),
+            mimetype="application/json",
+            status=http_status_code,
+        )
+
+    def send_file(
+        path_file_or_iterator,
+        mimetype=None,
+        as_attachment=False,
+        download_name=None,
+        stream=False,
+    ) -> FileResponseType:
+        "Send the contents of a file to the client"
+
+        if stream:
+            response = flask.Response(flask.stream_with_context(path_file_or_iterator))
+            if as_attachment:
+                content_disposition = "attachment;filename={}".format(download_name)
+                response.headers["Content-Disposition"] = content_disposition
+            return response
+        else:
+            return flask.send_file(
+                path_file_or_iterator,
+                as_attachment=as_attachment,
+                download_name=download_name,
+            )
+
+    def make_response(content, status, mimetype) -> flask.Response:
+        "Create a response object"
+        response = flask.make_response(content, status)
+        if mimetype:
+            response.headers['Content-Type'] = mimetype
+        return response
+
+    def generate_csrf() -> str:
+        "Generate a CSRF token"
+        return csrf.generate_csrf()

@@ -22,12 +22,12 @@ RUN pip install \
     pytest-cov \
     --no-cache-dir airflow-code-editor==${PLUGIN_VERSION} -r requirements-optional.txt pss && rm requirements-optional.txt
 # Init airflow db
-RUN airflow db migrate
+RUN airflow db init
 # Create user 'admin' with password 'admin'
-# RUN airflow users create -r Admin -u admin -e admin@example.com -f admin -l admin -p admin
-# RUN airflow sync-perm
+RUN airflow users create -r Admin -u admin -e admin@example.com -f admin -l admin -p admin
+RUN airflow sync-perm
 # Set API Authentication
-# RUN sed -i 's/auth_backends = .*/auth_backends = airflow.api.auth.backend.basic_auth/' /opt/airflow/airflow.cfg
+RUN sed -i 's/auth_backends = .*/auth_backends = airflow.api.auth.backend.basic_auth/' /opt/airflow/airflow.cfg
 # Configure GIT
 RUN git config --global --add safe.directory /opt/airflow/dags
 RUN git config --global user.email "dev@example.com"

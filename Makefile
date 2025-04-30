@@ -12,7 +12,7 @@ help:
 	@echo "- make dev-image    Build dev image"
 	@echo "- make dev-shell    Start a shell in the dev environment"
 	@echo "- make standalone   Run an all-in-one copy of Airflow"
-	@echo "- make webserver    Start a Airflow webserver instance"
+	@echo "- make api-server   Start a Airflow api-server instance"
 	@echo "- make scheduler    Start a scheduler instance"
 
 lint:
@@ -40,8 +40,8 @@ webserver:
 scheduler:
 	$(MAKE) -C docker scheduler
 
-standalone:
-	$(MAKE) -C docker standalone
+api-server:
+	$(MAKE) -C docker api-server
 
 build: clean
 	python3 setup.py bdist_wheel

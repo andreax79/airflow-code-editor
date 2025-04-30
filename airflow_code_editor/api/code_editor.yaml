@@ -37,7 +37,7 @@ paths:
   /files/{path}:
     get:
       summary: "Get file content"
-      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
       operationId: get_files
       tags: [Files]
       parameters:
@@ -60,7 +60,7 @@ paths:
           description: "File not found"
     post:
       summary: "Write file content"
-      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
       operationId: post_files
       tags: [Files]
       requestBody:
@@ -90,7 +90,7 @@ paths:
           description: "Client does not have sufficient permission"
     delete:
       summary: "Delete a file"
-      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
       operationId: delete_files
       tags: [Files]
       parameters:
@@ -117,7 +117,7 @@ paths:
   /tree:
     get:
       summary: "List root tree entries"
-      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
       operationId: get_tree_root
       tags: [Tree]
       parameters:
@@ -135,7 +135,7 @@ paths:
   /tree/{path}:
     get:
       summary: "List tree entries"
-      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
       operationId: get_tree
       tags: [Tree]
       parameters:
@@ -154,7 +154,7 @@ paths:
   /search:
     get:
       summary: "Search files"
-      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
       operationId: search
       tags: [Files]
       parameters:
@@ -183,7 +183,7 @@ paths:
   /git:
     post:
       summary: "Execute a GIT command"
-      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
       operationId: post_git
       tags: [GIT]
       requestBody:
@@ -210,7 +210,7 @@ paths:
   /version:
     get:
       summary: Get version information
-      x-openapi-router-controller: airflow_code_editor.api.endpoints
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
       operationId: get_version
       tags: [Misc]
       responses:

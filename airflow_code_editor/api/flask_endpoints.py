@@ -15,64 +15,96 @@
 #   limitations under the License
 #
 
+import importlib.resources
+
 from airflow.api_connexion import security
+from airflow.configuration import conf
+from airflow.utils.yaml import safe_load
 from airflow.www.app import csrf
+from connexion import FlaskApi
 from flask import request
 
-from airflow_code_editor.code_editor_view import AbstractCodeEditorView
+from airflow_code_editor.api import api
+
+__all__ = [
+    "get_tree",
+    "get_tree_root",
+    "get_files",
+    "post_files",
+    "delete_files",
+    "search",
+    "post_git",
+    "get_version",
+    "load_specification",
+    "api_blueprint",
+]
 
 
 @security.requires_access_dag("GET")
 @csrf.exempt
 def get_tree(*, path: str = None):
     "List tree entries"
-    return AbstractCodeEditorView._tree(path, args=request.args, method="GET")
+    return api.tree(path, args=request.args, method="GET")
 
 
 @security.requires_access_dag("GET")
 @csrf.exempt
 def get_tree_root():
     "List root tree entries"
-    return AbstractCodeEditorView._tree(None, args=request.args, method="GET")
+    return api.tree(None, args=request.args, method="GET")
 
 
 @security.requires_access_dag("GET")
 @csrf.exempt
 def get_files(*, path: str = None):
     "Get file content"
-    return AbstractCodeEditorView._load(path)
+    return api.load(path)
 
 
 @security.requires_access_dag("PUT")
 @csrf.exempt
 def post_files(*, path: str = None):
     "Write file content"
-    return AbstractCodeEditorView._save(path)
+    return api.save(path)
 
 
 @security.requires_access_dag("PUT")
 @csrf.exempt
 def delete_files(*, path: str = None):
     "Delete a file"
-    return AbstractCodeEditorView._delete(path)
+    return api.delete(path)
 
 
 @security.requires_access_dag("GET")
 @csrf.exempt
 def search(*, query: str):
     "File search"
-    return AbstractCodeEditorView._search(args=request.args)
+    return api.search(args=request.args)
 
 
 @security.requires_access_dag("PUT")
 @csrf.exempt
 def post_git():
     "Execute a GIT command"
-    return AbstractCodeEditorView._execute_git_command()
+    return api.execute_git_command()
 
 
 @security.requires_access_dag("GET")
 @csrf.exempt
 def get_version():
     "Get version information"
-    return AbstractCodeEditorView._get_version()
+    return api.get_version()
+
+
+def load_specification() -> dict:
+    with importlib.resources.path("airflow_code_editor.api", "code_editor.yaml") as f:
+        return safe_load(f.read_text())
+
+
+api_blueprint = FlaskApi(
+    specification=load_specification(),
+    base_path="/code_editor/api",
+    options={
+        "swagger_ui": conf.getboolean("webserver", "enable_swagger_ui", fallback=True),
+    },
+).blueprint

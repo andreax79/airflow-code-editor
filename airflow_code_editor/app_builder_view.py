@@ -17,10 +17,11 @@
 
 from airflow.security import permissions
 from airflow.www import auth
-from flask import redirect, request
+from flask import Blueprint, redirect, request
 from flask_appbuilder import BaseView, expose
 
-from airflow_code_editor.code_editor_view import AbstractCodeEditorView
+from airflow_code_editor.api import api
+from airflow_code_editor.api.flask_endpoints import api_blueprint
 from airflow_code_editor.commons import (
     API_REFERENCE_LABEL,
     API_REFERENCE_MENU_CATEGORY,
@@ -28,27 +29,38 @@ from airflow_code_editor.commons import (
     MENU_CATEGORY,
     MENU_LABEL,
     ROUTE,
+    STATIC,
     VERSION,
 )
 
-__all__ = ["appbuilder_view", "api_reference_menu"]
+__all__ = [
+    "appbuilder_view",
+    "api_reference_menu",
+    "api_blueprint",
+    "flask_blueprints",
+]
 
 PERMISSIONS = [
     (permissions.ACTION_CAN_READ, permissions.RESOURCE_WEBSITE),
 ]
 
 # ############################################################################
-# AppBuilder (Airflow >= 2.0)
+# AppBuilder (Airflow 2.x)
 
 
-class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
+class AppBuilderCodeEditorView(BaseView):
     route_base = ROUTE
     base_permissions = ["can_list", "can_create", "menu_acccess"]
 
     @expose("/")
     @auth.has_access(PERMISSIONS)
     def list(self):
-        return self._index()
+        return self.render_template(
+            "index_appbuilder.html",
+            airflow_major_version=2,  # Airflow 2
+            js_files=JS_FILES,
+            version=VERSION,
+        )
 
     @expose("/api/")
     @auth.has_access(PERMISSIONS)
@@ -58,62 +70,52 @@ class AppBuilderCodeEditorView(BaseView, AbstractCodeEditorView):
     @expose("/repo", methods=["POST"])
     @auth.has_access(PERMISSIONS)
     def repo_base(self):
-        return self._execute_git_command()
+        return api.execute_git_command()
 
     @expose("/files/<path:path>", methods=["POST"])
     @auth.has_access(PERMISSIONS)
     def save(self, path=None):
-        return self._save(path)
+        return api.save(path)
 
     @expose("/files/<path:path>", methods=["GET"])
     @auth.has_access(PERMISSIONS)
     def load(self, path=None):
-        return self._load(path)
+        return api.load(path)
 
     @expose("/files/<path:path>", methods=["DELETE"])
     @auth.has_access(PERMISSIONS)
     def delete(self, path=None):
-        return self._delete(path)
+        return api.delete(path)
 
     @expose("/format", methods=["POST"])
     @auth.has_access(PERMISSIONS)
     def format(self):
-        return self._format()
+        return api.format()
 
     @expose("/tree", methods=["GET", "HEAD"])
     @auth.has_access(PERMISSIONS)
     def tree_base(self, path=None):
-        return self._tree(path, args=request.args, method=request.method)
+        return api.tree(path, args=request.args, method=request.method)
 
     @expose("/tree/<path:path>", methods=["GET", "HEAD"])
     @auth.has_access(PERMISSIONS)
     def tree(self, path=None):
-        return self._tree(path, args=request.args, method=request.method)
+        return api.tree(path, args=request.args, method=request.method)
 
     @expose("/search", methods=["GET"])
     @auth.has_access(PERMISSIONS)
     def search(self):
-        return self._search(args=request.args)
+        return api.search(args=request.args)
 
     @expose("/version", methods=["GET"])
     @auth.has_access(PERMISSIONS)
     def get_version(self):
-        return self._get_version()
+        return api.get_version()
 
     @expose("/ping", methods=["GET"])
     @auth.has_access(PERMISSIONS)
     def ping(self):
-        return self._ping()
-
-    def _render(self, template, *args, **kargs):
-        return self.render_template(
-            template + "_appbuilder.html",
-            airflow_major_version=self.airflow_major_version,
-            js_files=JS_FILES,
-            version=VERSION,
-            *args,
-            **kargs
-        )
+        return api.ping()
 
 
 appbuilder_code_editor_view = AppBuilderCodeEditorView()
@@ -127,3 +129,11 @@ api_reference_menu = {
     "category": API_REFERENCE_MENU_CATEGORY,
     "href": ROUTE + "/api/",
 }
+code_editor_plugin_blueprint = Blueprint(
+    'code_editor_plugin_blueprint',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+    static_url_path=STATIC,
+)
+flask_blueprints = [code_editor_plugin_blueprint, api_blueprint]

@@ -101,6 +101,7 @@ dev-shell: dags banner
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/../sh.py:/opt/airflow/sh.py \
+		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
 		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \

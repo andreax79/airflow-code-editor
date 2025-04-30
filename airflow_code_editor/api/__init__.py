@@ -14,26 +14,3 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License
 #
-
-import importlib.resources
-
-from airflow.configuration import conf
-from airflow.utils.yaml import safe_load
-from connexion import FlaskApi
-
-__all__ = ["api_blueprint"]
-
-
-def load_specification() -> dict:
-    with importlib.resources.path("airflow_code_editor.api", "code_editor.yaml") as f:
-        return safe_load(f.read_text())
-
-
-api_blueprint = FlaskApi(
-    specification=load_specification(),
-    base_path="/code_editor/api",
-    options={
-        "swagger_ui": conf.getboolean("webserver", "enable_swagger_ui", fallback=True),
-        #     "swagger_path": os.fspath(ROOT_APP_DIR.joinpath("www", "static", "dist", "swagger-ui")),
-    },
-).blueprint

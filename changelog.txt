@@ -453,3 +453,13 @@
 ### Changed
 
 - Upgrade to CodeMirror 6
+
+## [8.0.0] - XXXX-XX-XX
+
+### Changed
+
+- Airflow 3.0 compatibility
+
+## Fix
+
+- Show save file error message

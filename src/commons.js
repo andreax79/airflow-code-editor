@@ -64,6 +64,20 @@ export function showNotification(options) {
     });
 }
 
+export function showError(message, options) {
+    if (vueApp) {
+        vueApp.showError(message, options);
+    }
+}
+
+export function showWarning(message, options) {
+    if (vueApp) {
+        options = (options !== undefined) ? options : {};
+        options['type'] = options.type || 'warning';
+        vueApp.showError(message, options);
+    }
+}
+
 export function normalize(path) {
     if (path[0] != '/') {
         path = '/' + path;
@@ -128,24 +142,42 @@ export function initCsrfToken(tokenParam) {
 
 export async function git_async(args, options) {
     options = (options !== undefined) ? options : {};
+    const title = options?.title || 'Git';
     const payload = { args: [].concat.apply([], args.filter(x => x != null)) };  // flat the array
-    const pre = (options.type == 'terminal') ? '$ git ' + payload.args.join(' ') + '\n' : '';
+    const command = '$ git ' + payload.args.join(' ') + '\n';
     try {
         const response = await axios.post(prepareHref('repo'), payload);
         if (response.data.returncode != 0) {
-            const message = pre + response.data.error.message;
-            showNotification({ title: options?.title || 'Git', message: message, type: 'error' });
+            const message = response.data?.error?.message || response.data?.data;
+            if (options?.type == 'terminal') {
+                showWarning(command + message, options);
+            } else {
+                showNotification({ title: title, message: message, type: 'error' });
+            }
             return null;
         }
         // Return code is 0 but there is stderr output: this is a warning message
         if (response.data.error) {
-            const message = pre + response.data.error.message;
-            showNotification({ title: options?.title || 'Git', message: message, type: 'warn' });
+            const message = response.data.error.message;
+            if (options?.type == 'terminal') {
+                showWarning(command + message, options);
+            } else {
+                showNotification({ title: title, message: message, type: 'warn' });
+            }
+        }
+        if (options?.forceTerminal) {
+            // Force terminal output
+            const message = command + response.data.data;
+            showWarning(message, options);
         }
         return response.data.data
     } catch(error) {
-        const message = error.response && error.response.data.error ? error.response.data.error.message : error;
-        showNotification({ title: options?.title || 'Git', message: message, type: 'error' });
+        const message = error?.response?.data?.error?.message || error;
+        if (options?.type == 'terminal') {
+            showError(message, options);
+        } else {
+            showNotification({ title: title, message: message, type: 'error' });
+        }
         return null;
     }
 }

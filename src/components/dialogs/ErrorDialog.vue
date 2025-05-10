@@ -12,6 +12,8 @@
 <style>
 .airflow-code-editor-modal-terminal {
     width: 95%;
+    font-family: "Menlo", "Monaco", "Lucida Console", "Liberation Mono", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Courier New", serif;
+    line-height: 1.4em;
 }
 .airflow-code-editor-modal-terminal label {
     white-space: pre;

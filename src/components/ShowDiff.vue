@@ -12,7 +12,8 @@
     display: block;
     flex: 1;
     overflow: auto;
-    background-color: #fff;
+    background-color: #f2f2f2;
+    padding-top: 1em;
 }
 .show-diff {
     font-family: monospace;
@@ -22,13 +23,11 @@
     padding-left: 2em;
 }
 .show-diff .diff-file-header {
-    font-weight: bold;
-    line-height: 3.6em;
     padding-left: 1em;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 1em;
-    background-color: #f6f6f6;
-    font-family: sans-serif;
+    font-family: monospace;
+}
+.show-diff .diff-filename{
+    font-weight: bold;
 }
 .show-diff .diff-line-add {
     background-color: #e6ffec;
@@ -62,12 +61,14 @@ export default defineComponent({
             let classes = '';
             let skip = false;
             if ((!this.inFileHeader) && (line.startsWith('diff --git'))) {
-                skip = true;
+                //skip = true;
                 this.inFileHeader = true;
             } else if (this.inFileHeader) { // file header
-                skip = true;
+                //skip = true;
+                this.inFileHeader = true;
+                classes += " diff-file-header";
                 if (line.startsWith('+++ ')) { // filename
-                    classes += " diff-file-header";
+                    classes += " diff-filename";
                     line = line.substring(5);
                     if (line.startsWith('dev/null')) {
                         line = this.last.substring(5);

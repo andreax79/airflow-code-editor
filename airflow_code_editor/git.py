@@ -248,6 +248,7 @@ def prepare_git_env() -> Dict[str, str]:
     # Don't prompt on the terminal
     env['GIT_TERMINAL_PROMPT'] = '0'
     env['GIT_ASKPASS'] = '/bin/true'
+    env['GIT_EDITOR'] = '/bin/false'
     # Author
     git_author_name = get_plugin_config('git_author_name')
     if not git_author_name:

@@ -28,7 +28,7 @@ window.search = async function(query) {
 
 window.git = async function(args) {
     let gitArgs = shlex.split(args);
-    let result = await git_async(gitArgs);
+    let result = await git_async(gitArgs, {type: 'terminal', forceTerminal: true});
     if (result) {
         console.log(result);
     }

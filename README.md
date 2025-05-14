@@ -15,7 +15,7 @@ With Git support enabled, DAGs are stored in a Git repository, enabling users to
 ### System Requirements
 
 * Airflow Versions
-    * 2.0.0 or newer
+    * 2.x or 3.x
 * git Versions (git is not required if git support is disabled)
     * 2.0 or newer
 
@@ -76,7 +76,7 @@ You can find the following images there:
 
 3. Restart the Airflow Web Server
 
-4. Open Admin - DAGs Code Editor
+4. Open 'Plugins' (for Airflow 3.x) or 'Admin' (for Airflow 2.x) - 'Airflow Code Editor'
 
 
 ### Config Options

@@ -2,7 +2,7 @@
   <splitpanes class="default-theme">
     <pane key="1" :size="50" class="history-view">
         <spinner v-show="loading"/>
-        <log ref="log" @updateCommit="updateCommit" />
+        <log :uuid="uuid" :target="target" ref="log" @updateCommit="updateCommit" />
     </pane>
     <pane key="2" :size="50" class="commit-view">
         <ul class="tabs">
@@ -79,7 +79,7 @@ export default defineComponent({
         'commit': ShowCommit,
         'spinner': Spinner,
     },
-    props: [ 'config', 'target' ],
+    props: [ 'config', 'target', 'uuid' ],
     data() {
         return {
             tab: 'commit', // active tab
@@ -105,7 +105,6 @@ export default defineComponent({
             if ((this.id != target.id) || (this.name != target.name)) {
                 this.id = target.id;
                 this.name = target.name;
-                this.$refs.log.update(this.name);
                 this.updateCommit({ commit: this.name });
                 this.updateLocation();
             }

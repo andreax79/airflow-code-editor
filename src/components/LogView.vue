@@ -1,8 +1,30 @@
 <template>
-  <div ref="logView" class="log-view">
-    <svg xmlns="http://www.w3.org/2000/svg"></svg>
-    <div></div>
+  <div ref="logView" class="log-view" @contextmenu.prevent.stop="showMenu($event, null)">
+    <template v-for="entry in entries">
+        <a class="log-entry list-group-item"
+           @click="updateCommit(entry.commit)"
+           @contextmenu.prevent.stop="showMenu($event, entry)">
+            <header>
+                <h6>{{ entry.author.name }}
+                    <template v-for="ref in entry.refs">
+                        <span>&nbsp;</span>
+                        <span :class="'label label-' + ref.reftype">{{ ref.ref }}</span>
+                    </template>
+                </h6>
+                <span class="log-entry-date">{{ entry.author.formattedDate }}&nbsp;</span>
+                <span class="badge">{{ entry.abbrevCommitHash }}</span>
+            </header>
+            <p class="list-group-item-text">{{ entry.abbrevMessage }}</p>
+        </a>
+    </template>
+    <svg ref="svg" xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
+  <vue-simple-context-menu
+      :element-id="'log-view-menu-' + uuid"
+      :options="options"
+      ref="logViewMenu"
+      @option-clicked="menuOptionClicked"
+  />
 </template>
 <style>
 .log-view {
@@ -33,6 +55,7 @@
     margin: 0;
     border-width: 0 0 1px 0;
     border-radius: 0;
+    height: 55px;
 }
 .log-view .log-entry:hover {
     background-color: rgba(244, 244, 244, 0.9);
@@ -88,30 +111,56 @@
 </style>
 <script>
 import { defineComponent, ref } from 'vue';
-import { LogView } from "../log";
+import { loadGitHistory, updateGraph } from "../log";
+import VueSimpleContextMenu from 'vue-simple-context-menu';
 
 export default defineComponent({
+    components: {
+        'vue-simple-context-menu': VueSimpleContextMenu,
+    },
+    props: [ 'target', 'uuid' ],
     data() {
         return {
-            logView: null, // LogView instance
+            entries: [], // log entries
+            options: [  // menu options
+                {
+                  name: '<span class="material-icons">refresh</span> Refresh',
+                  slug: 'refresh',
+                },
+            ],
         }
     },
     methods: {
-        initViews() {
-            // Init views
-            this.logView = new LogView(this.$refs.logView, this);
+        async initViews() {
+            this.refresh();
         },
-        update(target) {
-            // Update log view
-            if (this.logView) {
-                this.logView.update(target);
-            }
+        async refresh() {
+            // Refresh
+            const self = this;
+            const svg = self.$refs.svg;
+            // Load git history
+            const entries = await loadGitHistory(self.target);
+            self.entries.length = 0;
+            self.entries.push(...entries);
+            // Update graph
+            await updateGraph(svg, self.entries);
+            self.$refs.logView.setAttribute("style", "padding-left:" + svg.getAttribute('width') + "px");
         },
         updateCommit(commit) {
-            this.$emit('updateCommit', commit);
+            this.$emit('updateCommit', { 'commit': commit });
+        },
+        async showMenu(event, entry) {
+            // Show sidebar menu
+            await this.$refs.logViewMenu.showMenu(event, entry);
+        },
+        async menuOptionClicked(event) {
+            // Menu click
+            if (event.option.slug == 'refresh') {
+                await this.refresh();
+            }
         },
     },
-    mounted() {
+    async mounted() {
         // Init
         this.initViews();
     }

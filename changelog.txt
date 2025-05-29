@@ -454,7 +454,7 @@
 
 - Upgrade to CodeMirror 6
 
-## [8.0.0] - XXXX-XX-XX
+## [8.0.0] - 2025-05-29
 
 ### Changed
 

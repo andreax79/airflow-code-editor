@@ -1,6 +1,6 @@
 # Deploying Airflow Code Editor on Kubernetes
 
-Steps to run Airflow Code Editoron a Kubernetes cluster using helm.
+Steps to run Airflow Code Editor on a Kubernetes cluster using helm.
 
 ## Installation steps
 
@@ -14,6 +14,12 @@ Create the namespace:
 ```bash
 $ kubectl create namespace airflow
 namespace/airflow created
+```
+
+Create the dags PVC:
+```bash
+$ kubectl apply -f pvc.yaml -n airflow
+persistentvolumeclaim/airflow-dags created
 ```
 
 Generate the Fernet key:

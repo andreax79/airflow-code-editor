@@ -1,7 +1,7 @@
 IMAGE_NAME := airflow-code-editor
 DEV_IMAGE_NAME := airflow2-code-editor-dev
 OWNER := andreax79
-AIRFLOW_VERSION := 2.10.5
+AIRFLOW_VERSION := 2.11.0
 # Must match the Airflow image Python version
 DEV_IMAGE_PYTHON_VERSION := 3.12
 HOST_PORT := 8081

@@ -463,3 +463,9 @@
 ## Fix
 
 - Show save file error message
+
+## [8.0.1] - 2025-06-10
+
+## Fix
+
+- Include missing file code_editor.yaml in the package

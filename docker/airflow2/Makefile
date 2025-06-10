@@ -39,7 +39,6 @@ image:
 	@DOCKER_BUILDKIT=1 docker build \
 		 --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} \
 		 --build-arg AIRFLOW_VERSION=${AIRFLOW_VERSION} \
-		 --tag ${IMAGE_NAME}:latest \
 		 --tag ${IMAGE_NAME}:${AIRFLOW_VERSION} \
 		 --tag ${IMAGE_NAME}:${VERSION} \
 		 .
@@ -48,16 +47,12 @@ image:
 push:
 	@docker tag ${IMAGE_NAME}:${VERSION} ghcr.io/${OWNER}/${IMAGE_NAME}:${VERSION}
 	@docker tag ${IMAGE_NAME}:${VERSION} ghcr.io/${OWNER}/${IMAGE_NAME}:${AIRFLOW_VERSION}
-	@docker tag ${IMAGE_NAME}:${VERSION} ghcr.io/${OWNER}/${IMAGE_NAME}:latest
 	@docker push ghcr.io/${OWNER}/${IMAGE_NAME}:${VERSION}
 	@docker push ghcr.io/${OWNER}/${IMAGE_NAME}:${AIRFLOW_VERSION}
-	@docker push ghcr.io/${OWNER}/${IMAGE_NAME}:latest
 	@docker tag ${IMAGE_NAME}:${VERSION} ${OWNER}/${IMAGE_NAME}:${VERSION}
 	@docker tag ${IMAGE_NAME}:${VERSION} ${OWNER}/${IMAGE_NAME}:${AIRFLOW_VERSION}
-	@docker tag ${IMAGE_NAME}:${VERSION} ${OWNER}/${IMAGE_NAME}:latest
 	@docker push ${OWNER}/${IMAGE_NAME}:${VERSION}
 	@docker push ${OWNER}/${IMAGE_NAME}:${AIRFLOW_VERSION}
-	@docker push ${OWNER}/${IMAGE_NAME}:latest
 
 push-version:
 	@echo ${AIRFLOW_VERSION}

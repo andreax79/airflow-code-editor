@@ -145,7 +145,7 @@ export default defineComponent({
                     this.$emit("show", { id: 'workspace', name: name });
                     break;
                 case 'files': // Files
-                    this.$emit("show", { id: 'files', path: '/' + name, type: model.leaf ? 'blob' : 'tree' });
+                    this.$emit("show", { id: 'files', path: '/' + name, type: model.type == 'blob' ? 'blob' : 'tree' });
                     break;
                 case 'tags': // Git tags
                 case 'remote-branches': // Git remote branches
@@ -181,54 +181,65 @@ export default defineComponent({
             }
             return node;
         },
-        async loadChildrenAsync(parent) {
-            if (parent.id == 'bookmarks') {
-                // Populate bookmarks from local storage
-                const bookmarks = getBookmarks();
-                return bookmarks.filter(x => !!x).map((bookmark) => {
-                    let node = {
-                        "id": '',
-                        "leaf": true,
-                        "icon": "bookmark",
-                        "label": '',
-                        "type": "blob",
-                        "treeNodeSpec": {
-                            "expandable": false,
-                        }
-                    };
-                    switch (bookmark.id) {
-                        case 'workspace': // Workspace
-                        case 'git':
-                            node.id = 'workspace';
-                            node.label = 'Workspace';
-                            node.icon = 'work';
-                            break;
-                        case 'files': // Files
-                            node.id = 'files' + bookmark.path;
-                            node.type = bookmark.type;
-                            node.leaf = bookmark.type == 'blob';
-                            node.label = bookmark.path.split('/').pop() || '/';
-                            node.icon = (bookmark.type == 'blob') ? 'file' : 'folder';
-                            break;
-                        case 'tags': // Git tags
-                            node.id = bookmark.id + '/' + bookmark.name;
-                            node.label = bookmark.name;
-                            node.icon = 'style';
-                            break;
-                        case 'remote-branches': // Git remote branches
-                            node.id = bookmark.id + '/' + bookmark.name;
-                            node.label = bookmark.name;
-                            node.icon = 'public';
-                            break;
-                        case 'local-branches': // Git local branches
-                            node.id = bookmark.id + '/' + bookmark.name;
-                            node.label = bookmark.name;
-                            node.icon = 'fork_right';
-                            break;
+        loadBookmarks() {
+            // Populate bookmarks from local storage
+            const bookmarks = getBookmarks();
+            return bookmarks.map((bookmark) => {
+                // Prepare a tree node for each bookmark
+                if (!bookmark) {
+                    return null;
+                }
+                let node = {
+                    "id": '',
+                    "leaf": true,
+                    "icon": "bookmark",
+                    "label": '',
+                    "type": "blob",
+                    "treeNodeSpec": {
+                        "expandable": false,
                     }
-                    return node;
-                });
-            } else {
+                };
+                switch (bookmark.id) {
+                    case 'workspace': // Workspace
+                    case 'git':
+                        node.id = 'workspace';
+                        node.label = 'Workspace';
+                        node.icon = 'work';
+                        break;
+                    case 'files': // Files
+                        if (!bookmark.path) {
+                            return null;
+                        }
+                        node.id = 'files' + bookmark.path;
+                        node.type = bookmark.type;
+                        node.label = bookmark.path.split('/').pop() || '/';
+                        node.icon = (bookmark.type == 'blob') ? 'file' : 'folder';
+                        break;
+                    case 'tags': // Git tags
+                        node.id = bookmark.id + '/' + bookmark.name;
+                        node.label = bookmark.name;
+                        node.icon = 'style';
+                        break;
+                    case 'remote-branches': // Git remote branches
+                        node.id = bookmark.id + '/' + bookmark.name;
+                        node.label = bookmark.name;
+                        node.icon = 'public';
+                        break;
+                    case 'local-branches': // Git local branches
+                        node.id = bookmark.id + '/' + bookmark.name;
+                        node.label = bookmark.name;
+                        node.icon = 'fork_right';
+                        break;
+                }
+                return node;
+            }).filter(x => !!x);
+        },
+        async loadChildrenAsync(parent) {
+            // Load children of a tree node
+            if (parent.id == 'bookmarks') {
+                // Load bookmarks from local storage
+                return this.loadBookmarks();
+            } else {.filter(x => !!x)
                 // Load children from the server
                 const self = this;
                 const path = 'tree/' + parent.id;
@@ -238,7 +249,7 @@ export default defineComponent({
                     return response.data.value.map((node) => self.prepareTreeNode(node, parent));
                 } catch(error) {
                     const message = parseErrorResponse(error, 'Error loading tree');
-                    showNotification({ message: message, title: 'Load' });
+                    showNotificentry_numberation({ message: message, title: 'Load' });
                     return [];
                 }
             }
@@ -256,6 +267,7 @@ export default defineComponent({
             }
         },
         menuOptionRefresh(event) {
+            // Menu click on Refresh
             if (!event.item.treeNodeSpec.expandable) {
                 return;
             }

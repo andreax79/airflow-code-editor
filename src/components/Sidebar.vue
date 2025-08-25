@@ -20,7 +20,7 @@
         </div>
         <vue-simple-context-menu
             element-id="sidebar-tree-menu"
-            :options="options"
+            :options="menuOptions"
             ref="sidebarTreeMenu"
             @option-clicked="menuOptionClicked"
         />
@@ -60,7 +60,7 @@ import { TreeView } from '@grapoza/vue-tree';
 import VueSimpleContextMenu from 'vue-simple-context-menu';
 import { prepareHref, splitPath, showNotification, parseErrorResponse } from '../commons';
 import { getIcon } from '../tree_entry';
-import { getBookmarks } from '../bookmarks.js';
+import { getBookmarks, findBookmark, removeBookmark } from '../bookmarks.js';
 import Icon from './Icon.vue';
 
 export default defineComponent({
@@ -76,12 +76,7 @@ export default defineComponent({
             modelDefaults: {
                 loadChildrenAsync: this.loadChildrenAsync
             },
-            options: [
-                {
-                  name: '<span class="material-icons">refresh</span> Refresh',
-                  slug: 'refresh',
-                },
-            ],
+            menuOptions: [],
         }
     },
     methods: {
@@ -178,6 +173,7 @@ export default defineComponent({
             }
             if (parent) {
                 node.id = parent.id + '/' + node.id;
+                node.section = parent.id;
             }
             return node;
         },
@@ -194,7 +190,7 @@ export default defineComponent({
                     "leaf": true,
                     "icon": "bookmark",
                     "label": '',
-                    "type": "blob",
+                    "section": 'bookmarks',
                     "treeNodeSpec": {
                         "expandable": false,
                     }
@@ -239,7 +235,7 @@ export default defineComponent({
             if (parent.id == 'bookmarks') {
                 // Load bookmarks from local storage
                 return this.loadBookmarks();
-            } else {.filter(x => !!x)
+            } else {
                 // Load children from the server
                 const self = this;
                 const path = 'tree/' + parent.id;
@@ -256,14 +252,40 @@ export default defineComponent({
         },
         async showMenu(event, item) {
             // Show sidebar menu
-            if (item && !item.leaf) {
+            this.menuOptions = this.prepareMenuOptions(item);
+            if (this.menuOptions.length > 0) {
                 this.$refs.sidebarTreeMenu.showMenu(event, item);
+            }
+        },
+        prepareMenuOptions(item) {
+            // Prepare tab menu options
+            if (!item) {
+                return [];
+            } else if (item.section == 'bookmarks') {
+                return [
+                    {
+                        name: '<span class="material-icons">bookmark</span> Remove bookmark',
+                        slug: 'removeBookmark',
+                    }
+                ];
+            } else if (!item.leaf) {
+                return [
+                    {
+                      name: '<span class="material-icons">refresh</span> Refresh',
+                      slug: 'refresh',
+                    },
+                ];
+            } else {
+                return [];
             }
         },
         menuOptionClicked(event) {
             // Menu click
             if (event.option.slug == 'refresh') {
                 this.menuOptionRefresh(event);
+            }
+            else if (event.option.slug == 'removeBookmark') {
+                this.menuOptionRemoveBookmark(event);
             }
         },
         menuOptionRefresh(event) {
@@ -290,6 +312,20 @@ export default defineComponent({
                     spec._.state.areChildrenLoading = false;
                 }
             }, 1);
+        },
+        menuOptionRemoveBookmark(event) {
+            // Menu click on Remove bookmark
+            if (event.item.section != 'bookmarks') {
+                return;
+            }
+            const sectionAndName = splitPath(event.item.id);
+            const id = sectionAndName[0];
+            const name = (sectionAndName[1] || '').trim();
+            const bookmark = findBookmark(id, name);
+            if (bookmark) {
+                removeBookmark(bookmark);
+                this.refreshBookmarks();
+            }
         },
         refreshBookmarks() {
             // Refresh bookmarks

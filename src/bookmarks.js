@@ -36,3 +36,13 @@ export function removeBookmark(target) {
         return false;
     }
 }
+
+export function findBookmark(section, name) {
+    // Find a bookmark by its section and name/path
+    const bookmarks = getBookmarks();
+    if (section == 'files') {
+        return bookmarks.find(x => x.id == section && x.path == '/' + name);
+    } else {
+        return bookmarks.find(x => x.id == section && x.name == name);
+    }
+}

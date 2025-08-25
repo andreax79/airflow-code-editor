@@ -380,9 +380,6 @@ export default defineComponent({
                 this.uploadAction();
             }
         }
-    },
-    mounted() {
-        this.refresh();
     }
 })
 </script>

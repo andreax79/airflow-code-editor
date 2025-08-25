@@ -1,7 +1,7 @@
 IMAGE_NAME := airflow-code-editor
 DEV_IMAGE_NAME := ${IMAGE_NAME}-dev
 OWNER := andreax79
-AIRFLOW_VERSION := 3.0.1
+AIRFLOW_VERSION := 3.0.4
 # Must match the Airflow image Python version
 DEV_IMAGE_PYTHON_VERSION := 3.12
 AIRFLOW_PORT := 8080

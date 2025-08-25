@@ -469,3 +469,15 @@
 ## Fix
 
 - Include missing file code_editor.yaml in the package
+
+## [8.1.0] - 2025-08-12
+
+## Fix
+
+- Remove race condition when opening new tab
+- Fix bookmarks on Chrome
+- Fix file download on Airflow 3.x
+
+### Added
+
+- Add "Add bookmark" and "Remove bookmark" to context menu in the sidebar

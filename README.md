@@ -224,6 +224,7 @@ For details on configuring the authentication, see
 * [Black, The Uncompromising Code Formatter](https://github.com/psf/black)
 * [isort, A Python utility/library to sort imports](https://github.com/psf/black)
 * [pss, power-tool for searching source files](https://github.com/eliben/pss)
+* [itsdangerous, Safely pass trusted data to untrusted environments and back](https://github.com/pallets/itsdangerous)
 * [Vue.js](https://github.com/vuejs/vue)
 * [Vue-good-table, data table for VueJS](https://github.com/xaksis/vue-good-table)
 * [Vue-tree, TreeView control for VueJS](https://github.com/grapoza/vue-tree)

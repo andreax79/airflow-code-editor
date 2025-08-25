@@ -46,3 +46,22 @@ export function findBookmark(section, name) {
         return bookmarks.find(x => x.id == section && x.name == name);
     }
 }
+
+export function prepareBookmark(section, name, type) {
+    // Prepare a bookmark
+    switch (section) {
+        case 'workspace': // Workspace
+        case 'git':
+            return { id: 'workspace', name: name };
+        case 'files': // Files
+            return { id: 'files', path: '/' + name, type: type == 'blob' ? 'blob' : 'tree' };
+        case 'tags': // Git tags
+        case 'remote-branches': // Git remote branches
+        case 'local-branches': // Git local branches
+            if (name) {
+                return { id: section, name: name };
+            }
+            break;
+    }
+    return null;
+}

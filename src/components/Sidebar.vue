@@ -60,8 +60,21 @@ import { TreeView } from '@grapoza/vue-tree';
 import VueSimpleContextMenu from 'vue-simple-context-menu';
 import { prepareHref, splitPath, showNotification, parseErrorResponse } from '../commons';
 import { getIcon } from '../tree_entry';
-import { getBookmarks, findBookmark, removeBookmark } from '../bookmarks.js';
+import { getBookmarks, findBookmark, removeBookmark, prepareBookmark, addBookmark, isBookmarked } from '../bookmarks.js';
 import Icon from './Icon.vue';
+
+const MENU_REMOVE_BOOKMARK = {
+    name: '<span class="material-icons">bookmark</span> Remove bookmark',
+    slug: 'removeBookmark',
+};
+const MENU_ADD_BOOKMARK = {
+    name: '<span class="material-icons">bookmark</span> Add bookmark',
+    slug: 'addBookmark',
+};
+const MENU_REFRESH = {
+    name: '<span class="material-icons">refresh</span> Refresh',
+    slug: 'refresh',
+};
 
 export default defineComponent({
     components: {
@@ -174,6 +187,8 @@ export default defineComponent({
             if (parent) {
                 node.id = parent.id + '/' + node.id;
                 node.section = parent.id;
+            } else {
+                node.section = 'root';
             }
             return node;
         },
@@ -261,31 +276,38 @@ export default defineComponent({
             // Prepare tab menu options
             if (!item) {
                 return [];
+            } else if (item.section == 'root') {
+                // Root nodes
+                return [ MENU_REFRESH ];
             } else if (item.section == 'bookmarks') {
-                return [
-                    {
-                        name: '<span class="material-icons">bookmark</span> Remove bookmark',
-                        slug: 'removeBookmark',
-                    }
-                ];
-            } else if (!item.leaf) {
-                return [
-                    {
-                      name: '<span class="material-icons">refresh</span> Refresh',
-                      slug: 'refresh',
-                    },
-                ];
+                // Bookmarks node
+                return [ MENU_REMOVE_BOOKMARK ];
             } else {
-                return [];
+                // Other nodes
+                const sectionAndName = splitPath(item.id);
+                const id = sectionAndName[0];
+                const name = (sectionAndName[1] || '').trim();
+                const bookmark = prepareBookmark(id, name, item.type);
+                let menu = [];
+                if (!item.leaf) {
+                    menu.push(MENU_REFRESH);
+                }
+                if (isBookmarked(bookmark)) {
+                    menu.push(MENU_REMOVE_BOOKMARK);
+                } else {
+                    menu.push(MENU_ADD_BOOKMARK);
+                }
+                return menu;
             }
         },
         menuOptionClicked(event) {
             // Menu click
             if (event.option.slug == 'refresh') {
                 this.menuOptionRefresh(event);
-            }
-            else if (event.option.slug == 'removeBookmark') {
+            } else if (event.option.slug == 'removeBookmark') {
                 this.menuOptionRemoveBookmark(event);
+            } else if (event.option.slug == 'addBookmark') {
+                this.menuOptionAddBookmark(event);
             }
         },
         menuOptionRefresh(event) {
@@ -315,15 +337,24 @@ export default defineComponent({
         },
         menuOptionRemoveBookmark(event) {
             // Menu click on Remove bookmark
-            if (event.item.section != 'bookmarks') {
-                return;
-            }
             const sectionAndName = splitPath(event.item.id);
             const id = sectionAndName[0];
             const name = (sectionAndName[1] || '').trim();
             const bookmark = findBookmark(id, name);
             if (bookmark) {
                 removeBookmark(bookmark);
+                this.refreshBookmarks();
+            }
+        },
+        menuOptionAddBookmark(event) {
+            // Menu click on Add bookmark
+            const sectionAndName = splitPath(event.item.id);
+            const id = sectionAndName[0];
+            const name = (sectionAndName[1] || '').trim();
+            const bookmark = prepareBookmark(id, name, event.item.type);
+            console.log(bookmark);
+            if (bookmark) {
+                addBookmark(bookmark);
                 this.refreshBookmarks();
             }
         },

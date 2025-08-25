@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 info:
   title: "Airflow Code Editor API"
-  version: "1.0.0"
+  version: "8.1.0"
   description: |
     # Overview
 
@@ -218,6 +218,56 @@ paths:
           description: "Success"
           $ref: '#/components/responses/VersionInfo'
 
+  /generate_presigned:
+    post:
+      summary: "Generate a presigned URL token for downloading a file/git object"
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
+      operationId: generate_presigned
+      tags: [Presigned]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: string
+                  description: "File/git object path"
+      responses:
+        '200':
+          description: "Success"
+          $ref: '#/components/responses/GeneratePresignedResponse'
+        '401':
+          description: "Not authenticated"
+        '403':
+          description: "Client does not have sufficient permission"
+
+  /presigned/{token}:
+    get:
+      summary: "Download a file/git object using a presigned URL"
+      x-openapi-router-controller: airflow_code_editor.api.flask_endpoints
+      operationId: load_presigned
+      tags: [Presigned]
+      parameters:
+        - name: token
+          in: path
+          description: "Presigned URL token"
+          required: true
+          allowReserved: true
+          schema:
+            type: string
+            format: path
+      responses:
+        '200':
+          description: "Success"
+        '403':
+          description: "Client does not have sufficient permission"
+        '401':
+          description: "Not authenticated"
+        '404':
+          description: "File not found"
+
 components:
   schemas:
     TreeEntity:
@@ -327,6 +377,19 @@ components:
             required:
               - version
               - airflow_version
+
+    GeneratePresignedResponse:
+      description: Generate presigned URL token response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                description: Presigned URL token
+            required:
+              - token
 
   parameters:
     All:

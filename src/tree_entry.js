@@ -69,14 +69,6 @@ export class TreeEntry {
                     self.href = '#edit' + encodeURI(self.object);
                 }
             }
-            // download href
-            if (self.type == 'tree') { // tree
-                self.downloadHref = '#';
-            } else if (self.isGit) { // git blob
-                self.downloadHref = prepareHref('repo/' + self.object + '/' + self.name);
-            } else { // local file
-                self.downloadHref = prepareHref('files/' + self.object);
-            }
             // size
             self.formattedSize = formatSize(self.size, self.type);
         }

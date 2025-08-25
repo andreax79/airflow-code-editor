@@ -26,11 +26,13 @@ from airflow_code_editor import git
 from airflow_code_editor.commons import (
     HTTP_200_OK,
     HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
     HTTP_404_NOT_FOUND,
     HTTP_500_SERVER_ERROR,
     VERSION,
 )
 from airflow_code_editor.fs import RootFS
+from airflow_code_editor.presigned import create_presigned, decode_presigned
 from airflow_code_editor.tree import get_stat, get_tree
 from airflow_code_editor.utils import (
     DummyLexer,
@@ -53,6 +55,8 @@ __all__ = [
     "search",
     "ping",
     "get_version",
+    "generate_presigned",
+    "load_presigned",
 ]
 
 
@@ -250,3 +254,23 @@ def get_version():
         "version": VERSION,
         "airflow_version": airflow_version,
     }
+
+
+def generate_presigned(path):
+    "Generate a presigned URL token for downloading a file/git object"
+    return {
+        "token": create_presigned(path),
+    }
+
+
+def load_presigned(token: str):
+    "Download a file/git object using a presigned URL"
+    try:
+        path = decode_presigned(token)
+    except Exception as ex:
+        logging.error(ex)
+        return prepare_api_response(
+            error_message="Not authenticated",
+            http_status_code=HTTP_401_UNAUTHORIZED,
+        )
+    return load(path)

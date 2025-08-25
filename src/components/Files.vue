@@ -37,7 +37,7 @@
                     </a>
                   </span>
                   <span v-else-if="props.column.field == 'action'" class="btn-group">
-                    <a v-if="props.row.type == 'blob'" class="download btn btn-default btn-sm" title="Download" :href="props.row.downloadHref"><icon icon="file_download"/></a>
+                    <a v-if="props.row.type == 'blob'" class="download btn btn-default btn-sm" title="Download" v-on:click.prevent="download(props.row)"><icon icon="file_download"/></a>
                     <a v-if="(!props.row.isGit) && (props.row.type == 'blob' || props.row.size == 0)" class="trash-o btn btn-default btn-sm" title="Delete" target="_blank" v-on:click.prevent="showDeleteDialog(props.row)" :href="props.row.href"><icon icon="delete"/></a>
                     <a v-if="!props.row.isGit && (props.row.name != '..')" class="i-cursor btn btn-default btn-sm" title="Move/Rename" target="_blank" v-on:click.prevent="showRenameDialog(props.row)" :href="props.row.href"><icon icon="drive_file_rename_outline"/></a>
                     <a v-if="!props.row.isGit && (props.row.name != '..')" class="external-link btn btn-default btn-sm" title="Open in a new window" target="_blank" :href="props.row.href"><icon icon="open_in_new"/></a>
@@ -356,11 +356,24 @@ export default defineComponent({
             // Show menu
             this.$refs.filesMenu.showMenu(event, item);
         },
+        async download(item) {
+            // Download file - generate a presigned URL and open it in a new tab
+            let path = null;
+            if (item.type == 'tree') { // tree
+                return; // cannot download directory
+            } else if (item.isGit) { // git blob
+                path = '~git/' + item.object + '/' + item.name;
+            } else { // local file
+                path = item.object;
+            }
+            const response = await axios.post(prepareHref('generate_presigned'), { path: path });
+            window.open(prepareHref('presigned/' + response.data.token));
+        },
         menuOptionClicked(event) {
             if (event.option.slug == 'open') {
                 this.changePath(event.item);
             } else if (event.option.slug == 'download') {
-                window.open(event.item.downloadHref);
+                this.download(event.item);
             } else if (event.option.slug == 'delete') {
                 this.showDeleteDialog(event.item);
             } else if (event.option.slug == 'rename') {

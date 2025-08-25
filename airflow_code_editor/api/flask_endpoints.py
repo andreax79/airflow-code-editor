@@ -35,6 +35,8 @@ __all__ = [
     "search",
     "post_git",
     "get_version",
+    "generate_presigned",
+    "load_presigned",
     "load_specification",
     "api_blueprint",
 ]
@@ -97,6 +99,21 @@ def post_git():
 def get_version():
     "Get version information"
     return api.get_version()
+
+
+@security.requires_access_dag("PUT")
+@csrf.exempt
+def generate_presigned(*, path: str = None):
+    "Generate a presigned URL token for downloading a file/git object"
+    path = request.json.get("path", "")
+    return api.generate_presigned(path)
+
+
+# security is not required for presigned URLs
+@csrf.exempt
+def load_presigned(*, token: str = None):
+    "Download a file/git object using a presigned URL"
+    return api.load_presigned(token)
 
 
 def load_specification() -> dict:

@@ -124,6 +124,18 @@ class AppBuilderCodeEditorView(BaseView):
     def ping(self):
         return api.ping()
 
+    @expose("/generate_presigned", methods=["POST"])
+    @auth.has_access(PERMISSIONS)
+    def generate_presigned(self):
+        path = request.json.get("path", "")
+        return api.generate_presigned(path)
+
+    @expose("/presigned/<path:path>", methods=["GET"])
+    # auth is not required for presigned URLs
+    def load_presigned(self, path=None):
+        "Download a file/git object using a presigned URL"
+        return api.load_presigned(path)
+
 
 appbuilder_code_editor_view = AppBuilderCodeEditorView()
 appbuilder_view = {

@@ -72,6 +72,28 @@ def delete(path: str, request: Request):
 
 
 @app.post(
+    "/generate_presigned",
+    dependencies=[Depends(requires_access_dag(method="GET"))],
+    include_in_schema=False,
+)
+async def generate_presigned(request: Request):
+    "Generate a presigned URL token for downloading a file/git object"
+    body = await request.json()
+    path = body.get("path", "")
+    return api.generate_presigned(path)
+
+
+@app.get(
+    "/presigned/{token}",
+    dependencies=[],  # presigned URL does not require authentication
+    include_in_schema=False,
+)
+def presigned(token: str, request: Request):
+    "Download a file/git object using a presigned URL"
+    return api.load_presigned(token)
+
+
+@app.post(
     "/format",
     dependencies=[Depends(requires_access_dag(method="GET"))],
     include_in_schema=False,

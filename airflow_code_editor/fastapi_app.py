@@ -24,7 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from airflow_code_editor.api.fastapi_endpoints import app
-from airflow_code_editor.commons import PLUGIN_LONG_NAME, PLUGIN_NAME, MENU_LABEL
+from airflow_code_editor.commons import MENU_LABEL, PLUGIN_LONG_NAME, PLUGIN_NAME
 from airflow_code_editor.utils import is_enabled
 
 __all__ = ["fastapi_app"]

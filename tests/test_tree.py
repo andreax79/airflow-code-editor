@@ -5,23 +5,20 @@ import stat
 from pathlib import Path
 from unittest import TestCase
 
-import airflow
-import airflow.plugins_manager
-from airflow import configuration
 from flask import Flask
 
 from airflow_code_editor.commons import PLUGIN_NAME
 from airflow_code_editor.tree import get_stat, get_tree
+from airflow_code_editor.utils import conf
 
-assert airflow.plugins_manager
 app = Flask(__name__)
 
 
 class TestTree(TestCase):
     def setUp(self):
         self.root_dir = Path(__file__).parent
-        configuration.conf.set(PLUGIN_NAME, "git_init_repo", "False")
-        configuration.conf.set(PLUGIN_NAME, "root_directory", str(self.root_dir))
+        conf.set(PLUGIN_NAME, "git_init_repo", "False")
+        conf.set(PLUGIN_NAME, "root_directory", str(self.root_dir))
 
     def test_tree(self):
         with app.app_context():
@@ -79,9 +76,9 @@ class TestTree(TestCase):
 class TestTreeGitDisabled(TestCase):
     def setUp(self):
         self.root_dir = Path(__file__).parent
-        configuration.conf.set(PLUGIN_NAME, "git_init_repo", "False")
-        configuration.conf.set(PLUGIN_NAME, "root_directory", str(self.root_dir))
-        configuration.conf.set(PLUGIN_NAME, "git_enabled", "False")
+        conf.set(PLUGIN_NAME, "git_init_repo", "False")
+        conf.set(PLUGIN_NAME, "root_directory", str(self.root_dir))
+        conf.set(PLUGIN_NAME, "git_enabled", "False")
         os.environ["GIT_AUTHOR_NAME"] = os.environ["GIT_COMMITTER_NAME"] = "git_author_name"
         os.environ["GIT_AUTHOR_EMAIL"] = os.environ["GIT_COMMITTER_EMAIL"] = "git_author_email"
 
@@ -106,8 +103,8 @@ class TestTreeGitDisabled(TestCase):
 class TestStat(TestCase):
     def setUp(self):
         self.root_dir = Path(__file__).parent
-        configuration.conf.set(PLUGIN_NAME, "git_init_repo", "False")
-        configuration.conf.set(PLUGIN_NAME, "root_directory", str(self.root_dir))
+        conf.set(PLUGIN_NAME, "git_init_repo", "False")
+        conf.set(PLUGIN_NAME, "root_directory", str(self.root_dir))
 
     def test_tree(self):
         with app.app_context():

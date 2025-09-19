@@ -17,8 +17,9 @@
 
 import time
 
-from airflow.configuration import conf
 from itsdangerous import URLSafeSerializer
+
+from airflow_code_editor.utils import conf
 
 __all__ = ["create_presigned", "decode_presigned"]
 

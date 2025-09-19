@@ -250,10 +250,12 @@ def ping():
 
 def get_version():
     "Get version information"
-    return {
+    response = {
         "version": VERSION,
-        "airflow_version": airflow_version,
     }
+    if airflow_version:
+        response["airflow_version"] = airflow_version
+    return response
 
 
 def generate_presigned(path):

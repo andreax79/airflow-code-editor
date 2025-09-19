@@ -8,21 +8,18 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-import airflow
-import airflow.plugins_manager
-from airflow import configuration
 from flask import Flask
 
 from airflow_code_editor.commons import PLUGIN_DEFAULT_CONFIG, PLUGIN_NAME
 from airflow_code_editor.git import execute_git_command, git_enabled
 from airflow_code_editor.utils import (
+    conf,
     get_plugin_config,
     get_root_folder,
     normalize_path,
     read_mount_points_config,
 )
 
-assert airflow.plugins_manager
 app = Flask(__name__)
 
 
@@ -31,9 +28,9 @@ class TestUtils(TestCase):
         self.root_dir = "/tmp/tests"
         shutil.rmtree(self.root_dir, ignore_errors=True)
         shutil.copytree(Path(__file__).parent, self.root_dir)
-        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'True')
-        configuration.conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
-        configuration.conf.set(PLUGIN_NAME, 'git_enabled', 'True')
+        conf.set(PLUGIN_NAME, 'git_init_repo', 'True')
+        conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
+        conf.set(PLUGIN_NAME, 'git_enabled', 'True')
 
     def test_get_root_folder(self):
         assert get_root_folder() is not None
@@ -157,8 +154,8 @@ class TestUtils(TestCase):
 class TestInitGitRepo(TestCase):
     def setUp(self):
         self.root_dir = tempfile.mkdtemp()
-        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'True')
-        configuration.conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
+        conf.set(PLUGIN_NAME, 'git_init_repo', 'True')
+        conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
 
     def tearDown(self):
         shutil.rmtree(self.root_dir)
@@ -173,14 +170,14 @@ class TestInitGitRepo(TestCase):
 class TestConfig(TestCase):
     def setUp(self):
         self.root_dir = tempfile.mkdtemp()
-        configuration.conf.set(PLUGIN_NAME, 'git_init_repo', str(PLUGIN_DEFAULT_CONFIG['git_init_repo']))
+        conf.set(PLUGIN_NAME, 'git_init_repo', str(PLUGIN_DEFAULT_CONFIG['git_init_repo']))
 
     @contextlib.contextmanager
     def env_vars(self, overrides):
         orig_vars = {}
         new_vars = []
         for key, value in overrides.items():
-            env = configuration.conf._env_var_name(PLUGIN_NAME, key)
+            env = conf._env_var_name(PLUGIN_NAME, key)
             if env in os.environ:
                 orig_vars[env] = os.environ.pop(env, '')
             else:
@@ -200,7 +197,7 @@ class TestConfig(TestCase):
             assert get_plugin_config('git_cmd') == '--test--'
         assert get_plugin_config('git_cmd') == PLUGIN_DEFAULT_CONFIG['git_cmd']
         # for key in PLUGIN_DEFAULT_CONFIG:
-        #     print(configuration.conf._env_var_name(PLUGIN_NAME, key))
+        #     print(conf._env_var_name(PLUGIN_NAME, key))
 
     def test_mount_points(self):
         with self.env_vars(

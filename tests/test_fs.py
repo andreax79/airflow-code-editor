@@ -4,11 +4,11 @@ import shutil
 from pathlib import Path
 
 import fs
-from airflow import configuration
 from flask import Flask
 
 from airflow_code_editor.commons import PLUGIN_NAME
 from airflow_code_editor.fs import RootFS, split
+from airflow_code_editor.utils import conf
 
 app = Flask(__name__)
 
@@ -36,9 +36,9 @@ def test_root_fs():
     root_dir = "/tmp/tests"
     shutil.rmtree(root_dir, ignore_errors=True)
     shutil.copytree(Path(__file__).parent, root_dir)
-    configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
-    configuration.conf.set(PLUGIN_NAME, 'root_directory', str(root_dir))
-    configuration.conf.set(PLUGIN_NAME, 'git_enabled', 'True')
+    conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
+    conf.set(PLUGIN_NAME, 'root_directory', str(root_dir))
+    conf.set(PLUGIN_NAME, 'git_enabled', 'True')
 
     root_fs = RootFS()
     name = "/folder/root_fs_test_1"
@@ -82,9 +82,9 @@ def test_find():
     root_dir = "/tmp/tests"
     shutil.rmtree(root_dir, ignore_errors=True)
     shutil.copytree(Path(__file__).parent, root_dir)
-    configuration.conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
-    configuration.conf.set(PLUGIN_NAME, 'root_directory', str(root_dir))
-    configuration.conf.set(PLUGIN_NAME, 'git_enabled', 'True')
+    conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
+    conf.set(PLUGIN_NAME, 'root_directory', str(root_dir))
+    conf.set(PLUGIN_NAME, 'git_enabled', 'True')
 
     root_fs = RootFS()
     name = "/folder/root_fs_test_1"

@@ -15,13 +15,13 @@
 #   limitations under the License
 #
 
-from airflow.api_fastapi.core_api.openapi.exceptions import (
-    create_openapi_http_exception_doc,
-)
-from airflow.api_fastapi.core_api.security import requires_access_dag
 from fastapi import Depends, FastAPI, Request, status
 
 from airflow_code_editor.api import api
+from airflow_code_editor.fastapi_security import (
+    create_openapi_http_exception_doc,
+    requires_access_dag,
+)
 
 __all__ = ["app"]
 

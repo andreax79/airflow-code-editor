@@ -2,15 +2,14 @@
 
 from unittest import TestCase
 
-from airflow import configuration
-
 from airflow_code_editor.presigned import create_presigned, decode_presigned
+from airflow_code_editor.utils import conf
 
 
 class TestPresigned(TestCase):
 
     def setUp(self):
-        configuration.conf.set("core", "fernet_key", "SECRET_KEY")
+        conf.set("core", "fernet_key", "SECRET_KEY")
 
     def test_presigned(self):
         filename = "/README.md"

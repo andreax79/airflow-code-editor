@@ -16,15 +16,25 @@
 
 import itertools
 import json
+import os
 from collections import namedtuple
+from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, List, Optional, cast
 
-from airflow import configuration
-from airflow.version import version as airflow_version
 from fs.errors import FSError
 from pygments.lexer import RegexLexer
 from pygments.token import Text
+
+try:
+    from airflow.configuration import conf
+    from airflow.version import version as airflow_version
+
+except ImportError:
+    # Standalone
+    airflow_version = None
+
+    conf = ConfigParser()
 
 try:
     import fastapi
@@ -50,16 +60,18 @@ from airflow_code_editor.commons import (
     ROOT_MOUNTPOUNT,
 )
 
-AIRFLOW_MAJOR_VERSION = int(airflow_version.split(".")[0])
+AIRFLOW_MAJOR_VERSION = int(airflow_version.split(".")[0]) if airflow_version else 0
 
 __all__ = [
     'DummyLexer',
     'always',
+    'conf',
     'error_message',
     'get_plugin_boolean_config',
     'get_plugin_config',
     'get_plugin_int_config',
     'get_root_folder',
+    'get_current_user',
     'is_enabled',
     'normalize_path',
     'prepare_api_response',
@@ -67,13 +79,14 @@ __all__ = [
     'make_response',
     'airflow_version',
     'generate_csrf',
+    'read_config_file',
     'AIRFLOW_MAJOR_VERSION',
 ]
 
 
 # Create a new section in the configuration.
 try:
-    configuration.conf.add_section(PLUGIN_NAME)
+    conf.add_section(PLUGIN_NAME)
 except Exception:
     pass
 
@@ -93,14 +106,14 @@ def normalize_path(path: Optional[str]) -> str:
 
 def get_plugin_config(key: str) -> str:
     "Get a plugin configuration/default for a given key"
-    return cast(str, configuration.conf.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]))  # type: ignore
+    return cast(str, conf.get(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]))  # type: ignore
 
 
 def get_plugin_boolean_config(key: str) -> bool:
     "Get a plugin boolean configuration/default for a given key"
     return cast(
         bool,
-        configuration.conf.getboolean(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]),
+        conf.getboolean(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]),
     )  # type: ignore
 
 
@@ -108,7 +121,7 @@ def get_plugin_int_config(key: str) -> int:
     "Get a plugin int configuration/default for a given key"
     return cast(
         int,
-        configuration.conf.getint(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]),
+        conf.getint(PLUGIN_NAME, key, fallback=PLUGIN_DEFAULT_CONFIG[key]),
     )  # type: ignore
 
 
@@ -120,7 +133,7 @@ def is_enabled() -> bool:
 def get_root_folder() -> Path:
     "Return the configured root folder or Airflow DAGs folder"
     return Path(
-        get_plugin_config('root_directory') or cast(str, configuration.conf.get('core', 'dags_folder'))  # type: ignore
+        get_plugin_config('root_directory') or cast(str, conf.get('core', 'dags_folder'))  # type: ignore
     ).resolve()
 
 
@@ -140,16 +153,16 @@ def read_mount_points_config() -> Dict[str, MountPoint]:
         else:
             suffix = str(i)
         try:
-            if not configuration.conf.has_option(PLUGIN_NAME, 'mount{}'.format(suffix)):
+            if not conf.has_option(PLUGIN_NAME, 'mount{}'.format(suffix)):
                 break
-            conf = configuration.conf.get(PLUGIN_NAME, 'mount{}'.format(suffix))
-            if conf is None:
+            conf_value = conf.get(PLUGIN_NAME, 'mount{}'.format(suffix))
+            if conf_value is None:
                 break
         except Exception:
             break
         try:
             mount_conf = {}
-            for part in conf.split(','):
+            for part in conf_value.split(','):
                 k, v = part.split('=')
                 mount_conf[k] = v
             config[mount_conf['name']] = MountPoint(
@@ -166,14 +179,41 @@ def read_mount_points_config() -> Dict[str, MountPoint]:
         else:
             suffix = str(i)
         try:
-            if not configuration.conf.has_option(PLUGIN_NAME, 'mount{}_name'.format(suffix)):
+            if not conf.has_option(PLUGIN_NAME, 'mount{}_name'.format(suffix)):
                 break
         except Exception:  # backports.configparser.NoSectionError and friends
             break
-        name = configuration.conf.get(PLUGIN_NAME, 'mount{}_name'.format(suffix))
-        path = configuration.conf.get(PLUGIN_NAME, 'mount{}_path'.format(suffix))
+        name = conf.get(PLUGIN_NAME, 'mount{}_name'.format(suffix))
+        path = conf.get(PLUGIN_NAME, 'mount{}_path'.format(suffix))
         config[name] = MountPoint(path=path, default=mount_conf['name'] == ROOT_MOUNTPOUNT)
     return config
+
+
+def read_config_file(path: Path) -> None:
+    """
+    Read the configuration file
+    Create the required section and keys if not present
+    """
+
+    # Read the configuration
+    if path.exists():
+        conf.read(path)
+
+    # Create the required sections
+    if "core" not in conf:
+        conf.add_section("core")
+    if PLUGIN_NAME not in conf:
+        conf.add_section(PLUGIN_NAME)
+
+    if "fernet_key" not in conf["core"]:
+        path.mkdir(parents=True, exist_ok=True)
+        conf["core"]["fernet_key"] = os.urandom(16).hex()
+        with open(path, "w") as f:
+            conf.write(f)
+
+    # After writing the configuration file, ensure that root_directory is set
+    if "root_directory" not in conf[PLUGIN_NAME]:
+        conf.set(PLUGIN_NAME, "root_directory", str(Path.cwd()))
 
 
 def error_message(ex: Exception) -> str:
@@ -205,6 +245,18 @@ class DummyLexer(RegexLexer):
             (r'.*\n', Text),
         ]
     }
+
+
+try:
+    from flask_login import current_user  # type: ignore
+
+    def get_current_user():
+        return current_user
+
+except ImportError:  # Standalone
+
+    def get_current_user():
+        return None
 
 
 if FASTAPI:

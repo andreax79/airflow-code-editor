@@ -23,9 +23,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-# TODO
-from flask_login import current_user  # type: ignore
-
 from airflow_code_editor.commons import (
     DEFAULT_GIT_BRANCH,
     HTTP_200_OK,
@@ -36,6 +33,7 @@ from airflow_code_editor.commons import (
 from airflow_code_editor.fs import RootFS
 from airflow_code_editor.utils import (
     Response,
+    get_current_user,
     get_plugin_boolean_config,
     get_plugin_config,
     get_root_folder,
@@ -253,6 +251,7 @@ def prepare_git_env() -> Dict[str, str]:
     git_author_name = get_plugin_config('git_author_name')
     if not git_author_name:
         try:
+            current_user = get_current_user()
             git_author_name = '%s %s' % (
                 current_user.first_name,
                 current_user.last_name,
@@ -266,6 +265,7 @@ def prepare_git_env() -> Dict[str, str]:
     git_author_email = get_plugin_config('git_author_email')
     if not git_author_email:
         try:
+            current_user = get_current_user()
             git_author_email = current_user.email
         except Exception:
             pass

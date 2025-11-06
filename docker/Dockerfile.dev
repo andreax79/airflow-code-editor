@@ -23,11 +23,8 @@ RUN pip install \
     --no-cache-dir airflow-code-editor==${PLUGIN_VERSION} -r requirements-optional.txt pss && rm requirements-optional.txt
 # Init airflow db
 RUN airflow db migrate
-# Create user 'admin' with password 'admin'
-# RUN airflow users create -r Admin -u admin -e admin@example.com -f admin -l admin -p admin
-# RUN airflow sync-perm
-# Set API Authentication
-# RUN sed -i 's/auth_backends = .*/auth_backends = airflow.api.auth.backend.basic_auth/' /opt/airflow/airflow.cfg
+# Set base_url
+# RUN sed -i 's/# base_url =.*/base_url = http:\/\/localhost:8080\/airflow/' /opt/airflow/airflow.cfg
 # Configure GIT
 RUN git config --global --add safe.directory /opt/airflow/dags
 RUN git config --global user.email "dev@example.com"

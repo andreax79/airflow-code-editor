@@ -166,7 +166,7 @@ class RootFS(MountFS):
                                         "path": path.path,  # file path
                                     }
                                 )
-            except (OSError, IOError):
+            except (OSError, IOError, fs.errors.FSError):
                 pass
 
         return result

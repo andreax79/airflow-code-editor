@@ -481,3 +481,15 @@
 ### Added
 
 - Add "Add bookmark" and "Remove bookmark" to context menu in the sidebar
+
+## [8.1.1] - 2025-11-06
+
+## Fix
+
+- Fix running when running Airflow in a sub path
+- Fix menu in Airflow 3.1.x
+- Fix authentication on Airflow 3.1.x
+
+### Added
+
+- Improve search results page

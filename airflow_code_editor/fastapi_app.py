@@ -52,14 +52,19 @@ fastapi_app = {
     "name": PLUGIN_LONG_NAME,
 }
 
-menu = {
-    "name": MENU_LABEL,
-    "href": f"{PLUGIN_NAME}/",
-}
-
+menu = [
+    {
+        "name": MENU_LABEL,
+        "href": f"{PLUGIN_NAME}/",
+    },
+    {
+        "name": f"{MENU_LABEL} REST API",
+        "href": f"{PLUGIN_NAME}/docs",
+    },
+]
 
 # Plugin
 class CodeEditorPlugin(AirflowPlugin):
     name = 'editor_plugin'
     fastapi_apps = [fastapi_app] if is_enabled() else []
-    appbuilder_menu_items = [menu] if is_enabled() else []
+    appbuilder_menu_items = menu if is_enabled() else []

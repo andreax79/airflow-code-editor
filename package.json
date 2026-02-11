@@ -36,7 +36,7 @@
     "@kyvg/vue3-notification": "^3.4.1",
     "@replit/codemirror-emacs": "^6.1.0",
     "@replit/codemirror-vim": "^6.2.1",
-    "axios": "^1.12.0",
+    "axios": "^1.13.5",
     "codemirror": "^6.0.1",
     "crc-32": "^1.2.2",
     "shlex": "^2.1.2",

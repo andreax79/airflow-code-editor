@@ -119,3 +119,4 @@ venv.bak/
 /scripts/dags/.gitignore
 /scripts/dags/dags
 /node_modules
+.sh_history

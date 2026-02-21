@@ -51,8 +51,8 @@ The image is based on the reference images for Apache Airflow.
 
 You can find the following images there:
 * andreax79/airflow-code-editor:**latest** - the latest released Airflow Code Editor image with the latest Apache Airflow version
-* andreax79/airflow-code-editor:**3.0.4** - the latest released Airflow Code Editor with specific Airflow version
-* andreax79/airflow-code-editor:**3.0.4-8.1.0** - specific version of Airflow and Airflow Code Editor
+* andreax79/airflow-code-editor:**3.1.7** - the latest released Airflow Code Editor with specific Airflow version
+* andreax79/airflow-code-editor:**3.1.7-8.2.0** - specific version of Airflow and Airflow Code Editor
 
 #### Installing from PyPI
 
@@ -66,12 +66,13 @@ You can find the following images there:
 
 * black - Black Python code formatter
 * isort - A Python utility/library to sort imports
-* fs-s3fs - S3FS Amazon S3 Filesystem
-* fs-gcsfs - Google Cloud Storage Filesystem
-* ... other filesystems supported by PyFilesystem - see https://www.pyfilesystem.org/page/index-of-filesystems/
+* fsspec[s3] - Python filesystem interface for S3.
+* fsspec[gcs] - Python filesystem interface for Google Cloud Storage.
+* fsspec[sftp] - Python filesystem interface for SFTP.
+* ... other filesystems supported by [pss](https://github.com/eliben/pss)
 
   ```bash
-    pip install black isort fs-s3fs fs-gcsfs
+    pip install black isort fsspec[s3,gcp,sftp]
   ```
 
 3. Restart the Airflow Web Server
@@ -233,6 +234,4 @@ For details on configuring the authentication, see
 * [vue3-notification, Vue.js notifications](https://github.com/kyvg/vue3-notification)
 * [Splitpanes](https://github.com/antoniandre/splitpanes)
 * [Axios, Promise based HTTP client for the browser and node.js](https://github.com/axios/axios)
-* [PyFilesystem2, Python's Filesystem abstraction layer](https://github.com/PyFilesystem/pyfilesystem2)
-* [Amazon S3 PyFilesystem](https://github.com/PyFilesystem/s3fs)
-* [Google Cloud Storage PyFilesystem](https://github.com/Othoz/gcsfs)
+* [fsspec, a specification for pythonic filesystems](https://github.com/fsspec/filesystem_spec)

@@ -16,14 +16,13 @@
 
 import errno
 import os
+from dataclasses import dataclass
 from fnmatch import fnmatch
-from typing import Any, List, Optional, Tuple, Union
+from pathlib import PurePosixPath
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
-import fs
-from fs.mountfs import MountError, MountFS
-from fs.multifs import MultiFS
-from fs.path import abspath, forcedir, normpath
-from fs.walk import Walker
+import fsspec
+import fsspec.implementations.local
 from psslib.contentmatcher import ContentMatcher
 from psslib.driver import LINE_CONTEXT, LINE_MATCH, _build_match_context_dict
 from psslib.utils import istextfile
@@ -37,20 +36,22 @@ from airflow_code_editor.utils import (
 
 __all__ = [
     "RootFS",
+    "FSError",
 ]
 
-STAT_FIELDS = [
-    "st_mode",
-    "st_ino",
-    "st_dev",
-    "st_nlink",
-    "st_uid",
-    "st_gid",
-    "st_size",
-    "st_atime",
-    "st_mtime",
-    "st_ctime",
-]
+
+# Custom exceptions to replace fs.errors
+class FSError(Exception):
+    "Base filesystem error"
+
+    pass
+
+
+class MountError(FSError):
+    "Mount error"
+
+    pass
+
 
 SEND_FILE_CHUNK_SIZE = 8192
 
@@ -65,38 +66,249 @@ def split(pathname: str):
         return pathname[: i - 1], pathname[i:]
 
 
-class RootFS(MountFS):
+def normpath(path: str) -> str:
+    "Normalize a path"
+    return str(PurePosixPath(path))
+
+
+def abspath(path: str) -> str:
+    "Make path absolute"
+    if not path.startswith('/'):
+        path = '/' + path
+    return normpath(path)
+
+
+def forcedir(path: str) -> str:
+    "Ensure path ends with /"
+    if not path.endswith('/'):
+        return path + '/'
+    return path
+
+
+class RootFS:
     "Root filesystem with mountpoints"
 
     def __init__(self):
-        super().__init__()
         mounts = read_mount_points_config()
+        # Setup filesystems
+        self.mounts: List[Tuple[str, fsspec.AbstractFileSystem, str]] = []  # (mount_path, filesystem, base_path)
         # Set default fs (root)
-        self.default_fs = MultiFS()
-        self.tmp_fs = fs.open_fs("mem://")
-        self.default_fs.add_fs("tmp", self.tmp_fs, write=False, priority=0)
-        self.root_fs = [fs.open_fs(v.path) for v in mounts.values() if v.default][0]
-        self.default_fs.add_fs("root", self.root_fs, write=True, priority=1)
+        root_fs_path = [v.path for v in mounts.values() if v.default][0]
+        self.root_fs, self.root_fs_base_path = self._open_fs(root_fs_path)
+        self.default_fs = self.root_fs
         # Mount other fs
         for k, v in mounts.items():
             if not v.default:
-                self.mount("/~" + k, fs.open_fs(v.path))
+                mount_path = "/~" + k
+                self.mount(mount_path, v.path)
 
-    def mount(self, path, fs_):
-        "Mounts a host FS object on a given path"
-        if isinstance(fs_, str):
-            fs_ = fs.open_fs(fs_)
-        path_ = forcedir(abspath(normpath(path)))
-        for mount_path, _ in self.mounts:
-            if path_.startswith(mount_path):
+    def _open_fs(self, path: str) -> Tuple[fsspec.AbstractFileSystem, str]:
+        "Open a filesystem from a path/URL"
+        if path.startswith("mem://"):
+            return fsspec.filesystem("memory"), "/"
+        elif "://" in path:
+            # URL-like path, let fsspec handle it
+            return fsspec.url_to_fs(path)
+        else:
+            # Local file path
+            return fsspec.filesystem("file"), path
+
+    def _get_fs_and_path(self, path: str) -> Tuple[fsspec.AbstractFileSystem, str]:
+        "Get the appropriate filesystem and adjusted path for a given path"
+        path = abspath(normpath(path))
+
+        # Check mounts (longest prefix match)
+        for mount_path, mount_fs, base_path in sorted(self.mounts, key=lambda x: len(x[0]), reverse=True):
+            if path.startswith(mount_path):
+                # Calculate relative path from mount point
+                rel_path = path[len(mount_path) :].lstrip('/')
+                if not rel_path:
+                    rel_path = ""
+                # Combine base path with relative path
+                if base_path:
+                    full_path = os.path.join(base_path, rel_path) if rel_path else base_path
+                else:
+                    full_path = rel_path if rel_path else "/"
+                return mount_fs, full_path
+
+        # Use default fs
+        if self.root_fs_base_path:
+            # For local filesystem, combine with base path
+            path = os.path.join(self.root_fs_base_path, path.lstrip('/'))
+        return self.default_fs, path
+
+    def mount(self, path: str, fs_or_path: Union[str, fsspec.AbstractFileSystem]) -> None:
+        "Mounts a filesystem on a given path"
+        if isinstance(fs_or_path, str):
+            fs_, base_path = self._open_fs(fs_or_path)
+        else:
+            fs_ = fs_or_path
+            base_path = None
+
+        path = forcedir(abspath(normpath(path)))
+
+        # Check for overlapping mounts
+        for mount_path, _, _ in self.mounts:
+            if path.startswith(mount_path) or mount_path.startswith(path):
                 raise MountError("mount point overlaps existing mount")
-        self.mounts.append((path_, fs_))
-        # Create mountpoint on the temporary filesystem
-        self.tmp_fs.makedirs(path_, recreate=True)
 
-    def path(self, *parts: List[str]):
+        self.mounts.append((path.rstrip('/'), fs_, base_path))
+
+    def path(self, *parts: str):
         "Return a FSPath instance for the given path"
         return FSPath(*parts, root_fs=self)
+
+    def open(self, path: str, mode="r", buffering=-1, encoding=None, errors=None, newline=None):
+        "Open a file"
+        fs, path = self._get_fs_and_path(path)
+        if 'b' in mode:
+            # Binary mode
+            return fs.open(path, mode=mode)
+        else:
+            # Text mode
+            return fs.open(path, mode=mode, encoding=encoding, errors=errors)
+
+    def exists(self, path: str) -> bool:
+        "Check if path exists"
+        fs, path = self._get_fs_and_path(path)
+        try:
+            return fs.exists(path)
+        except Exception:
+            return False
+
+    def isdir(self, path: str) -> bool:
+        "Check if path is a directory"
+        fs, path = self._get_fs_and_path(path)
+        try:
+            return fs.isdir(path)
+        except Exception:
+            return False
+
+    def isfile(self, path: str) -> bool:
+        "Check if path is a file"
+        fs, path = self._get_fs_and_path(path)
+        try:
+            return fs.isfile(path)
+        except Exception:
+            return False
+
+    def listdir(self, path: str = "/") -> List[str]:
+        "List directory contents"
+        fs, path = self._get_fs_and_path(path)
+        try:
+            items = fs.ls(path, detail=False)
+            # Extract just the names (basenames)
+            result = []
+            for item in items:
+                # Get basename - handle both regular paths and URLs
+                basename = os.path.basename(item.rstrip('/'))
+                if basename:  # Skip empty strings
+                    result.append(basename)
+            return sorted(result)
+        except (FileNotFoundError, NotADirectoryError):
+            raise FileNotFoundError(path)
+
+    def makedirs(self, path: str, recreate=False, exist_ok=False) -> None:
+        "Create directories"
+        fs, path = self._get_fs_and_path(path)
+        try:
+            fs.makedirs(path, exist_ok=recreate or exist_ok)
+        except FileExistsError:
+            if not (recreate or exist_ok):
+                raise
+
+    def remove(self, path: str) -> None:
+        "Remove a file"
+        fs, path = self._get_fs_and_path(path)
+        fs.rm(path, recursive=False)
+
+    def rmdir(self, path: str) -> None:
+        "Remove a directory"
+        fs, path = self._get_fs_and_path(path)
+        fs.rmdir(path)
+
+    def info(self, path: str) -> Dict[str, Union[int, float]]:
+        "Get file info"
+        fs, path = self._get_fs_and_path(path)
+        return fs.info(path)
+
+    def size(self, path: str) -> int:
+        "Get file size"
+        fs, path = self._get_fs_and_path(path)
+        return fs.size(path)
+
+    def move(self, src: str, dst: str) -> None:
+        "Move/rename a file or directory"
+        src_fs, src_path = self._get_fs_and_path(src)
+        dst_fs, dst_path = self._get_fs_and_path(dst)
+
+        if src_fs is dst_fs:
+            src_fs.mv(src_path, dst_path, recursive=True)
+        else:
+            # Cross-filesystem move
+            if src_fs.isdir(src_path):
+                raise FSError("Cross-filesystem directory moves not supported")
+            # Copy then delete
+            with src_fs.open(src_path, 'rb') as src_file:
+                with dst_fs.open(dst_path, 'wb') as dst_file:
+                    dst_file.write(src_file.read())
+            src_fs.rm(src_path)
+
+    def copy(self, src: str, dst: str) -> None:
+        "Copy a file"
+        src_fs, src_path = self._get_fs_and_path(src)
+        dst_fs, dst_path = self._get_fs_and_path(dst)
+
+        with src_fs.open(src_path, 'rb') as src_file:
+            with dst_fs.open(dst_path, 'wb') as dst_file:
+                dst_file.write(src_file.read())
+
+    def read_text(self, path: str, encoding=None, errors=None) -> str:
+        "Read text from a file"
+        fs, path = self._get_fs_and_path(path)
+        with fs.open(path, 'r', encoding=encoding, errors=errors) as f:
+            return f.read()
+
+    def read_bytes(self, path: str) -> bytes:
+        "Read bytes from a file"
+        fs, path = self._get_fs_and_path(path)
+        with fs.open(path, 'rb') as f:
+            return f.read()
+
+    def write_text(self, path: str, data: str, encoding=None, errors=None):
+        "Write text to a file"
+        # Ensure parent directory exists
+        parent_path = os.path.dirname(path)
+        if parent_path and parent_path != '/':
+            self.makedirs(parent_path, exist_ok=True)
+
+        fs, path = self._get_fs_and_path(path)
+        with fs.open(path, 'w', encoding=encoding, errors=errors) as f:
+            f.write(data)
+
+    def write_bytes(self, path: str, data: bytes) -> None:
+        "Write bytes to a file"
+        # Ensure parent directory exists
+        parent_path = os.path.dirname(path)
+        if parent_path and parent_path != '/':
+            self.makedirs(parent_path, exist_ok=True)
+
+        fs, path = self._get_fs_and_path(path)
+        with fs.open(path, 'wb') as f:
+            f.write(data)
+
+    def touch(self, path: str) -> None:
+        "Create or update a file"
+        fs, path = self._get_fs_and_path(path)
+        fs.touch(path)
+
+    def get_local_path(self, path: str) -> str:
+        "Get local path"
+        fs, path = self._get_fs_and_path(path)
+        if isinstance(fs, fsspec.implementations.local.LocalFileSystem):
+            return path
+        else:
+            return None
 
     def find_files(
         self,
@@ -104,22 +316,60 @@ class RootFS(MountFS):
         filter: Union[List[str], str, None] = None,
         exclude: Optional[List[str]] = None,
         max_depth: Optional[int] = None,
-    ):
-        "Walk a filesystem, yielding FSPAth"
+    ) -> Generator["FSPath", None, None]:
+        "Walk a filesystem, yielding FSPath"
         if exclude == []:
             exclude = None
         if isinstance(filter, str):
             filter = [filter]
-        walker = Walker(
-            ignore_errors=True,
-            filter=filter,
-            exclude=exclude,
-            exclude_dirs=exclude,
-            max_depth=max_depth,
-        )
-        fs = self.root_fs
-        for filename in walker.files(fs=fs, path=path):
-            yield self.path(filename)
+
+        def should_exclude(name: str, patterns: Optional[List[str]]) -> bool:
+            "Check if name matches any exclude pattern"
+            if not patterns:
+                return False
+            for pattern in patterns:
+                if fnmatch(name, pattern):
+                    return True
+            return False
+
+        def matches_filter(name: str, patterns: Optional[List[str]]) -> bool:
+            "Check if name matches any filter pattern"
+            if not patterns:
+                return True
+            for pattern in patterns:
+                if fnmatch(name, pattern):
+                    return True
+            return False
+
+        def walk_recursive(current_path: str, depth: int = 0):
+            "Recursively walk directories"
+            if max_depth is not None and depth > max_depth:
+                return
+
+            try:
+                items = self.listdir(current_path)
+            except (FileNotFoundError, FSError):
+                return
+
+            for item in items:
+                item_path = os.path.join(current_path, item).replace('\\', '/')
+
+                try:
+                    is_dir = self.isdir(item_path)
+
+                    # Handle directories
+                    if is_dir:
+                        # Recurse into directory unless excluded
+                        if not should_exclude(item, exclude):
+                            yield from walk_recursive(item_path, depth + 1)
+                    else:
+                        # Handle files
+                        if not should_exclude(item, exclude) and matches_filter(item, filter):
+                            yield FSPath(item_path, root_fs=self)
+                except (FileNotFoundError, FSError):
+                    continue
+
+        yield from walk_recursive(path, 0)
 
     def search(
         self,
@@ -138,9 +388,9 @@ class RootFS(MountFS):
 
         result = []
         matcher = ContentMatcher(pattern=query.encode("utf-8"))
-        for path in self.find_files(filter=filter, exclude=exclude, max_depth=max_depth):
+        for file_path in self.find_files(filter=filter, exclude=exclude, max_depth=max_depth):
             try:
-                with path.open("rb") as f:
+                with file_path.open("rb") as f:
                     if istextfile(f):
                         f.seek(0)
                         matches = list(matcher.match_file(f))
@@ -153,7 +403,7 @@ class RootFS(MountFS):
                                         "row_number": row_number,  # matching row number
                                         "context_first_row": row_number,  # context first row number
                                         "context": context,  # context (matching row)
-                                        "path": path.path,  # file path
+                                        "path": file_path.path,  # file path
                                     }
                                 )
                         else:
@@ -163,16 +413,16 @@ class RootFS(MountFS):
                                         "row_number": row,  # matching row number
                                         "context_first_row": context_first_row,  # context first row number
                                         "context": context,  # context
-                                        "path": path.path,  # file path
+                                        "path": file_path.path,  # file path
                                     }
                                 )
-            except (OSError, IOError, fs.errors.FSError):
+            except (OSError, IOError, FSError):
                 pass
 
         return result
 
 
-def prepare_search_context(f, matches, search_context) -> Tuple[int, str, int]:
+def prepare_search_context(f, matches, search_context) -> Generator[Tuple[int, str, int], None, None]:
     f.seek(0)
     match_context_dict = _build_match_context_dict(matches, search_context, search_context)
     lines = []
@@ -211,10 +461,14 @@ def prepare_search_context(f, matches, search_context) -> Tuple[int, str, int]:
         yield row_number, context, context_first_row
 
 
-class FSPath(object):
-    def __init__(self, *parts: List[str], root_fs: RootFS) -> None:
+class FSPath:
+
+    def __init__(self, *parts: str, root_fs: RootFS) -> None:
         self.root_fs = root_fs
-        self.path = os.path.join("/", *parts)
+        if parts:
+            self.path = os.path.join("/", *parts)
+        else:
+            self.path = "/"
 
     def open(self, mode="r", buffering=-1, encoding=None, errors=None, newline=None):
         "Open the file pointed by this path and return a file object"
@@ -233,25 +487,25 @@ class FSPath(object):
         return split(self.path)[1]
 
     @property
-    def parent(self):
+    def parent(self) -> "FSPath":
         "The logical parent of the path"
-        return self.root_fs.path(split(self.path)[0])
+        return FSPath(split(self.path)[0], root_fs=self.root_fs)
 
-    def touch(self, mode=0o666, exist_ok=True):
+    def touch(self, mode=0o666, exist_ok=True) -> None:
         "Create this file"
-        return self.root_fs.touch(self.path)
+        self.root_fs.touch(self.path)
 
     def rmdir(self) -> None:
         "Remove this directory"
-        self.root_fs.removedir(self.path)
+        self.root_fs.rmdir(self.path)
 
     def unlink(self, missing_ok: bool = False) -> None:
         "Remove this file"
         try:
             self.root_fs.remove(self.path)
-        except fs.errors.ResourceNotFound:
+        except FileNotFoundError as ex:
             if not missing_ok:
-                raise FileNotFoundError(self.path)
+                raise ex
 
     def delete(self) -> None:
         "Remove this file or directory"
@@ -260,12 +514,23 @@ class FSPath(object):
         else:
             self.unlink()
 
-    def stat(self):
+    def stat(self) -> os.stat_result:
         "File stat"
-        info = self.root_fs.getinfo(self.path, namespaces=["stat"])
-        if not info.has_namespace("stat"):
-            return os.stat_result([None for _ in STAT_FIELDS])
-        return os.stat_result([info.raw["stat"].get(field) for field in STAT_FIELDS])
+        info = self.root_fs.info(self.path)
+        return os.stat_result(
+            (
+                info["mode"],
+                info["ino"],
+                None,
+                info["nlink"],
+                info["uid"],
+                info["gid"],
+                info["size"],
+                None,
+                info["mtime"],
+                info["created"],
+            )
+        )
 
     def is_dir(self) -> bool:
         "Return True if this path is a directory"
@@ -274,15 +539,15 @@ class FSPath(object):
         except Exception:
             return False
 
-    def resolve(self):
+    def resolve(self) -> "FSPath":
         "Make the path absolute"
-        return self.root_fs.path(os.path.realpath(self.path))
+        return FSPath(os.path.realpath(self.path), root_fs=self.root_fs)
 
-    def exists(self):
+    def exists(self) -> bool:
         "Check if this path exists"
         return self.root_fs.exists(self.path)
 
-    def iterdir(self, show_ignored_entries=False):
+    def iterdir(self, show_ignored_entries=False) -> Generator["FSPath", None, None]:
         "Iterate over the files in this directory"
         ignored_entries = get_plugin_config("ignored_entries").split(",")
         mount_points = [x[0].rstrip("/") for x in self.root_fs.mounts]
@@ -298,7 +563,7 @@ class FSPath(object):
                     if fnmatch(fullpath if pattern.startswith("/") else name, pattern.strip()):
                         skip = True
             if not skip:
-                yield self.root_fs.path(self.path, name)
+                yield FSPath(self.path, name, root_fs=self.root_fs)
 
     def size(self) -> Optional[int]:
         "Return file size for files and number of files for directories"
@@ -306,8 +571,8 @@ class FSPath(object):
             if self.is_dir():
                 return len(self.root_fs.listdir(self.path))
             else:
-                return self.root_fs.getsize(self.path)
-        except fs.errors.FSError:
+                return self.root_fs.size(self.path)
+        except FSError:
             return None
 
     def move(self, target) -> None:
@@ -320,7 +585,7 @@ class FSPath(object):
 
     def read_file_chunks(self, chunk_size: int = SEND_FILE_CHUNK_SIZE):
         "Read file in chunks"
-        with self.root_fs.openbin(self.path) as f:
+        with self.root_fs.open(self.path, mode="rb") as f:
             while True:
                 buffer = f.read(chunk_size)
                 if buffer:
@@ -332,17 +597,18 @@ class FSPath(object):
         "Send the contents of a file to the client"
         if not self.exists():
             raise FileNotFoundError(errno.ENOENT, "File not found", self.path)
-        elif self.root_fs.hassyspath(self.path):
+        local_path = self.root_fs.get_local_path(self.path)
+        if local_path:
             # Local filesystem
             if as_attachment:
                 # Send file as attachment (set Content-Disposition: attachment header)
                 return send_file(
-                    self.root_fs.getsyspath(self.path),
+                    local_path,
                     as_attachment=True,
                     download_name=self.name,
                 )
             else:
-                return send_file(self.root_fs.getsyspath(self.path))
+                return send_file(local_path)
         else:
             # Other filesystems
             return send_file(
@@ -356,17 +622,23 @@ class FSPath(object):
         "Write data to a file"
         self.root_fs.makedirs(self.parent.path, recreate=True)
         if is_text:
-            self.root_fs.writetext(self.path, data)
+            if isinstance(data, bytes):
+                self.root_fs.write_text(self.path, data.decode('utf-8'))
+            else:
+                self.root_fs.write_text(self.path, str(data))
         else:
-            self.root_fs.writebytes(self.path, data)
+            if isinstance(data, str):
+                self.root_fs.write_bytes(self.path, data.encode('utf-8'))
+            else:
+                self.root_fs.write_bytes(self.path, data)
 
     def read_text(self, encoding=None, errors=None) -> str:
         "Get the contents of a file as a string"
-        return self.root_fs.readtext(self.path, encoding=encoding, errors=errors)
+        return self.root_fs.read_text(self.path, encoding=encoding, errors=errors)
 
     def read_bytes(self) -> bytes:
         "Get the contents of a file as bytes"
-        return self.root_fs.readbytes(self.path)
+        return self.root_fs.read_bytes(self.path)
 
     def __str__(self) -> str:
         return self.path
@@ -374,10 +646,10 @@ class FSPath(object):
     def __repr__(self) -> str:
         return self.path
 
-    def __truediv__(self, key):
+    def __truediv__(self, key) -> "FSPath":
         try:
             path = os.path.join(self.path, key)
-            return self.root_fs.path(path)
+            return FSPath(path, root_fs=self.root_fs)
         except TypeError:
             return NotImplemented
 
@@ -393,7 +665,7 @@ class FSPath(object):
             self._hash = hash(self.path)
             return self._hash
 
-    def __lt__(self, other: Any):
+    def __lt__(self, other: Any) -> bool:
         if not isinstance(other, FSPath):
             return NotImplemented
         return self.path < other.path

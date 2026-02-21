@@ -18,8 +18,6 @@ import re
 from datetime import datetime
 from typing import Any, Callable, Dict, List, NamedTuple, Optional
 
-import fs
-
 from airflow_code_editor.commons import (
     FOLDER_ICON,
     ICON_GIT,
@@ -218,7 +216,7 @@ def get_stat(path: Optional[str] = None, args: Args = {}) -> TreeOutput:
         path = normalize_path(path)
         get_tree(path, args)
         return {'id': path, 'leaf': False, 'exists': True}
-    except fs.errors.DirectoryExpected:
+    except NotADirectoryError:
         return {'id': path, 'leaf': True, 'exists': True}
-    except fs.errors.ResourceNotFound:
+    except FileNotFoundError:
         return {'id': path, 'leaf': None, 'exists': False}

@@ -8,8 +8,6 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 
-from flask import Flask
-
 from airflow_code_editor.commons import PLUGIN_DEFAULT_CONFIG, PLUGIN_NAME
 from airflow_code_editor.git import execute_git_command, git_enabled
 from airflow_code_editor.utils import (
@@ -19,8 +17,6 @@ from airflow_code_editor.utils import (
     normalize_path,
     read_mount_points_config,
 )
-
-app = Flask(__name__)
 
 
 class TestUtils(TestCase):
@@ -68,32 +64,27 @@ class TestUtils(TestCase):
         assert normalize_path('aaa') == 'aaa'
 
     def test_invalid_command(self):
-        with app.app_context():
-            r = execute_git_command(['invalid-command'])
+        r = execute_git_command(['invalid-command'])
         assert r.returncode != 0
         assert 'Command not supported' in r.stderr
 
     def test_ls_tree(self):
         assert git_enabled()
-        with app.app_context():
-            r = execute_git_command(['ls-tree', 'HEAD', '-l'])
+        r = execute_git_command(['ls-tree', 'HEAD', '-l'])
         assert r.returncode == 0
         assert r.stdout
 
     def test_mounts(self):
-        with app.app_context():
-            r = execute_git_command(['mounts'])
+        r = execute_git_command(['mounts'])
         assert r.returncode == 0
         assert r.stdout == 'airflow_home\nlogs'
 
     def test_ls_local_logs(self):
-        with app.app_context():
-            r = execute_git_command(['ls-local', '-l', '~logs'])
+        r = execute_git_command(['ls-local', '-l', '~logs'])
         assert r.returncode == 0
 
     def test_ls_local_airflow_home(self):
-        with app.app_context():
-            r = execute_git_command(['ls-local', '-l', '~airflow_home'])
+        r = execute_git_command(['ls-local', '-l', '~airflow_home'])
         assert r.returncode == 0
         assert r.stdout
         for line in r.stdout.split('\n'):
@@ -102,8 +93,7 @@ class TestUtils(TestCase):
             assert i[2].startswith('/~airflow_home/')
 
     def test_ls_local_folder(self):
-        with app.app_context():
-            r = execute_git_command(['ls-local', '-l', 'folder'])
+        r = execute_git_command(['ls-local', '-l', 'folder'])
         assert r.returncode == 0
         assert r.stdout
         for line in r.stdout.split('\n'):
@@ -119,8 +109,7 @@ class TestUtils(TestCase):
             with open(source, 'w') as f:
                 f.write('test')
             assert os.path.exists(source)
-            with app.app_context():
-                r = execute_git_command(['rm-local', 'new.file'])
+            r = execute_git_command(['rm-local', 'new.file'])
             assert r.returncode == 0
             assert not os.path.exists(source)
         finally:
@@ -136,8 +125,7 @@ class TestUtils(TestCase):
             assert not os.path.exists(target)
             with open(source, 'w') as f:
                 f.write('test')
-            with app.app_context():
-                r = execute_git_command(['mv-local', 'new.file', 'folder'])
+            r = execute_git_command(['mv-local', 'new.file', 'folder'])
             assert r.returncode == 0
             assert os.path.exists(target)
         finally:
@@ -161,8 +149,7 @@ class TestInitGitRepo(TestCase):
         shutil.rmtree(self.root_dir)
 
     def test_ls_tree(self):
-        with app.app_context():
-            r = execute_git_command(['ls-tree', 'HEAD', '-l'])
+        r = execute_git_command(['ls-tree', 'HEAD', '-l'])
         assert r.returncode == 0
         assert r.stdout
 
@@ -211,6 +198,7 @@ class TestConfig(TestCase):
             }
         ):
             m = read_mount_points_config()
+            assert 'test' in m
             assert str(m['test'].path) == '/tmp/test'
             assert str(m['test1'].path) == '/tmp/test1'
             assert str(m['test2'].path) == '/tmp/test2'

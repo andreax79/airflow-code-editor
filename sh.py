@@ -15,20 +15,53 @@
 #   limitations under the Licens
 
 import cmd
-import sys
 import shlex
+import sys
+
+try:
+    import readline
+except ImportError:
+    readline = None
+from pathlib import Path
+
+import platformdirs
+
+from airflow_code_editor.commons import VERSION
 from airflow_code_editor.fs import RootFS
+from airflow_code_editor.utils import read_config_file
+
+CONFIG_DIR = Path(platformdirs.user_config_dir(appname="CodeEditor"))
+CONFIG_PATH = CONFIG_DIR / "config.ini"
+HISTORY_PATH = ".sh_history"
+HISTORY_SIZE = 1000
+
+# Read the configuration
+read_config_file(CONFIG_PATH)
+
 
 class Shell(cmd.Cmd):
     intro = 'Type "help" list commands.\n'
     root_fs = RootFS()
     cwd = root_fs.path("/")
 
+    def preloop(self):
+        if readline is not None and CONFIG_PATH.exists():
+            try:
+                readline.read_history_file(HISTORY_PATH)
+            except FileNotFoundError:
+                pass
+
+    def postloop(self):
+        if readline is not None:
+            readline.set_history_length(HISTORY_SIZE)
+            readline.write_history_file(HISTORY_PATH)
+
     @property
     def prompt(self):
-        return str(self.cwd) + '$ '
+        return str(self.cwd) + "$ "
 
     def emptyline(self):
+        "Do nothing on empty input line"
         pass
 
     def parseline(self, line):
@@ -86,14 +119,29 @@ class Shell(cmd.Cmd):
                         print(str(item.name))
 
     def do_mount(self, args):
-        "List mountpoints"
-        print("{0} on /".format(self.root_fs.default_fs))
-        for item in self.root_fs.mounts:
-            print("{1} on {0}".format(*item))
+        "List mountpoints or mount a filesystem"
+        if len(args) == 2:
+            try:
+                self.root_fs.mount(args[1], args[0])
+            except Exception as ex:
+                print("mount: error: {message}".format(message=str(ex)))
+        else:
+            print("{0} on /".format(self.root_fs.default_fs))
+            for item in self.root_fs.mounts:
+                print(f"{item.filesystem} on {item.path}")
+
+    def do_version(self, args):
+        "Show version"
+        print(VERSION)
 
     def do_exit(self, args):
         "Exit"
         return True
+
+    def do_quit(self, args):
+        "Exit"
+        return True
+
 
 def main():
     if sys.argv[1:]:
@@ -103,6 +151,7 @@ def main():
         Shell().cmdloop()
     except KeyboardInterrupt:
         pass
+
 
 if __name__ == "__main__":
     main()

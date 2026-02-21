@@ -62,3 +62,15 @@ npm-build:
 
 npm-watch:
 	@npm run watch
+
+venv:
+	uv venv
+	uv pip install fastapi
+	uv pip install -r requirements.txt
+	uv pip install -r requirements-dev.txt
+
+run-app:
+	uv run fastapi run --app airflow_code_editor.main
+
+run-sh:
+	uv run python sh.py

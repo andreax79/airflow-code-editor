@@ -493,3 +493,13 @@
 ### Added
 
 - Improve search results page
+
+## [8.2.0] - 2025-02-21
+
+### Added
+
+- Add Standalone mode (without Airflow) support
+
+### Changed
+
+- Replace filesystem2 with fsspec

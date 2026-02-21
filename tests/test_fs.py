@@ -3,14 +3,9 @@
 import shutil
 from pathlib import Path
 
-import fs
-from flask import Flask
-
 from airflow_code_editor.commons import PLUGIN_NAME
 from airflow_code_editor.fs import RootFS, split
 from airflow_code_editor.utils import conf
-
-app = Flask(__name__)
 
 
 def test_split():
@@ -22,6 +17,11 @@ def test_split():
 
 
 def test_parent():
+    # Setup configuration
+    conf.set(PLUGIN_NAME, 'git_init_repo', 'False')
+    conf.set(PLUGIN_NAME, 'root_directory', '/tmp')
+    conf.set(PLUGIN_NAME, 'git_enabled', 'True')
+
     root_fs = RootFS()
     a = root_fs.path("/aaa/bbb/ccc")
     assert a.name == "ccc"
@@ -44,28 +44,28 @@ def test_root_fs():
     name = "/folder/root_fs_test_1"
     try:
         root_fs.remove(name)
-    except fs.errors.ResourceNotFound:
+    except FileNotFoundError:
         pass
-    root_fs.writetext(name, "data")
-    assert root_fs.readtext(name) == "data"
+    root_fs.write_text(name, "data")
+    assert root_fs.read_text(name) == "data"
     root_fs.copy(name, name + ".new")
-    assert root_fs.readtext(name + ".new") == "data"
+    assert root_fs.read_text(name + ".new") == "data"
     root_fs.remove(name)
     root_fs.remove(name + ".new")
 
     name = "/~logs/logs_test_2"
     try:
         root_fs.remove(name)
-    except fs.errors.ResourceNotFound:
+    except FileNotFoundError:
         pass
     try:
         root_fs.remove(name + ".new")
-    except fs.errors.ResourceNotFound:
+    except FileNotFoundError:
         pass
-    root_fs.writetext(name, "data")
-    assert root_fs.readtext(name) == "data"
+    root_fs.write_text(name, "data")
+    assert root_fs.read_text(name) == "data"
     root_fs.copy(name, name + ".new")
-    assert root_fs.readtext(name + ".new") == "data"
+    assert root_fs.read_text(name + ".new") == "data"
     assert len(root_fs.listdir("/~logs/"))
     root_fs.remove(name)
     root_fs.remove(name + ".new")
@@ -87,7 +87,6 @@ def test_find():
     conf.set(PLUGIN_NAME, 'git_enabled', 'True')
 
     root_fs = RootFS()
-    name = "/folder/root_fs_test_1"
     t = list(root_fs.find_files())
     assert [path for path in t if path.name.startswith(".")]
     t = list(root_fs.find_files(exclude=[]))

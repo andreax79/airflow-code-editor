@@ -63,6 +63,7 @@ menu = [
     },
 ]
 
+
 # Plugin
 class CodeEditorPlugin(AirflowPlugin):
     name = 'editor_plugin'

@@ -22,19 +22,8 @@ from configparser import ConfigParser
 from pathlib import Path
 from typing import Dict, List, Optional, cast
 
-from fs.errors import FSError
 from pygments.lexer import RegexLexer
 from pygments.token import Text
-
-try:
-    from airflow.configuration import conf
-    from airflow.version import version as airflow_version
-
-except ImportError:
-    # Standalone
-    airflow_version = None
-
-    conf = ConfigParser()
 
 try:
     import fastapi
@@ -60,7 +49,65 @@ from airflow_code_editor.commons import (
     ROOT_MOUNTPOUNT,
 )
 
-AIRFLOW_MAJOR_VERSION = int(airflow_version.split(".")[0]) if airflow_version else 0
+try:
+    from airflow.configuration import conf
+    from airflow.version import version as airflow_version
+
+    AIRFLOW_MAJOR_VERSION = int(airflow_version.split(".")[0])
+
+    # Create a new section in the configuration.
+    try:
+        conf.add_section(PLUGIN_NAME)
+    except Exception:
+        pass
+
+except ImportError:
+    # Standalone
+    airflow_version = None
+
+    AIRFLOW_MAJOR_VERSION = 0
+    ENV_VAR_PREFIX = "AIRFLOW__"
+
+    # from .standalone import CodeEditorConfigParser
+    class CodeEditorConfigParser(ConfigParser):
+
+        def __init__(self):
+            super().__init__()
+            self.add_section("core")
+            self.add_section(PLUGIN_NAME)
+
+        def get(self, section: str, key: str, **kwargs) -> str:
+            "Get config value"
+            var_name = self._env_var_name(section, key)
+            result = os.environ.get(var_name)
+            if result is None:
+                result = super().get(section, key, **kwargs)
+            return result
+
+        def has_option(self, section: str, option: str, **kwargs) -> bool:
+            "Check if option is defined"
+            try:
+                value = self.get(section, option, **kwargs)
+                if value is None:
+                    return False
+                return True
+            except Exception:
+                return False
+
+        def _env_var_name(self, section: str, key: str, team_name: str | None = None) -> str:
+            "Generate environment variable name for a config option"
+            team_component: str = f"{team_name.upper()}___" if team_name else ""
+            return f"{ENV_VAR_PREFIX}{team_component}{section.replace('.', '_').upper()}__{key.upper()}"
+
+        def get_mandatory_value(self, section: str, key: str, **kwargs) -> str:
+            "Get mandatory config value, raising ValueError if not found"
+            try:
+                return self.get(section, key, **kwargs)
+            except Exception:
+                raise ValueError(f"The value {section}.{key} should be set")
+
+    conf = CodeEditorConfigParser()
+
 
 __all__ = [
     'DummyLexer',
@@ -82,13 +129,6 @@ __all__ = [
     'read_config_file',
     'AIRFLOW_MAJOR_VERSION',
 ]
-
-
-# Create a new section in the configuration.
-try:
-    conf.add_section(PLUGIN_NAME)
-except Exception:
-    pass
 
 
 def normalize_path(path: Optional[str]) -> str:
@@ -132,9 +172,12 @@ def is_enabled() -> bool:
 
 def get_root_folder() -> Path:
     "Return the configured root folder or Airflow DAGs folder"
-    return Path(
-        get_plugin_config('root_directory') or cast(str, conf.get('core', 'dags_folder'))  # type: ignore
-    ).resolve()
+    try:
+        return Path(
+            get_plugin_config('root_directory') or conf.get_mandatory_value('core', 'dags_folder')  # type: ignore
+        ).resolve()
+    except ValueError:
+        return Path.cwd()
 
 
 MountPoint = namedtuple('MountPoint', 'path default')
@@ -165,9 +208,8 @@ def read_mount_points_config() -> Dict[str, MountPoint]:
             for part in conf_value.split(','):
                 k, v = part.split('=')
                 mount_conf[k] = v
-            config[mount_conf['name']] = MountPoint(
-                path=mount_conf['path'], default=mount_conf['name'] == ROOT_MOUNTPOUNT
-            )
+            default = mount_conf['name'] == ROOT_MOUNTPOUNT
+            config[mount_conf['name']] = MountPoint(path=mount_conf['path'], default=default)
         except Exception:
             pass
 
@@ -185,7 +227,8 @@ def read_mount_points_config() -> Dict[str, MountPoint]:
             break
         name = conf.get(PLUGIN_NAME, 'mount{}_name'.format(suffix))
         path = conf.get(PLUGIN_NAME, 'mount{}_path'.format(suffix))
-        config[name] = MountPoint(path=path, default=mount_conf['name'] == ROOT_MOUNTPOUNT)
+        default = name == ROOT_MOUNTPOUNT
+        config[name] = MountPoint(path=path, default=default)
     return config
 
 
@@ -220,7 +263,7 @@ def error_message(ex: Exception) -> str:
     "Get exception error message"
     if ex is None:
         return ''
-    elif isinstance(ex, FSError):
+    elif isinstance(ex, OSError):
         return str(ex)
     elif hasattr(ex, 'strerror'):
         return ex.strerror

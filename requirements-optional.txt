@@ -1,5 +1,6 @@
 black
 isort
-fs-s3fs
-fs-gcsfs
+fsspec[s3]
+fsspec[gcs]
+fsspec[sftp]
 connexion[swagger-ui]

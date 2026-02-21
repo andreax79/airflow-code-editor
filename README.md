@@ -69,7 +69,7 @@ You can find the following images there:
 * fsspec[s3] - Python filesystem interface for S3.
 * fsspec[gcs] - Python filesystem interface for Google Cloud Storage.
 * fsspec[sftp] - Python filesystem interface for SFTP.
-* ... other filesystems supported by [pss](https://github.com/eliben/pss)
+* ... other filesystems supported [fsspec](https://filesystem-spec.readthedocs.io/en/latest/api.html#implementations)
 
   ```bash
     pip install black isort fsspec[s3,gcp,sftp]

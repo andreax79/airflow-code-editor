@@ -519,16 +519,16 @@ class FSPath:
         info = self.root_fs.info(self.path)
         return os.stat_result(
             (
-                info["mode"],
-                info["ino"],
+                info.get("mode", None),
+                info.get("ino", None),
                 None,
-                info["nlink"],
-                info["uid"],
-                info["gid"],
+                info.get("nlink", None),
+                info.get("uid", None),
+                info.get("gid", None),
                 info["size"],
                 None,
-                info["mtime"],
-                info["created"],
+                info.get("mtime", info.get("LastModified", None)),
+                info.get("created", None),
             )
         )
 

@@ -14,6 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License
 
+import datetime
 import errno
 import os
 from dataclasses import dataclass
@@ -517,18 +518,22 @@ class FSPath:
     def stat(self) -> os.stat_result:
         "File stat"
         info = self.root_fs.info(self.path)
+        mtime = info.get("mtime", info.get("LastModified", None))
+        if isinstance(mtime, datetime.datetime):
+            # todo: timezone?
+            mtime = mtime.timestamp()
         return os.stat_result(
             (
-                info["mode"],
-                info["ino"],
+                info.get("mode", None),
+                info.get("ino", None),
                 None,
-                info["nlink"],
-                info["uid"],
-                info["gid"],
+                info.get("nlink", None),
+                info.get("uid", None),
+                info.get("gid", None),
                 info["size"],
                 None,
-                info["mtime"],
-                info["created"],
+                mtime,
+                info.get("created", None),
             )
         )
 

@@ -503,3 +503,9 @@
 ### Changed
 
 - Replace filesystem2 with fsspec
+
+## [8.2.1] - 2026-02-27
+
+## Fix
+
+- Fix accessing to an S3 mount

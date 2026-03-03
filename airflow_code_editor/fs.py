@@ -109,7 +109,7 @@ class RootFS:
             return fsspec.filesystem("memory"), "/"
         elif "://" in path:
             # URL-like path, let fsspec handle it
-            return fsspec.url_to_fs(path)
+            return fsspec.url_to_fs(path, use_listings_cache=False)
         else:
             # Local file path
             return fsspec.filesystem("file"), path

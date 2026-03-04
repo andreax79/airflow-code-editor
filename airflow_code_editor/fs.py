@@ -17,6 +17,7 @@
 import datetime
 import errno
 import os
+import uuid
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import PurePosixPath
@@ -106,7 +107,8 @@ class RootFS:
     def _open_fs(self, path: str) -> Tuple[fsspec.AbstractFileSystem, str]:
         "Open a filesystem from a path/URL"
         if path.startswith("mem://"):
-            return fsspec.filesystem("memory"), "/"
+            # In-memory filesystem with unique root path to avoid conflicts
+            return fsspec.filesystem("memory"), f"/{uuid.uuid4()}/"
         elif "://" in path:
             # URL-like path, let fsspec handle it
             return fsspec.url_to_fs(path, use_listings_cache=False)

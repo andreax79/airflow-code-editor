@@ -63,13 +63,15 @@ __all__ = [
 def save(path: str, data: bytes, mime_type: str):
     "Save a file (invoked by the HTTP POST method)"
     try:
+        root_fs = RootFS()
         is_text = mime_type.startswith("text/")
         if is_text:
-            data = data.decode("utf-8", errors="ignore")
+            text = data.decode("utf-8", errors="ignore")
             # Newline fix (remove cr)
-            data = data.replace("\r", "").rstrip() + "\n"
-        root_fs = RootFS()
-        root_fs.path(path).write_file(data=data, is_text=is_text)
+            text = text.replace("\r", "").rstrip() + "\n"
+            root_fs.path(path).write_text(text)
+        else:
+            root_fs.path(path).write_bytes(data)
         return prepare_api_response(path=normalize_path(path))
     except Exception as ex:
         logging.error(ex)

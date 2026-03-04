@@ -544,6 +544,13 @@ class FSPath:
         except Exception:
             return False
 
+    def is_file(self) -> bool:
+        "Return True if this path is a file"
+        try:
+            return self.root_fs.isfile(self.path)
+        except Exception:
+            return False
+
     def resolve(self) -> "FSPath":
         "Make the path absolute"
         return FSPath(os.path.realpath(self.path), root_fs=self.root_fs)
@@ -623,19 +630,15 @@ class FSPath:
                 stream=True,
             )
 
-    def write_file(self, data: Union[str, bytes], is_text: bool) -> None:
-        "Write data to a file"
+    def write_text(self, data: str) -> None:
+        "Write text data to a file"
         self.root_fs.makedirs(self.parent.path, recreate=True)
-        if is_text:
-            if isinstance(data, bytes):
-                self.root_fs.write_text(self.path, data.decode('utf-8'))
-            else:
-                self.root_fs.write_text(self.path, str(data))
-        else:
-            if isinstance(data, str):
-                self.root_fs.write_bytes(self.path, data.encode('utf-8'))
-            else:
-                self.root_fs.write_bytes(self.path, data)
+        self.root_fs.write_text(self.path, data)
+
+    def write_bytes(self, data: bytes) -> None:
+        "Write bytes data to a file"
+        self.root_fs.makedirs(self.parent.path, recreate=True)
+        self.root_fs.write_bytes(self.path, data)
 
     def read_text(self, encoding=None, errors=None) -> str:
         "Get the contents of a file as a string"

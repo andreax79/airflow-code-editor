@@ -74,8 +74,8 @@ def test_root_fs():
 def test_mem():
     root_fs = RootFS()
     root_fs.mount("/~mem", "mem://")
-    root_fs.path("/~mem/f.txt").write_file("data", is_text=True)
-    root_fs.path("/~mem/f.bin").write_file(b"data", is_text=False)
+    root_fs.path("/~mem/f.txt").write_text("data")
+    root_fs.path("/~mem/f.bin").write_bytes(b"data")
 
 
 def test_find():

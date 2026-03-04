@@ -130,6 +130,45 @@ class Shell(cmd.Cmd):
             for item in self.root_fs.mounts:
                 print(f"{item.filesystem} on {item.path}")
 
+    def do_cp(self, args):
+        "Copy files"
+        if len(args) != 2:
+            print("cp: usage: cp <source> <destination>")
+            return
+        src = self.cwd / args[0]
+        dst = self.cwd / args[1]
+        if not src.exists():
+            print("cp: no such file or directory: {src}".format(src=src))
+            return
+        if src.is_dir():
+            if dst.exists() and not dst.is_dir():
+                print("cp: cannot overwrite non-directory {dst} with directory {src}".format(dst=dst, src=src))
+                return
+            for item in src.iterdir():
+                self.do_cp([str(item), str(dst / item.name)])
+        else:
+            try:
+                dst.write_bytes(src.read_bytes())
+            except Exception as ex:
+                print("cp: error: {message}".format(message=str(ex)))
+
+    def do_rm(self, args):
+        "Remove files"
+        for arg in args:
+            path = self.cwd / arg
+            if not path.exists():
+                print("rm: no such file or directory: {path}".format(path=path))
+                continue
+            try:
+                if path.is_dir():
+                    for item in path.iterdir():
+                        self.do_rm([str(item)])
+                    path.rmdir()
+                else:
+                    path.unlink()
+            except Exception as ex:
+                print("rm: error: {message}".format(message=str(ex)))
+
     def do_version(self, args):
         "Show version"
         print(VERSION)

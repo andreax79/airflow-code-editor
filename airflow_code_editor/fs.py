@@ -109,7 +109,7 @@ class RootFS:
             return fsspec.filesystem("memory"), "/"
         elif "://" in path:
             # URL-like path, let fsspec handle it
-            return fsspec.url_to_fs(path)
+            return fsspec.url_to_fs(path, use_listings_cache=False)
         else:
             # Local file path
             return fsspec.filesystem("file"), path
@@ -518,22 +518,22 @@ class FSPath:
     def stat(self) -> os.stat_result:
         "File stat"
         info = self.root_fs.info(self.path)
-        mtime = info.get("mtime", info.get("LastModified", None))
+        mtime = info.get("mtime", info.get("LastModified"))
         if isinstance(mtime, datetime.datetime):
             # todo: timezone?
             mtime = mtime.timestamp()
         return os.stat_result(
             (
-                info.get("mode", None),
-                info.get("ino", None),
+                info.get("mode"),
+                info.get("ino"),
                 None,
-                info.get("nlink", None),
-                info.get("uid", None),
-                info.get("gid", None),
+                info.get("nlink"),
+                info.get("uid"),
+                info.get("gid"),
                 info["size"],
                 None,
                 mtime,
-                info.get("created", None),
+                info.get("created"),
             )
         )
 

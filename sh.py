@@ -17,6 +17,7 @@
 import cmd
 import shlex
 import sys
+from datetime import datetime
 
 try:
     import readline
@@ -105,6 +106,13 @@ class Shell(cmd.Cmd):
 
     def do_ls(self, args):
         "List directory"
+
+        if "-l" in args:
+            args.remove("-l")
+            long_format = True
+        else:
+            long_format = False
+
         for arg in args or ["."]:
             path = self.cwd / arg
             if not path.exists():
@@ -113,7 +121,17 @@ class Shell(cmd.Cmd):
                 print(str(path.name))
             else:
                 for item in path.iterdir():
-                    if item.is_dir():
+                    if long_format:
+                        s = item.stat()
+                        size = item.size()
+                        result = {
+                                'id': item.name,
+                                'size': size,
+                                'mode': s.st_mode,
+                                'mtime': datetime.fromtimestamp(int(s.st_mtime)).isoformat() if s.st_mtime else None,
+                            }
+                        print(result)
+                    elif item.is_dir():
                         print(str(item.name) + "/")
                     else:
                         print(str(item.name))

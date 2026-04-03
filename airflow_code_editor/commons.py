@@ -99,7 +99,7 @@ PLUGIN_DEFAULT_CONFIG = {
     'root_directory': None,
     'line_length': 88,
     'string_normalization': False,
-    'ignored_entries': '.*,__pycache__',
+    'ignored_entries': '.*,__pycache__,lost+found',
     'search_context': 2,
 }
 ROOT_MOUNTPOUNT = 'root'

@@ -586,7 +586,7 @@ class FSPath:
                 return len(self.root_fs.listdir(self.path))
             else:
                 return self.root_fs.size(self.path)
-        except FSError:
+        except Exception:
             return None
 
     def move(self, target) -> None:

@@ -515,3 +515,9 @@
 ## Fix
 
 - Disable listings cache for URL-like paths
+
+## [8.2.3] - 2026-04-03
+
+## Fix
+
+- Handle unreadable directories when listing files

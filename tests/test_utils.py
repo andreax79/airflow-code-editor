@@ -6,7 +6,7 @@ import os.path
 import shutil
 import tempfile
 from pathlib import Path
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from airflow_code_editor.commons import PLUGIN_DEFAULT_CONFIG, PLUGIN_NAME
 from airflow_code_editor.git import execute_git_command, git_enabled
@@ -20,13 +20,25 @@ from airflow_code_editor.utils import (
 
 
 class TestUtils(TestCase):
+
     def setUp(self):
-        self.root_dir = "/tmp/tests"
+        self.logs_dir = tempfile.mkdtemp()
+        self.root_dir = tempfile.mkdtemp()
+        self.enterClassContext(
+            mock.patch.dict(os.environ, {
+                "AIRFLOW__CODE_EDITOR__MOUNT": "name=airflow_home,path=..",
+                "AIRFLOW__CODE_EDITOR__MOUNT1": f"name=logs,path={self.logs_dir}",
+            })
+        )
         shutil.rmtree(self.root_dir, ignore_errors=True)
         shutil.copytree(Path(__file__).parent, self.root_dir)
         conf.set(PLUGIN_NAME, 'git_init_repo', 'True')
         conf.set(PLUGIN_NAME, 'root_directory', self.root_dir)
         conf.set(PLUGIN_NAME, 'git_enabled', 'True')
+
+    def tearDown(self):
+        shutil.rmtree(self.logs_dir)
+        shutil.rmtree(self.root_dir)
 
     def test_get_root_folder(self):
         assert get_root_folder() is not None
@@ -158,6 +170,9 @@ class TestConfig(TestCase):
     def setUp(self):
         self.root_dir = tempfile.mkdtemp()
         conf.set(PLUGIN_NAME, 'git_init_repo', str(PLUGIN_DEFAULT_CONFIG['git_init_repo']))
+
+    def tearDown(self):
+        shutil.rmtree(self.root_dir)
 
     @contextlib.contextmanager
     def env_vars(self, overrides):

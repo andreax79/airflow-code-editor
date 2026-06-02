@@ -65,9 +65,12 @@ npm-watch:
 
 venv:
 	uv venv
-	uv pip install fastapi
+	uv pip install apache-airflow==$(shell grep -m 1 AIRFLOW_VERSION docker/Makefile | cut -d ' ' -f 3)
 	uv pip install -r requirements.txt
 	uv pip install -r requirements-dev.txt
+
+uv-test:
+	uv run pytest
 
 run-app:
 	uv run fastapi run --app airflow_code_editor.main

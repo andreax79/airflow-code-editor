@@ -32,12 +32,9 @@ jobs:
     strategy:
       matrix:
         python-version:
-        - "3.12"
+        - "3.13"
         airflow:
-        - "2.10.0"
-
-    env:
-      AIRFLOW_HOME: ./scripts/airflow
+        - "3.2.2"
 
     steps:
       - name: Checkout code
@@ -65,10 +62,9 @@ jobs:
           python -m pip install --upgrade setuptools wheel
 
       - name: Prepare environment
-        env:
-          AIRFLOW_VERSION: ${{ matrix.airflow }}
         run: |
-          bash ./scripts/prepare.sh
+          python -m pip install apache-airflow==${{ matrix.airflow }} pytest
+          python -m pip install -r requirements.txt
           pip freeze
 
       - name: Build package

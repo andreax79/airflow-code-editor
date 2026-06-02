@@ -11,18 +11,11 @@ jobs:
     strategy:
       matrix:
         python:
-        - "3.9"
-        - "3.10"
-        - "3.11"
-        - "3.12"
+        - "3.13"
         airflow:
-        - "2.10.5"
+        - "3.2.2"
 
     runs-on: ubuntu-latest
-
-    env:
-      AIRFLOW_HOME: ./scripts/airflow
-      AIRFLOW_VERSION: ${{ matrix.airflow }}
 
     steps:
     - name: Checkout
@@ -49,17 +42,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools wheel
-        python -m pip install pytest
 
     - name: Install environment
       run: |
-        bash ./scripts/prepare.sh
-        bash ./scripts/install.sh
+        python -m pip install apache-airflow==${{ matrix.airflow }} pytest
+        python -m pip install -r requirements.txt
         pip freeze
 
     - name: Run tests
       run: |
-        source ./scripts/config.sh
         git config --global user.email "dev@example.com"
         git config --global user.name "Test"
         pytest tests

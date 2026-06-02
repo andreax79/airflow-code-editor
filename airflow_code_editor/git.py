@@ -235,7 +235,11 @@ def init_git_repo() -> None:
         gitignore = cwd / '.gitignore'
         if not gitignore.exists():
             with gitignore.open('w') as f:
-                f.write('__pycache__\n')
+                ignored_entries = get_plugin_config("ignored_entries").split(",")
+                for entry in ignored_entries:
+                    entry = entry.strip()
+                    if entry != ".*":
+                        f.write(f"{entry}\n")
             git_call(['add', '.gitignore'])
         git_call(['commit', '-m', 'Initial commit'])
 

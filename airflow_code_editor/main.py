@@ -47,7 +47,7 @@ templates = Jinja2Templates(directory=str(templates_path))
 # Render the index page
 @code_editor_app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request})
 
 
 # Mount the app

@@ -8,7 +8,7 @@
 
 ## [1.0.1] - 2019-08-07
 
-### Fix
+#### Fixed
 
 - change static folder
 
@@ -32,13 +32,13 @@
 
 ## [2.1.0] - 2019-10-15
 
-### Fixed
+#### Fixed
 
 - fix newline (cr+lf vs lf)
 
 ## [2.1.1] - 2019-11-19
 
-### Fixed
+#### Fixed
 
 - fix missing icons
 
@@ -50,7 +50,7 @@
 
 ## [2.2.1] - 2020-09-04
 
-### Fixed
+#### Fixed
 
 - fixed format file size
 
@@ -77,7 +77,7 @@
 
 ## [2.2.4] - 2020-09-17
 
-### Fixed
+#### Fixed
 
 - mount points config parsing
 - always show Files section
@@ -114,7 +114,7 @@
 - Format code
 - Editor settings (theme, mode)
 
-### Fix
+#### Fixed
 
 - fix git revert (checkout)
 
@@ -130,7 +130,7 @@
 
 ## [3.2.1] - 2021-01-05
 
-### Fix
+#### Fixed
 
 - keep cursor position after save
 
@@ -144,7 +144,7 @@
 
 ## [3.3.1] - 2021-03-29
 
-### Fix
+#### Fixed
 
 - Support different base URL
 - Fix buttons wrap
@@ -155,7 +155,7 @@
 
 - CodeMirror upgrade
 
-### Fix
+#### Fixed
 
 - Fix missing font awesome css for Airflow v1 without RBAC
 
@@ -184,7 +184,7 @@
 
 - Github Actions CI/CD
 
-### Fix
+#### Fixed
 
 - Fix init git repository
 - Add missing horizontal scroll to the sidebar
@@ -236,7 +236,7 @@
 
 - ansi-regex upgrade
 
-### Fix
+#### Fixed
 
 - Fix directories items number
 
@@ -246,7 +246,7 @@
 
 - CodeMirror upgrade
 
-### Fix
+#### Fixed
 
 - Fix empty files list
 
@@ -327,14 +327,14 @@
 - Replace Bootstap Modals with Vue-universal-modal
 - Replace Font Awesome with Material Icons
 
-### Fix
+#### Fixed
 
 - Raise the correct exception at file loading and show the error in the editor
 - Fix exception related to https://github.com/axios/axios/issues/811
 
 ## [7.0.1] - 2022-08-25
 
-### Fix
+#### Fixed
 
 - Fix "send_file() got an unexpected keyword argument 'attachment_filename'" exception for new version of Flask
 
@@ -352,7 +352,7 @@
 
 ## [7.1.1] - 2022-10-29
 
-### Fix
+#### Fixed
 
 - Fix theme settings
 
@@ -369,7 +369,7 @@
 
 ## [7.2.1] - 2023-01-30
 
-### Fix
+#### Fixed
 
 - Fix "Permission denied" error renaming/removing files when git is not installed
 
@@ -397,7 +397,7 @@
 
 ## [7.4.1] - 2023-08-28
 
-### Fix
+#### Fixed
 
 - fix requirements (pss)
 
@@ -426,7 +426,7 @@
 - make prepareHref more robust
 - add menu link to REST API reference
 
-### Fix
+#### Fixed
 
 - files containing spaces in the Git Workspace view
 
@@ -460,19 +460,19 @@
 
 - Airflow 3.0 compatibility
 
-## Fix
+### Fixed
 
 - Show save file error message
 
 ## [8.0.1] - 2025-06-10
 
-## Fix
+### Fixed
 
 - Include missing file code_editor.yaml in the package
 
 ## [8.1.0] - 2025-08-12
 
-## Fix
+### Fixed
 
 - Remove race condition when opening new tab
 - Fix bookmarks on Chrome
@@ -484,7 +484,7 @@
 
 ## [8.1.1] - 2025-11-06
 
-## Fix
+### Fixed
 
 - Fix running when running Airflow in a sub path
 - Fix menu in Airflow 3.1.x
@@ -506,18 +506,30 @@
 
 ## [8.2.1] - 2026-02-27
 
-## Fix
+### Fixed
 
 - Fix accessing to an S3 mount
 
 ## [8.2.2] - 2026-03-04
 
-## Fix
+### Fixed
 
 - Disable listings cache for URL-like paths
 
 ## [8.2.3] - 2026-04-03
 
-## Fix
+### Fixed
 
 - Handle unreadable directories when listing files
+
+## [8.2.4] - 2026-06-02
+
+### Fixed
+
+- Make template rendering compatible with the new Starlette API
+
+### Changed
+
+- Change test Airflow version to 3.2.2
+- Update dependencies
+- Generate .gitignore from `ignored_entries` config

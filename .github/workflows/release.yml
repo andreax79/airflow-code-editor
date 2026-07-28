@@ -34,7 +34,7 @@ jobs:
         python-version:
         - "3.13"
         airflow:
-        - "3.2.2"
+        - "3.3.0"
 
     steps:
       - name: Checkout code

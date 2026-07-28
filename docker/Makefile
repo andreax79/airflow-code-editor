@@ -9,7 +9,7 @@ PLUGIN_VERSION := $(shell cat ../airflow_code_editor/VERSION)
 VERSION := ${AIRFLOW_VERSION}-${PLUGIN_VERSION}
 DEV_IMAGE_PACKAGE_DIR := /home/airflow/.local/lib/python${DEV_IMAGE_PYTHON_VERSION}/site-packages/airflow_code_editor/
 
-.PHONY: help banner image push all dev-image dev-shell webserver scheduler test coverage all
+.PHONY: help banner image push all dev-image dev-shell webserver scheduler test coverage all simple_auth_manager_passwords.json.generated
 
 makeFileDir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -92,7 +92,11 @@ dev-image:
 dags:
 	@git clone https://github.com/andreax79/airflow-maintenance-dags ${makeFileDir}/dags
 
-dev-shell: dags banner
+simple_auth_manager_passwords.json.generated:
+	@touch ${makeFileDir}/simple_auth_manager_passwords.json.generated
+	@chmod 666 ${makeFileDir}/simple_auth_manager_passwords.json.generated
+
+dev-shell: dags banner simple_auth_manager_passwords.json.generated
 	@touch ${makeFileDir}/.bash_history
 	@docker run --rm -it \
 		-h airflow \
@@ -101,6 +105,7 @@ dev-shell: dags banner
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/../sh.py:/opt/airflow/sh.py \
+		-v ${makeFileDir}/simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
@@ -112,12 +117,13 @@ dev-shell: dags banner
 webserver:
 	@echo Please use `make api-server`.
 
-api-server: dags banner
+api-server: dags banner simple_auth_manager_passwords.json.generated
 	@docker run --rm -it \
 		-h airflow \
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
+		-v ${makeFileDir}/simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
@@ -126,12 +132,13 @@ api-server: dags banner
 		${DEV_IMAGE_NAME} \
 		airflow api-server
 
-standalone: dags banner
+standalone: dags banner simple_auth_manager_passwords.json.generated
 	@docker run --rm -it \
 		-h airflow \
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
+		-v ${makeFileDir}/simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
@@ -140,12 +147,13 @@ standalone: dags banner
 		${DEV_IMAGE_NAME} \
 		airflow standalone
 
-scheduler: dags banner
+scheduler: dags banner simple_auth_manager_passwords.json.generated
 	@docker run --rm -it \
 		-h airflow \
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
+		-v ${makeFileDir}/simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated \
 		-p ${AIRFLOW_PORT}:${AIRFLOW_PORT} \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
@@ -154,12 +162,13 @@ scheduler: dags banner
 		${DEV_IMAGE_NAME} \
 		airflow scheduler
 
-test: dags banner
+test: dags banner simple_auth_manager_passwords.json.generated
 	@docker run --rm -it \
 		-h airflow \
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
+		-v ${makeFileDir}/simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
 		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \
@@ -168,12 +177,13 @@ test: dags banner
 		${DEV_IMAGE_NAME} \
 		tests
 
-coverage: dags banner
+coverage: dags banner simple_auth_manager_passwords.json.generated
 	@docker run --rm -it \
 		-h airflow \
 		-v ${makeFileDir}/../airflow_code_editor:${DEV_IMAGE_PACKAGE_DIR} \
 		-v ${makeFileDir}/dags:/opt/airflow/dags \
 		-v ${makeFileDir}/../tests:/opt/airflow/tests \
+		-v ${makeFileDir}/simple_auth_manager_passwords.json.generated:/opt/airflow/simple_auth_manager_passwords.json.generated \
 		-e AIRFLOW_UID=$$(id -u) \
 		-e AIRFLOW__CODE_EDITOR__ENABLED="True" \
 		-e AIRFLOW__CODE_EDITOR__MOUNT="name=airflow_home,path=/opt/airflow" \

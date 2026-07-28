@@ -198,11 +198,14 @@ For details on configuring the authentication, see
     make npm-build
   ```
 
-6. You can start Airflow webserver with:
+6. You can start Airflow API server with:
 
   ```bash
-    make webserver
+    make api-server
   ```
+
+The predefined users in the dev image are: `admin`, `op`, `user`, and `viewer`.
+The password are auto-generated and are saved in `docker/simple_auth_manager_passwords.json.generated`.
 
 7. Run tests
 

@@ -23,9 +23,12 @@ RUN pip install \
     --no-cache-dir airflow-code-editor==${PLUGIN_VERSION} -r requirements-optional.txt pss && rm requirements-optional.txt
 # Init airflow db
 RUN airflow db init
-# Create user 'admin' with password 'admin'
-RUN airflow users create -r Admin -u admin -e admin@example.com -f admin -l admin -p admin
+# Create the users
 RUN airflow sync-perm
+RUN airflow users create -r Admin -u admin -e admin@example.com -f admin -l admin -p admin
+RUN airflow users create -r User -u user -e user@example.com -f user -l user -p user
+RUN airflow users create -r Op -u op -e op@example.com -f op -l op -p op
+RUN airflow users create -r Viewer -u viewer -e viewer@example.com -f viewer -l viewer -p viewer
 # Set API Authentication
 RUN sed -i 's/auth_backends = .*/auth_backends = airflow.api.auth.backend.basic_auth/' /opt/airflow/airflow.cfg
 # Configure GIT

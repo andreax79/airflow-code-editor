@@ -7,6 +7,7 @@
             :config="config"
             :isGit="isGit"
             :showBreadcrumb="true"
+            :canEdit="canEdit"
             @changePath="changePath"
             @updateLocation="updateLocation"
             @loaded="loaded"
@@ -18,6 +19,7 @@
             :config="config"
             :isGit="isGit"
             :showBreadcrumb="true"
+            :canEdit="canEdit"
             @changePath="changePath"
             @updateLocation="updateLocation"
             @loaded="loaded"
@@ -38,7 +40,7 @@ export default defineComponent({
         'editor': Editor,
         'spinner': Spinner,
     },
-    props: [ 'config', 'isGit', 'target', 'uuid' ],
+    props: [ 'config', 'isGit', 'target', 'uuid', 'canEdit' ],
     data() {
         return {
             stack: new Stack(), // files stack

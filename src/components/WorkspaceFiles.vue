@@ -1,20 +1,20 @@
 <template>
   <div class="workspace-file-header">
     <span class="workspace-file-header-checkbox" @click="toggleAll()">
-        <icon icon="check_box" :state="items.length && selected.length == items.length" />
+        <icon v-if="canEdit" icon="check_box" :state="items.length && selected.length == items.length" />
     </span>
     <h1>{{ kind == 'unstaged' ? 'Unstaged files' : 'Staged files' }}</h1>
     <div class="header-buttons">
       <button @click="showRevertDialog"
               type="button"
-              :disabled="selected.length == 0 ? 'disabled' : null"
+              :disabled=" selected.length == 0 ? 'disabled' : null"
               class="btn btn-default"
-              v-if="kind == 'unstaged'">
+              v-if="canEdit && kind == 'unstaged'">
               <icon icon="rotate_left"/>
               Revert
       </button>
       <button @click="process"
-              v-if="kind == 'unstaged'"
+              v-if="canEdit && kind == 'unstaged'"
               type="button"
               :disabled="selected.length == 0 ? 'disabled' : null"
               class="btn btn-primary">
@@ -22,7 +22,7 @@
               Stage
       </button>
       <button @click="process"
-              v-if="kind != 'unstaged'"
+              v-if="canEdit && kind != 'unstaged'"
               type="button"
               :disabled="selected.length == 0 ? 'disabled' : null"
               class="btn btn-default">
@@ -33,7 +33,7 @@
               type="button"
               :disabled="items.length == 0 ? 'disabled' : null"
               class="btn btn-primary"
-              v-if="kind == 'staged'">
+              v-if="canEdit && kind == 'staged'">
               <icon icon="approval"/>
               Commit
       </button>
@@ -43,7 +43,7 @@
     <table class="table table-hover table-striped">
       <tbody>
         <tr v-for="item in items" :key="item" :class="item.selected ? 'info' : ''">
-          <td class="workspace-file-checkbox" @click="toggleItem(item)">
+          <td v-if="canEdit" class="workspace-file-checkbox" @click="toggleItem(item)">
             <icon icon="check_box" :state="item.selected" />
           </td>
           <td class="workspace-file-icon" @click="showDiff(item)">
@@ -144,7 +144,7 @@ export default defineComponent({
         'commit-dialog': CommitDialog,
         'confirm-dialog': ConfirmDialog,
     },
-    props: [ 'kind' ], // staged/unstaged
+    props: [ 'kind', 'canEdit' ], // staged/unstaged
     data() {
         return {
             items: ref([]),

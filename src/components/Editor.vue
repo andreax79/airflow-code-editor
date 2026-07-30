@@ -11,12 +11,12 @@
                 <div class="cm-body cm-flex-child-grow codemirror-editor-parent">
                 </div>
                 <div class="cm-footer cm-flex-child-fixed">
-                    <button v-on:click="saveAction()" v-if="!readOnly" type="button" class="btn btn-primary"><icon icon="save"/> Save</button>
-                    <button v-on:click="saveAsAction()" v-if="!readOnly" type="button" class="btn btn-default"><icon icon="save_as"/> Save as</button>
-                    <button v-on:click="revertAction()" v-if="!readOnly" type="button" class="btn btn-default"><icon icon="rotate_left"/> Revert</button>
-                    <button v-on:click="findAction()" v-if="!readOnly" type="button" class="btn btn-default"><icon icon="search"/> Find/Replace</button>
-                    <button v-on:click="findAction()" v-if="readOnly" type="button" class="btn btn-default"><icon icon="search"/> Find</button>
-                    <button v-on:click="formatAction()" v-if="!readOnly" type="button" class="btn btn-default" v-show="language == 'Python'"><icon icon="format_indent_increase"/> Format Code</button>
+                    <button v-on:click="saveAction()" v-if="canEdit && !readOnly" type="button" class="btn btn-primary"><icon icon="save"/> Save</button>
+                    <button v-on:click="saveAsAction()" v-if="canEdit && !readOnly" type="button" class="btn btn-default"><icon icon="save_as"/> Save as</button>
+                    <button v-on:click="revertAction()" v-if="canEdit && !readOnly" type="button" class="btn btn-default"><icon icon="rotate_left"/> Revert</button>
+                    <button v-on:click="findAction()" v-if="canEdit && !readOnly" type="button" class="btn btn-default"><icon icon="search"/> Find/Replace</button>
+                    <button v-on:click="findAction()" v-if="!canEdit || readOnly" type="button" class="btn btn-default"><icon icon="search"/> Find</button>
+                    <button v-on:click="formatAction()" v-if="canEdit && !readOnly" type="button" class="btn btn-default" v-show="language == 'Python'"><icon icon="format_indent_increase"/> Format Code</button>
                     <button v-on:click="settingsAction()" type="button" class="btn btn-default" style="float: right"><icon icon="settings"/> Settings</button>
                 </div>
             </div>
@@ -171,7 +171,7 @@ export default defineComponent({
         'save-as-dialog': SaveAsDialog,
         'breadcrumb': Breadcrumb,
     },
-    props: [ 'stack', 'config', 'isGit', 'showBreadcrumb' ],
+    props: [ 'stack', 'config', 'isGit', 'showBreadcrumb', 'canEdit' ],
     data() {
         return {
             editorPath: null, // path of the file open in editor
@@ -347,7 +347,7 @@ export default defineComponent({
         },
         refresh() {
             // Show file in editor
-            this.readOnly = this.isGit;
+            this.readOnly = this.isGit || !this.canEdit;
             let last = this.stack.last();
             if (last.type == 'blob') {
                 if (this.isGit){ // Git hash

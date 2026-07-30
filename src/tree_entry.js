@@ -75,7 +75,7 @@ export class TreeEntry {
     }
 }
 
-export function prepareMenuOptions(item, isGit, showHiddenFiles) {
+export function prepareMenuOptions(item, isGit, showHiddenFiles, canEdit) {
     // Prepare the menu
     let options = []
     if (item) {
@@ -90,13 +90,13 @@ export function prepareMenuOptions(item, isGit, showHiddenFiles) {
             slug: 'download'
         });
     }
-    if ((!isGit) && item && (item.type == 'blob' || item.size == 0)) {
+    if (canEdit && (!isGit) && item && (item.type == 'blob' || item.size == 0)) {
         options.push({
             name: '<span class="material-icons">delete</span> Delete',
             slug: 'delete'
         });
     }
-    if ((!isGit) && item && (item.name != '..')) {
+    if (canEdit && (!isGit) && item && (item.name != '..')) {
         options.push({
             name: '<span class="material-icons">drive_file_rename_outline</span> Move/Rename',
             slug: 'rename'
@@ -112,14 +112,16 @@ export function prepareMenuOptions(item, isGit, showHiddenFiles) {
                 type: 'divider'
             });
         }
-        options.push({
-            name: '<span class="material-icons">add_circle</span> New',
-            slug: 'new'
-        });
-        options.push({
-            name: '<span class="material-icons">file_upload</span> Upload',
-            slug: 'upload'
-        });
+        if (canEdit) {
+            options.push({
+                name: '<span class="material-icons">add_circle</span> New',
+                slug: 'new'
+            });
+            options.push({
+                name: '<span class="material-icons">file_upload</span> Upload',
+                slug: 'upload'
+            });
+        }
         options.push({
             name: '<span class="material-icons">refresh</span> Refresh',
             slug: 'refresh'

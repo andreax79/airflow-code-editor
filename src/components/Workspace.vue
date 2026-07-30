@@ -2,17 +2,17 @@
   <div class="workspace-view">
       <ol class="breadcrumb">
         <div class="breadcrumb-buttons">
-            <button v-on:click="pull()" type="button" class="btn btn-outlined"><icon icon="keyboard_double_arrow_down"/> Pull</button>
-            <button v-on:click="push()" type="button" class="btn btn-outlined"><icon icon="keyboard_double_arrow_up"/> Push</button>
+            <button v-if="canEdit" v-on:click="pull()" type="button" class="btn btn-outlined"><icon icon="keyboard_double_arrow_down"/> Pull</button>
+            <button v-if="canEdit" v-on:click="push()" type="button" class="btn btn-outlined"><icon icon="keyboard_double_arrow_up"/> Push</button>
         </div>
       </ol>
       <splitpanes class="default-theme">
         <pane class="workspace-file-pane" :size="33">
           <spinner v-show="loading"/>
-          <workspacefiles @showDiff="showDiff" ref="unstaged" kind="unstaged" @refresh="refresh"></workspacefiles>
+          <workspacefiles @showDiff="showDiff" ref="unstaged" kind="unstaged" @refresh="refresh" :canEdit="canEdit"></workspacefiles>
         </pane>
         <pane class="workspace-file-pane" :size="33">
-          <workspacefiles @showDiff="showDiff" ref="staged" kind="staged" @refresh="refresh"></workspacefiles>
+          <workspacefiles @showDiff="showDiff" ref="staged" kind="staged" @refresh="refresh" :canEdit="canEdit"></workspacefiles>
         </pane>
         <pane :size="34" class="workspace-show-diff-pane">
           <diff ref="diff" linesOfContext="3" @loaded="loaded"></diff>
@@ -66,7 +66,7 @@ export default defineComponent({
         'diff': ShowDiff,
         'spinner': Spinner,
     },
-    props: [],
+    props: [ 'canEdit' ],
     data() {
         return {
             loading: false,

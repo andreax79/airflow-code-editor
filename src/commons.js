@@ -184,6 +184,16 @@ export async function git_async(args, options) {
     }
 }
 
+export async function getPermissions() {
+    // Get user permissions from the backend
+    try {
+        const response = await axios.get(prepareHref('permissions'));
+        return response.data;
+    } catch(error) {
+        return {}
+    }
+}
+
 export function setColor(color) {
     // Set light/dark mode
     if (color == 'Dark') {

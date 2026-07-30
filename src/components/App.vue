@@ -35,6 +35,7 @@
                     :config="config"
                     :target="tab.target"
                     :is-git="false"
+                    :can-edit="permissions.can_edit"
                     @show="show"
                     @setTab="(event) => { tab.name = event.name; tab.target = event; }"
                     v-show="selectedTab == tab.uuid"
@@ -136,7 +137,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { defineComponent, ref } from 'vue';
 import { Splitpanes, Pane } from 'splitpanes';
-import { setColor, prepareHref, splitPath, EDITOR_THEME_KEY, EDITOR_MODE_KEY, EDITOR_COLOR_KEY, SHOW_HIDDEN_FILES_KEY, BOOKMARKS_KEY, WORKSPACE_UUID } from "../commons";
+import { setColor, prepareHref, splitPath, getPermissions, EDITOR_THEME_KEY, EDITOR_MODE_KEY, EDITOR_COLOR_KEY, SHOW_HIDDEN_FILES_KEY, BOOKMARKS_KEY, WORKSPACE_UUID } from "../commons";
 import { TabState } from '../tabs.js';
 
 import VueSimpleContextMenu from 'vue-simple-context-menu';
@@ -174,10 +175,12 @@ export default defineComponent({
             },
             sidebarSize: 190 * 100 / document.documentElement.clientWidth, // sidebar size (percentage)
             menuOptions: [],
+            permissions: { "can_edit": null },
         };
     },
     methods: {
-        initViews() {
+        async initViews() {
+            this.permissions = await getPermissions();
             // Init views
             setColor(this.config.color);
         },

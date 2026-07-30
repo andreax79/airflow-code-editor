@@ -533,3 +533,14 @@
 - Change test Airflow version to 3.2.2
 - Update dependencies
 - Generate .gitignore from `ignored_entries` config
+
+## [8.3.0] - 2026-07-30
+
+### Fixed
+
+- Check user permission for the routes that change files or repository state
+
+### Changed
+
+- Change test Airflow version to 3.3.0
+- Update dependencies

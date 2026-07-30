@@ -9,7 +9,11 @@ from pathlib import Path
 from unittest import TestCase, mock
 
 from airflow_code_editor.commons import PLUGIN_DEFAULT_CONFIG, PLUGIN_NAME
-from airflow_code_editor.git import execute_git_command, git_enabled
+from airflow_code_editor.git import (
+    execute_git_command,
+    git_enabled,
+    is_readonly_git_command,
+)
 from airflow_code_editor.utils import (
     conf,
     get_plugin_config,
@@ -25,10 +29,13 @@ class TestUtils(TestCase):
         self.logs_dir = tempfile.mkdtemp()
         self.root_dir = tempfile.mkdtemp()
         self.enterClassContext(
-            mock.patch.dict(os.environ, {
-                "AIRFLOW__CODE_EDITOR__MOUNT": "name=airflow_home,path=..",
-                "AIRFLOW__CODE_EDITOR__MOUNT1": f"name=logs,path={self.logs_dir}",
-            })
+            mock.patch.dict(
+                os.environ,
+                {
+                    "AIRFLOW__CODE_EDITOR__MOUNT": "name=airflow_home,path=..",
+                    "AIRFLOW__CODE_EDITOR__MOUNT1": f"name=logs,path={self.logs_dir}",
+                },
+            )
         )
         shutil.rmtree(self.root_dir, ignore_errors=True)
         shutil.copytree(Path(__file__).parent, self.root_dir)
@@ -76,26 +83,31 @@ class TestUtils(TestCase):
         assert normalize_path('aaa') == 'aaa'
 
     def test_invalid_command(self):
+        assert not is_readonly_git_command(['invalid-command'])
         r = execute_git_command(['invalid-command'])
         assert r.returncode != 0
         assert 'Command not supported' in r.stderr
 
     def test_ls_tree(self):
         assert git_enabled()
+        assert is_readonly_git_command(['ls-tree', 'HEAD', '-l'])
         r = execute_git_command(['ls-tree', 'HEAD', '-l'])
         assert r.returncode == 0
         assert r.stdout
 
     def test_mounts(self):
+        assert is_readonly_git_command(['mounts'])
         r = execute_git_command(['mounts'])
         assert r.returncode == 0
         assert r.stdout == 'airflow_home\nlogs'
 
     def test_ls_local_logs(self):
+        assert is_readonly_git_command(['ls-local', '-l', '~logs'])
         r = execute_git_command(['ls-local', '-l', '~logs'])
         assert r.returncode == 0
 
     def test_ls_local_airflow_home(self):
+        assert is_readonly_git_command(['ls-local', '-l', '~airflow_home'])
         r = execute_git_command(['ls-local', '-l', '~airflow_home'])
         assert r.returncode == 0
         assert r.stdout
@@ -105,6 +117,7 @@ class TestUtils(TestCase):
             assert i[2].startswith('/~airflow_home/')
 
     def test_ls_local_folder(self):
+        assert is_readonly_git_command(['ls-local', '-l', 'folder'])
         r = execute_git_command(['ls-local', '-l', 'folder'])
         assert r.returncode == 0
         assert r.stdout
@@ -121,6 +134,7 @@ class TestUtils(TestCase):
             with open(source, 'w') as f:
                 f.write('test')
             assert os.path.exists(source)
+            assert not is_readonly_git_command(['rm-local', 'new.file'])
             r = execute_git_command(['rm-local', 'new.file'])
             assert r.returncode == 0
             assert not os.path.exists(source)
@@ -137,6 +151,7 @@ class TestUtils(TestCase):
             assert not os.path.exists(target)
             with open(source, 'w') as f:
                 f.write('test')
+            assert not is_readonly_git_command(['mv-local', 'new.file', 'folder'])
             r = execute_git_command(['mv-local', 'new.file', 'folder'])
             assert r.returncode == 0
             assert os.path.exists(target)
@@ -150,6 +165,12 @@ class TestUtils(TestCase):
             except Exception:
                 pass
 
+    def test_help(self):
+        assert is_readonly_git_command(['help'])
+        r = execute_git_command(['help'])
+        assert r.returncode == 0
+        assert r.stdout
+
 
 class TestInitGitRepo(TestCase):
     def setUp(self):
@@ -161,6 +182,7 @@ class TestInitGitRepo(TestCase):
         shutil.rmtree(self.root_dir)
 
     def test_ls_tree(self):
+        assert is_readonly_git_command(['ls-tree', 'HEAD', '-l'])
         r = execute_git_command(['ls-tree', 'HEAD', '-l'])
         assert r.returncode == 0
         assert r.stdout

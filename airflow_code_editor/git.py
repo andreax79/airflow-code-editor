@@ -46,6 +46,7 @@ from airflow_code_editor.utils import (
 __all__ = [
     'git_enabled',
     'execute_git_command',
+    'is_readonly_git_command',
 ]
 
 
@@ -106,7 +107,7 @@ def execute_git_command(git_args: List[str]) -> CompletedGitCommand:
             init_git_repo()
             # Local commands
             if git_cmd in LOCAL_COMMANDS:
-                handler = LOCAL_COMMANDS[git_cmd]
+                handler = LOCAL_COMMANDS[git_cmd]["handler"]
                 stdout = handler(git_args)
             # Git commands
             elif git_cmd in SUPPORTED_GIT_COMMANDS:
@@ -188,15 +189,15 @@ def git_mv_local(git_args: List[str]) -> str:
 
 def git_help(git_args: List[str]) -> str:
     "Show supported git commands"
-    return '\n'.join(list(LOCAL_COMMANDS.keys()) + SUPPORTED_GIT_COMMANDS)
+    return '\n'.join(list(LOCAL_COMMANDS.keys()) + list(SUPPORTED_GIT_COMMANDS.keys()))
 
 
 LOCAL_COMMANDS = {
-    'help': git_help,
-    'mounts': git_mounts,
-    'ls-local': git_ls_local,
-    'rm-local': git_rm_local,
-    'mv-local': git_mv_local,
+    'help': {"readonly": True, "handler": git_help},
+    'mounts': {"readonly": True, "handler": git_mounts},
+    'ls-local': {"readonly": True, "handler": git_ls_local},
+    'rm-local': {"readonly": False, "handler": git_rm_local},
+    'mv-local': {"readonly": False, "handler": git_mv_local},
 }
 
 
@@ -277,3 +278,19 @@ def prepare_git_env() -> Dict[str, str]:
         env['GIT_AUTHOR_EMAIL'] = git_author_email
         env['GIT_COMMITTER_EMAIL'] = git_author_email
     return env
+
+
+def is_readonly_git_command(git_args: List[str]) -> bool:
+    """
+    Return true if the git command is readonly
+    Return False if the git command is not supported or if it is a write command
+    """
+    if not git_args:
+        return False
+    git_cmd = git_args[0]
+    if git_cmd in LOCAL_COMMANDS:
+        return LOCAL_COMMANDS[git_cmd]["readonly"]
+    elif git_cmd in SUPPORTED_GIT_COMMANDS:
+        return SUPPORTED_GIT_COMMANDS[git_cmd]["readonly"]
+    else:
+        return False

@@ -68,26 +68,26 @@ HTTP_400_BAD_REQUEST = 400
 HTTP_401_UNAUTHORIZED = 401
 HTTP_404_NOT_FOUND = 404
 HTTP_500_SERVER_ERROR = 500
-SUPPORTED_GIT_COMMANDS = [
-    'add',
-    'branch',
-    'cat-file',
-    'checkout',
-    'commit',
-    'diff',
-    'for-each-ref',
-    'log',
-    'ls-tree',
-    'pull',
-    'push',
-    'reset',
-    'rm',
-    'show',
-    'stage',
-    'status',
-    'tag',
-    'unstage',
-]
+SUPPORTED_GIT_COMMANDS = {
+    "add": {"readonly": False},
+    "branch": {"readonly": False},
+    "cat-file": {"readonly": True},
+    "checkout": {"readonly": False},
+    "commit": {"readonly": False},
+    "diff": {"readonly": True},
+    "for-each-ref": {"readonly": True},
+    "log": {"readonly": True},
+    "pull": {"readonly": False},
+    "ls-tree": {"readonly": True},
+    "push": {"readonly": False},
+    "reset": {"readonly": False},
+    "rm": {"readonly": False},
+    "show": {"readonly": True},
+    "stage": {"readonly": False},
+    "status": {"readonly": True},
+    "tag": {"readonly": False},
+    "unstage": {"readonly": False},
+}
 PLUGIN_DEFAULT_CONFIG = {
     'enabled': True,
     'git_enabled': True,

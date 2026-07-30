@@ -43,6 +43,7 @@ from airflow_code_editor.utils import (
     get_plugin_int_config,
     make_response,
     normalize_path,
+    not_authenticated,
     prepare_api_response,
 )
 
@@ -273,8 +274,5 @@ def load_presigned(token: str):
         path = decode_presigned(token)
     except Exception as ex:
         logging.error(ex)
-        return prepare_api_response(
-            error_message="Not authenticated",
-            http_status_code=HTTP_401_UNAUTHORIZED,
-        )
+        return not_authenticated()
     return load(path)

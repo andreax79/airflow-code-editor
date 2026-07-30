@@ -15,6 +15,8 @@
 #   limitations under the License
 #
 
+from airflow.api_fastapi.app import get_auth_manager
+from airflow.api_fastapi.core_api.security import GetUserDep
 from fastapi import Depends, FastAPI, Request, status
 
 from airflow_code_editor.api import api
@@ -41,7 +43,7 @@ async def repo_base(request: Request):
 
 @app.post(
     "/files/{path:path}",
-    dependencies=[Depends(requires_access_dag(method="GET"))],
+    dependencies=[Depends(requires_access_dag(method="POST"))],
     include_in_schema=False,
 )
 async def save(path: str, request: Request):
@@ -63,7 +65,7 @@ def load(path: str, request: Request):
 
 @app.delete(
     "/files/{path:path}",
-    dependencies=[Depends(requires_access_dag(method="GET"))],
+    dependencies=[Depends(requires_access_dag(method="POST"))],
     include_in_schema=False,
 )
 def delete(path: str, request: Request):
@@ -95,7 +97,7 @@ def presigned(token: str, request: Request):
 
 @app.post(
     "/format",
-    dependencies=[Depends(requires_access_dag(method="GET"))],
+    dependencies=[Depends(requires_access_dag(method="POST"))],
     include_in_schema=False,
 )
 async def format(request: Request):
@@ -164,6 +166,23 @@ def get_version():
     return api.get_version()
 
 
+@app.get(
+    "/permissions",
+    dependencies=[Depends(requires_access_dag(method="GET"))],
+    include_in_schema=False,
+)
+def get_permissions(user: GetUserDep):
+    "Get the current user permissions"
+    auth_manager = get_auth_manager()
+    can_edit = auth_manager.is_authorized_dag(
+        method="PUT",
+        user=user,
+    )
+    return {
+        "can_edit": can_edit,
+    }
+
+
 # ############################################################################
 # Public API
 
@@ -189,7 +208,7 @@ def api_get_files(path: str, request: Request):
             status.HTTP_400_BAD_REQUEST,  # Error writing file
         ]
     ),
-    dependencies=[Depends(requires_access_dag(method="GET"))],
+    dependencies=[Depends(requires_access_dag(method="POST"))],
 )
 async def api_post_files(path: str, request: Request):
     "Write file content"
@@ -206,7 +225,7 @@ async def api_post_files(path: str, request: Request):
             status.HTTP_404_NOT_FOUND,  # File not found
         ]
     ),
-    dependencies=[Depends(requires_access_dag(method="GET"))],
+    dependencies=[Depends(requires_access_dag(method="POST"))],
 )
 def api_delete_files(path: str, request: Request):
     "Delete a file"
@@ -242,7 +261,7 @@ def api_get_search(request: Request):
 
 @app.post(
     "/api/git",
-    dependencies=[Depends(requires_access_dag(method="GET"))],
+    dependencies=[Depends(requires_access_dag(method="POST"))],
 )
 async def api_post_git(request: Request):
     "Execute a GIT command"

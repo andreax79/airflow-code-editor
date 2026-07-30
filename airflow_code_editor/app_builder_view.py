@@ -14,10 +14,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License
 #
+from functools import wraps
 
 from airflow.plugins_manager import AirflowPlugin
-from airflow.security import permissions
-from airflow.www import auth
+from airflow.www.extensions.init_auth_manager import get_auth_manager
 from flask import Blueprint, redirect, request
 from flask_appbuilder import BaseView, expose
 
@@ -33,7 +33,8 @@ from airflow_code_editor.commons import (
     STATIC,
     VERSION,
 )
-from airflow_code_editor.utils import is_enabled
+from airflow_code_editor.git import is_readonly_git_command
+from airflow_code_editor.utils import forbidden, is_enabled
 
 __all__ = [
     "appbuilder_view",
@@ -43,12 +44,32 @@ __all__ = [
     "CodeEditorPlugin",
 ]
 
-PERMISSIONS = [
-    (permissions.ACTION_CAN_READ, permissions.RESOURCE_WEBSITE),
-]
 
 # ############################################################################
 # AppBuilder (Airflow 2.x)
+
+
+def has_access(method, check_git_command=False):
+    "Decorator to check if the user has access for the given method"
+
+    def has_access_decorator(func):
+        @wraps(func)
+        def decorated(*args, **kwargs):
+            auth_manager = get_auth_manager()
+            if not get_auth_manager().is_logged_in():
+                return forbidden()
+            if not auth_manager.is_authorized_dag(method=method):
+                return forbidden()
+            if check_git_command:
+                git_args = request.json.get("args", [])
+                can_edit = auth_manager.is_authorized_dag(method="PUT")
+                if not can_edit and not is_readonly_git_command(git_args):
+                    return forbidden()
+            return func(*args, **kwargs)
+
+        return decorated
+
+    return has_access_decorator
 
 
 class AppBuilderCodeEditorView(BaseView):
@@ -56,7 +77,7 @@ class AppBuilderCodeEditorView(BaseView):
     base_permissions = ["can_list", "can_create", "menu_acccess"]
 
     @expose("/")
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def list(self):
         return self.render_template(
             "index_appbuilder.html",
@@ -66,66 +87,75 @@ class AppBuilderCodeEditorView(BaseView):
         )
 
     @expose("/api/")
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def api(self):
         return redirect(request.path + "/ui")
 
     @expose("/repo", methods=["POST"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET", check_git_command=True)
     def repo_base(self):
         git_args = request.json.get("args", [])
         return api.execute_git_command(git_args)
 
     @expose("/files/<path:path>", methods=["POST"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="PUT")
     def save(self, path=None):
         mime_type = request.headers.get("Content-Type", "text/plain")
         data = request.get_data()
         return api.save(path=path, data=data, mime_type=mime_type)
 
     @expose("/files/<path:path>", methods=["GET"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def load(self, path=None):
         return api.load(path)
 
     @expose("/files/<path:path>", methods=["DELETE"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="DELETE")
     def delete(self, path=None):
         return api.delete(path)
 
     @expose("/format", methods=["POST"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="PUT")
     def format(self):
         data = request.get_data(as_text=True)
         return api.format(data)
 
     @expose("/tree", methods=["GET", "HEAD"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def tree_base(self, path=None):
         return api.tree(path, args=request.args, method=request.method)
 
     @expose("/tree/<path:path>", methods=["GET", "HEAD"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def tree(self, path=None):
         return api.tree(path, args=request.args, method=request.method)
 
     @expose("/search", methods=["GET"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def search(self):
         return api.search(args=request.args)
 
     @expose("/version", methods=["GET"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def get_version(self):
         return api.get_version()
 
+    @expose("/permissions", methods=["GET"])
+    @has_access(method="GET")
+    def get_permissions(self):
+        "Get the current user permissions"
+        can_edit = get_auth_manager().is_authorized_dag(method="PUT")
+        return {
+            "can_edit": can_edit,
+        }
+
     @expose("/ping", methods=["GET"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def ping(self):
         return api.ping()
 
     @expose("/generate_presigned", methods=["POST"])
-    @auth.has_access(PERMISSIONS)
+    @has_access(method="GET")
     def generate_presigned(self):
         path = request.json.get("path", "")
         return api.generate_presigned(path)

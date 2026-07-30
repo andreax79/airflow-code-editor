@@ -44,6 +44,8 @@ except ImportError:
 
 from airflow_code_editor.commons import (
     HTTP_200_OK,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
     PLUGIN_DEFAULT_CONFIG,
     PLUGIN_NAME,
     ROOT_MOUNTPOUNT,
@@ -127,6 +129,8 @@ __all__ = [
     'airflow_version',
     'generate_csrf',
     'read_config_file',
+    'not_authenticated',
+    'forbidden',
     'AIRFLOW_MAJOR_VERSION',
 ]
 
@@ -288,6 +292,22 @@ class DummyLexer(RegexLexer):
             (r'.*\n', Text),
         ]
     }
+
+
+def not_authenticated():
+    "Return a 401 Not Authenticated response"
+    return prepare_api_response(
+        error_message="Not authenticated",
+        http_status_code=HTTP_401_UNAUTHORIZED,
+    )
+
+
+def forbidden():
+    "Return a 403 Forbidden response"
+    return prepare_api_response(
+        http_status_code=HTTP_403_FORBIDDEN,
+        error_message="Forbidden",
+    )
 
 
 try:

@@ -13,7 +13,7 @@ jobs:
         python:
         - "3.13"
         airflow:
-        - "3.3.0"
+        - "3.3.1"
 
     runs-on: ubuntu-latest
 

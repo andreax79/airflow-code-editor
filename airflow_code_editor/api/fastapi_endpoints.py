@@ -43,7 +43,7 @@ async def repo_base(request: Request):
 
 @app.post(
     "/files/{path:path}",
-    dependencies=[Depends(requires_access_dag(method="POST"))],
+    dependencies=[Depends(requires_access_dag(method="PUT"))],
     include_in_schema=False,
 )
 async def save(path: str, request: Request):
@@ -65,7 +65,7 @@ def load(path: str, request: Request):
 
 @app.delete(
     "/files/{path:path}",
-    dependencies=[Depends(requires_access_dag(method="POST"))],
+    dependencies=[Depends(requires_access_dag(method="DELETE"))],
     include_in_schema=False,
 )
 def delete(path: str, request: Request):

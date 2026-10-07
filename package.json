@@ -42,7 +42,7 @@
     "shlex": "^2.1.2",
     "splitpanes": "^3.1.1",
     "uuid": "^14.0.0",
-    "vue": "^3.4.29",
+    "vue": "^3.5.43",
     "vue-good-table-next": "^0.2.1",
     "vue-simple-context-menu": "^4.0.4",
     "vue-universal-modal": "^1.1.4"

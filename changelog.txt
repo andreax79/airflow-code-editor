@@ -554,3 +554,9 @@
 ### Changed
 
 - JavaScript dependencies update
+
+## [8.3.2] - 2026-10-20
+
+### Fixed
+
+- Fix workspace file list not refreshed when git status is empty

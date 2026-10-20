@@ -258,9 +258,9 @@ export default defineComponent({
         async refresh() {
             // --untracked-files=all - Also shows individual files in untracked directories
             const data = await git_async([ 'status', '--porcelain', '--untracked-files=all' ]);
-            if (data) {
-                this.parseStatus(data);
-            }
+            // An empty result means a clean working tree (e.g. right after a commit or revert):
+            // it must still be applied, otherwise the list keeps stale entries.
+            this.parseStatus(data || '');
         },
     },
 })

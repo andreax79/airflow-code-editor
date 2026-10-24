@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Modified 2026-10-24: cover first-run configuration creation.
 
 import contextlib
 import os
@@ -20,6 +21,7 @@ from airflow_code_editor.utils import (
     get_root_folder,
     normalize_path,
     read_mount_points_config,
+    read_config_file,
 )
 
 
@@ -239,3 +241,18 @@ class TestConfig(TestCase):
             assert str(m['test'].path) == '/tmp/test'
             assert str(m['test1'].path) == '/tmp/test1'
             assert str(m['test2'].path) == '/tmp/test2'
+
+
+class TestReadConfigFile(TestCase):
+    def test_creates_file_in_missing_parent_directory(self):
+        from configparser import ConfigParser
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "new" / "config.ini"
+            config = ConfigParser()
+            with mock.patch("airflow_code_editor.utils.conf", config):
+                read_config_file(path)
+            self.assertTrue(path.is_file())
+            saved = ConfigParser()
+            saved.read(path)
+            self.assertTrue(saved.has_option("core", "fernet_key"))

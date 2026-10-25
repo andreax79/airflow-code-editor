@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# Modified 2026-10-24: create the configuration parent directory.
 #
 #   Copyright 2019 Andrea Bonomi <andrea.bonomi@gmail.com>
 #
@@ -253,7 +254,7 @@ def read_config_file(path: Path) -> None:
         conf.add_section(PLUGIN_NAME)
 
     if "fernet_key" not in conf["core"]:
-        path.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
         conf["core"]["fernet_key"] = os.urandom(16).hex()
         with open(path, "w") as f:
             conf.write(f)
